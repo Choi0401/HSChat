@@ -1,17 +1,17 @@
 #pragma once
-
-class CSigninForm : public CFormView
+#include <afxext.h>
+class CWaitingForm : public CFormView
 {
-	DECLARE_DYNAMIC(CSigninForm)
+	DECLARE_DYNAMIC(CWaitingForm)
 
 public:
-	CSigninForm();
-	CSigninForm(UINT nIDTemplate);
-	virtual ~CSigninForm();
+	CWaitingForm();
+	CWaitingForm(UINT nIDTemplate);
+	virtual ~CWaitingForm();
 
 	// 대화 상자 데이터입니다.
 #ifdef AFX_DESIGN_TIME
-	enum { IDD = IDD_FORMVIEW_SIGNIN };
+	enum { IDD = IDD_FORMVIEW_WAITING };
 #endif
 
 protected:
@@ -21,5 +21,4 @@ protected:
 public:
 	virtual BOOL Create(LPCTSTR lpszClassName, LPCTSTR lpszWindowName, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID, CCreateContext* pContext = NULL);
 	virtual void OnInitialUpdate();
-	afx_msg void OnBnClickedButtonSignin();
 };

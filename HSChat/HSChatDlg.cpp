@@ -63,8 +63,7 @@ void CHSChatDlg::DoDataExchange(CDataExchange* pDX)
 BEGIN_MESSAGE_MAP(CHSChatDlg, CDialogEx)
 	ON_WM_SYSCOMMAND()
 	ON_WM_PAINT()
-	ON_WM_QUERYDRAGICON()
-	ON_BN_CLICKED(IDC_BUTTON_SIGNIN, &CHSChatDlg::OnBnClickedButtonSignin)
+	ON_WM_QUERYDRAGICON()	
 	ON_WM_SIZE()
 END_MESSAGE_MAP()
 
@@ -101,7 +100,7 @@ BOOL CHSChatDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// 작은 아이콘을 설정합니다.
 
 	// TODO: 여기에 추가 초기화 작업을 추가합니다.
-	AllocSigninForm();
+	AllocForm();
 
 	return TRUE;  // 포커스를 컨트롤에 설정하지 않으면 TRUE를 반환합니다.
 }
@@ -156,31 +155,45 @@ HCURSOR CHSChatDlg::OnQueryDragIcon()
 }
 
 
-void CHSChatDlg::AllocSigninForm()
+void CHSChatDlg::AllocForm()
 {
 	CCreateContext context;
 	ZeroMemory(&context, sizeof(context));
 
 	CRect rectOfPanelArea;
 
-	GetDlgItem(IDC_PICTURE_LOGIN)->GetWindowRect(&rectOfPanelArea);
+	GetDlgItem(IDC_PICTURE_CONTROL)->GetWindowRect(&rectOfPanelArea);
 	ScreenToClient(&rectOfPanelArea);
 	m_pSigninForm = new CSigninForm();
 	m_pSigninForm->Create(NULL, NULL, WS_CHILD | WS_VSCROLL | WS_HSCROLL, rectOfPanelArea, this, IDD_FORMVIEW_SIGNIN, &context);
 	m_pSigninForm->OnInitialUpdate();
 	m_pSigninForm->ShowWindow(SW_SHOW);
-	GetDlgItem(IDC_PICTURE_LOGIN)->DestroyWindow();
+
+	m_pWatingForm = new CWaitingForm();
+	m_pWatingForm->Create(NULL, NULL, WS_CHILD | WS_VSCROLL | WS_HSCROLL, rectOfPanelArea, this, IDD_FORMVIEW_WAITING, &context);
+	m_pWatingForm->OnInitialUpdate();
+	m_pWatingForm->ShowWindow(SW_HIDE);
+
+	GetDlgItem(IDC_PICTURE_CONTROL)->DestroyWindow();
 }
 
 
-void CHSChatDlg::OnBnClickedButtonSignin()
-{	
-	CString strID, strPW;
-	GetDlgItemText(IDC_EDIT_ID, strID);
-	GetDlgItemText(IDC_EDIT_PW, strPW);
+void CHSChatDlg::ShowForm(int idx)
+{
+	switch (idx)
+	{
+	case 0:
+		m_pSigninForm->ShowWindow(SW_SHOW);
+		m_pWatingForm->ShowWindow(SW_HIDE);
+		
+		break;
+	case 1:
+		m_pSigninForm->ShowWindow(SW_HIDE);
+		m_pWatingForm->ShowWindow(SW_SHOW);
+		
+		break;
 	
-
-
+	}
 }
 
 

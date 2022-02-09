@@ -184,6 +184,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="CSigninForm.h" />
+    <ClInclude Include="CWaitingForm.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="HSChat.h" />
     <ClInclude Include="HSChatDlg.h" />
@@ -193,6 +194,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CSigninForm.cpp" />
+    <ClCompile Include="CWaitingForm.cpp" />
     <ClCompile Include="HSChat.cpp" />
     <ClCompile Include="HSChatDlg.cpp" />
     <ClCompile Include="pch.cpp">
