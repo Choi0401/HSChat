@@ -1,12 +1,8 @@
-#pragma once
-
+#include "pch.h"
+#include "HSChat.h"
 #include "CSigninForm.h"
-#include "HSChatDlg.h"
-#include "resource.h"
-#include "afxdialogex.h"
 
-
-// CMyForm 대화 상자
+// CSigninForm 대화 상자
 
 IMPLEMENT_DYNAMIC(CSigninForm, CFormView)
 
@@ -53,3 +49,4 @@ void CSigninForm::OnInitialUpdate()
 
 	// TODO: 여기에 특수화된 코드를 추가 및/또는 기본 클래스를 호출합니다.
 }
+

@@ -1,4 +1,4 @@
-﻿
+﻿#pragma once
 // HSChatDlg.cpp: 구현 파일
 //
 #include "pch.h"
@@ -6,7 +6,6 @@
 #include "HSChat.h"
 #include "HSChatDlg.h"
 #include "afxdialogex.h"
-#include "CSigninForm.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -102,7 +101,7 @@ BOOL CHSChatDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// 작은 아이콘을 설정합니다.
 
 	// TODO: 여기에 추가 초기화 작업을 추가합니다.
-
+	AllocSigninForm();
 
 	return TRUE;  // 포커스를 컨트롤에 설정하지 않으면 TRUE를 반환합니다.
 }
@@ -182,9 +181,6 @@ void CHSChatDlg::OnBnClickedButtonSignin()
 	
 
 
-
-	
-	
 }
 
 

@@ -2,6 +2,7 @@
 // HSChatDlg.h: 헤더 파일
 //
 #pragma once
+#include "CSigninForm.h"
 
 // CHSChatDlg 대화 상자
 class CHSChatDlg : public CDialogEx

@@ -1,5 +1,5 @@
 #pragma once
-#include <afxext.h>
+
 class CSigninForm : public CFormView
 {
 	DECLARE_DYNAMIC(CSigninForm)
@@ -22,4 +22,3 @@ public:
 	virtual BOOL Create(LPCTSTR lpszClassName, LPCTSTR lpszWindowName, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID, CCreateContext* pContext = NULL);
 	virtual void OnInitialUpdate();
 };
-
