@@ -1,12 +1,12 @@
 ﻿
 // HSChatDlg.cpp: 구현 파일
 //
-
 #include "pch.h"
 #include "framework.h"
 #include "HSChat.h"
 #include "HSChatDlg.h"
 #include "afxdialogex.h"
+#include "CSigninForm.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -27,7 +27,7 @@ public:
 
 	protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 지원입니다.
-
+	
 // 구현입니다.
 protected:
 	DECLARE_MESSAGE_MAP()
@@ -58,7 +58,7 @@ CHSChatDlg::CHSChatDlg(CWnd* pParent /*=nullptr*/)
 
 void CHSChatDlg::DoDataExchange(CDataExchange* pDX)
 {
-	CDialogEx::DoDataExchange(pDX);
+	CDialogEx::DoDataExchange(pDX);	
 }
 
 BEGIN_MESSAGE_MAP(CHSChatDlg, CDialogEx)
@@ -66,6 +66,7 @@ BEGIN_MESSAGE_MAP(CHSChatDlg, CDialogEx)
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
 	ON_BN_CLICKED(IDC_BUTTON_SIGNIN, &CHSChatDlg::OnBnClickedButtonSignin)
+	ON_WM_SIZE()
 END_MESSAGE_MAP()
 
 
@@ -156,13 +157,41 @@ HCURSOR CHSChatDlg::OnQueryDragIcon()
 }
 
 
+void CHSChatDlg::AllocSigninForm()
+{
+	CCreateContext context;
+	ZeroMemory(&context, sizeof(context));
+
+	CRect rectOfPanelArea;
+
+	GetDlgItem(IDC_PICTURE_LOGIN)->GetWindowRect(&rectOfPanelArea);
+	ScreenToClient(&rectOfPanelArea);
+	m_pSigninForm = new CSigninForm();
+	m_pSigninForm->Create(NULL, NULL, WS_CHILD | WS_VSCROLL | WS_HSCROLL, rectOfPanelArea, this, IDD_FORMVIEW_SIGNIN, &context);
+	m_pSigninForm->OnInitialUpdate();
+	m_pSigninForm->ShowWindow(SW_SHOW);
+	GetDlgItem(IDC_PICTURE_LOGIN)->DestroyWindow();
+}
+
 
 void CHSChatDlg::OnBnClickedButtonSignin()
 {	
 	CString strID, strPW;
 	GetDlgItemText(IDC_EDIT_ID, strID);
 	GetDlgItemText(IDC_EDIT_PW, strPW);
+	
+
+
 
 	
 	
+}
+
+
+void CHSChatDlg::OnSize(UINT nType, int cx, int cy)
+{
+	CDialogEx::OnSize(nType, cx, cy);
+
+	// TODO: 창 크기 변화할 때 호출
+
 }

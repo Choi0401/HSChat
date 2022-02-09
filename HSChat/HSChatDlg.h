@@ -1,9 +1,7 @@
 ﻿
 // HSChatDlg.h: 헤더 파일
 //
-
 #pragma once
-
 
 // CHSChatDlg 대화 상자
 class CHSChatDlg : public CDialogEx
@@ -33,4 +31,8 @@ protected:
 	DECLARE_MESSAGE_MAP()
 public:
 	afx_msg void OnBnClickedButtonSignin();
+	afx_msg void OnSize(UINT nType, int cx, int cy);
+
+	CSigninForm *m_pSigninForm;
+	void AllocSigninForm();
 };
