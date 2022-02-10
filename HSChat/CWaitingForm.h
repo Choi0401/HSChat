@@ -25,4 +25,6 @@ public:
 
 	CHSChatDlg* m_pDlg;
 	afx_msg void OnBnClickedButtonExit();
+	afx_msg void OnBnClickedButtonMakeroom();
+	virtual BOOL PreTranslateMessage(MSG* pMsg);
 };

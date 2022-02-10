@@ -30,6 +30,8 @@ public:
 // 구현입니다.
 protected:
 	DECLARE_MESSAGE_MAP()
+public:
+//	virtual BOOL PreTranslateMessage(MSG* pMsg);
 };
 
 CAboutDlg::CAboutDlg() : CDialogEx(IDD_ABOUTBOX)
@@ -174,6 +176,13 @@ void CHSChatDlg::AllocForm()
 	m_pWatingForm->OnInitialUpdate();
 	m_pWatingForm->ShowWindow(SW_HIDE);
 
+	m_pChatRoomForm = new CChatRoomForm();
+	m_pChatRoomForm->Create(NULL, NULL, WS_CHILD | WS_VSCROLL | WS_HSCROLL, rectOfPanelArea, this, IDD_FORMVIEW_CHATROOM, &context);
+	m_pChatRoomForm->OnInitialUpdate();
+	m_pChatRoomForm->ShowWindow(SW_HIDE);
+
+
+
 	GetDlgItem(IDC_PICTURE_CONTROL)->DestroyWindow();
 }
 
@@ -185,15 +194,23 @@ void CHSChatDlg::ShowForm(int idx)
 	case 0:
 		m_pSigninForm->ShowWindow(SW_SHOW);
 		m_pWatingForm->ShowWindow(SW_HIDE);
-		
+		m_pChatRoomForm->ShowWindow(SW_HIDE);
 		break;
+
 	case 1:
 		m_pSigninForm->ShowWindow(SW_HIDE);
 		m_pWatingForm->ShowWindow(SW_SHOW);
-		
+		m_pChatRoomForm->ShowWindow(SW_HIDE);
 		break;
-	
+
+	case 5:
+		m_pSigninForm->ShowWindow(SW_HIDE);
+		m_pWatingForm->ShowWindow(SW_HIDE);
+		m_pChatRoomForm->ShowWindow(SW_SHOW);
+		break;
+
 	}
+
 }
 
 
@@ -204,3 +221,11 @@ void CHSChatDlg::OnSize(UINT nType, int cx, int cy)
 	// TODO: 창 크기 변화할 때 호출
 
 }
+
+
+//BOOL CAboutDlg::PreTranslateMessage(MSG* pMsg)
+//{
+//	// TODO: 여기에 특수화된 코드를 추가 및/또는 기본 클래스를 호출합니다.
+//
+//	return CDialogEx::PreTranslateMessage(pMsg);
+//}

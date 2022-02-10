@@ -23,6 +23,8 @@ protected:
 public:
 	virtual BOOL Create(LPCTSTR lpszClassName, LPCTSTR lpszWindowName, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID, CCreateContext* pContext = NULL);
 	virtual void OnInitialUpdate();
-	afx_msg void OnBnClickedButtonSignin();
+
 	CHSChatDlg* m_pDlg;
+	afx_msg void OnBnClickedButtonSigninSignup();
+	afx_msg void OnBnClickedButtonSigninSignin();
 };

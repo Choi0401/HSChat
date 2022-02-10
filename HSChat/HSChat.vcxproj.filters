@@ -39,6 +39,12 @@
     <ClInclude Include="CWaitingForm.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="CMakeRoomDlg.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="CChatRoomForm.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="HSChat.cpp">
@@ -54,6 +60,12 @@
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="CWaitingForm.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="CMakeRoomDlg.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="CChatRoomForm.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>

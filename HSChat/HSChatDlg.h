@@ -4,6 +4,7 @@
 #pragma once
 #include "CSigninForm.h"
 #include "CWaitingForm.h"
+#include "CChatRoomForm.h"
 // CHSChatDlg 대화 상자
 class CHSChatDlg : public CDialogEx
 {
@@ -34,7 +35,8 @@ public:
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 
 	CSigninForm *m_pSigninForm;
-	CWaitingForm* m_pWatingForm;
+	CWaitingForm *m_pWatingForm;
+	CChatRoomForm *m_pChatRoomForm;
 
 	void AllocForm();	
 	void ShowForm(int idx);

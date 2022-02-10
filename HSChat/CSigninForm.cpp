@@ -30,7 +30,8 @@ void CSigninForm::DoDataExchange(CDataExchange* pDX)
 
 
 BEGIN_MESSAGE_MAP(CSigninForm, CFormView)
-	ON_BN_CLICKED(IDC_BUTTON_SIGNIN, &CSigninForm::OnBnClickedButtonSignin)
+	ON_BN_CLICKED(IDC_BUTTON_SIGNIN_SIGNUP, &CSigninForm::OnBnClickedButtonSigninSignup)
+	ON_BN_CLICKED(IDC_BUTTON_SIGNIN_SIGNIN, &CSigninForm::OnBnClickedButtonSigninSignin)
 END_MESSAGE_MAP()
 
 
@@ -53,14 +54,22 @@ void CSigninForm::OnInitialUpdate()
 }
 
 
-
-void CSigninForm::OnBnClickedButtonSignin()
+void CSigninForm::OnBnClickedButtonSigninSignup()
 {
 	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
-	CString strID, strPW;
-	GetDlgItemText(IDC_EDIT_ID, strID);
-	GetDlgItemText(IDC_EDIT_PW, strPW);
+}
 
+
+void CSigninForm::OnBnClickedButtonSigninSignin()
+{
+	// 서버에 로그인 메시지 전송
+	CString strID, strPW;
+	GetDlgItemText(IDC_EDIT_SIGNIN_ID, strID);
+	GetDlgItemText(IDC_EDIT_SIGNIN_PW, strPW);
+
+
+	// 로그인 실패
+
+	// 로그인 성공
 	m_pDlg->ShowForm(1);
-		
 }
