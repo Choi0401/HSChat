@@ -10,7 +10,7 @@ IMPLEMENT_DYNAMIC(CSigninForm, CFormView)
 CSigninForm::CSigninForm()
 	: CFormView(IDD_FORMVIEW_SIGNIN)
 {
-	m_pDlg = (CHSChatDlg*)::AfxGetMainWnd();
+	m_pDlg = (CHSChatDlg*)::AfxGetMainWnd();	
 }
 
 CSigninForm::CSigninForm(UINT nIDTemplate)
@@ -71,5 +71,8 @@ void CSigninForm::OnBnClickedButtonSigninSignin()
 	// 로그인 실패
 
 	// 로그인 성공
-	m_pDlg->ShowForm(1);
+	m_pDlg->ShowForm(1);	
+	SetDlgItemText(IDC_EDIT_SIGNIN_ID, _T(""));
+	SetDlgItemText(IDC_EDIT_SIGNIN_PW, _T(""));
+		
 }

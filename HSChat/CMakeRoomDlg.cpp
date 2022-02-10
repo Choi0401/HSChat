@@ -42,14 +42,21 @@ BOOL CMakeRoomDlg::OnInitDialog()
 	CButton* pRB_public = NULL;
 	if ((pRB_public = (CButton*)GetDlgItem(IDC_RADIO_PUBLIC)) == NULL)
 	{
-		AfxMessageBox(_T("GetDlgItem Error"));
+		AfxMessageBox(_T("ERROR[GetDlgItem()] : Failed to get IDC_RADIO_PUBLIC"));
 		// TODO : 소켓 닫기 필요
 		::PostQuitMessage(WM_QUIT);
 	}
 
 	pRB_public->SetCheck(TRUE);
+	CEdit* pEDC_name = NULL;
+	if ((pEDC_name = (CEdit*)GetDlgItem(IDC_EDIT_MAKEROOM_NAME)) == NULL)
+	{
+		AfxMessageBox(_T("ERROR[GetDlgItem()] : Failed to get IDC_EDIT_MAKEROOM_NAME"));
+	}
+	pEDC_name->SetSel(-1);
+	pEDC_name->SetFocus();
 
-	return TRUE;
+	return FALSE;
 
 }
 
@@ -78,6 +85,7 @@ void CMakeRoomDlg::OnBnClickedButtonMakeroom()
 		//TODO : 폼 전환(채팅방)		
 		CHSChatDlg* pDlg = (CHSChatDlg*)AfxGetMainWnd();
 		pDlg->ShowForm(5);	
+
 
 		//CEdit* pedit = (CEdit*)GetDlgItem(IDC_EDIT_CHATROOM_SENDMSG);
 		//if (pedit == NULL)

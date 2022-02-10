@@ -207,6 +207,13 @@ void CHSChatDlg::ShowForm(int idx)
 		m_pSigninForm->ShowWindow(SW_HIDE);
 		m_pWatingForm->ShowWindow(SW_HIDE);
 		m_pChatRoomForm->ShowWindow(SW_SHOW);
+		CEdit* p_EditSend = NULL;
+		if ((p_EditSend = (CEdit*)m_pChatRoomForm->GetDlgItem(IDC_EDIT_CHATROOM_SENDMSG)) == NULL)
+		{
+			AfxMessageBox(_T("ERROR[GetDlgItem()] : Failed to get IDC_EDIT_CHATROOM_SENDMSG"));
+		}
+		p_EditSend->SetSel(-1);
+		p_EditSend->SetFocus();
 		break;
 
 	}

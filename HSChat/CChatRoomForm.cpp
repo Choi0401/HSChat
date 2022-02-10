@@ -13,8 +13,7 @@ IMPLEMENT_DYNCREATE(CChatRoomForm, CFormView)
 
 CChatRoomForm::CChatRoomForm()
 	: CFormView(IDD_FORMVIEW_CHATROOM)
-{
-	m_pDlg = (CHSChatDlg*)::AfxGetMainWnd();
+{	
 }
 
 CChatRoomForm::~CChatRoomForm()
@@ -64,10 +63,8 @@ void CChatRoomForm::OnInitialUpdate()
 {
 	CFormView::OnInitialUpdate();
 	// TODO: 여기에 특수화된 코드를 추가 및/또는 기본 클래스를 호출합니다.
-
-
+	m_pDlg = (CHSChatDlg*)::AfxGetMainWnd();
 }
-
 
 void CChatRoomForm::OnBnClickedButtonChatroomSend()
 {
@@ -79,7 +76,6 @@ void CChatRoomForm::OnBnClickedButtonChatroomSend()
 	if (send_msg.GetLength() > 0) {
 		AfxMessageBox(send_msg);
 	}
-
 	SetDlgItemText(IDC_EDIT_CHATROOM_SENDMSG, _T(""));
 
 

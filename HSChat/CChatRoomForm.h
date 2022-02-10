@@ -34,6 +34,7 @@ public:
 	afx_msg void OnBnClickedButtonChatroomSend();
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
 	afx_msg void OnBnClickedButtonChatroomQuit();
+
 };
 
 
