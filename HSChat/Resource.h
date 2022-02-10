@@ -15,13 +15,22 @@
 #define IDC_STATIC_HSCHAT               1001
 #define IDC_BUTTON_TEST                 1001
 #define IDC_STATIC_ID                   1002
+#define IDC_BUTTON_MYINFO               1002
 #define IDC_STATIC_PW                   1003
+#define IDC_BUTTON_LOGOUT               1003
 #define IDC_EDIT_ID                     1004
+#define IDC_BUTTON_EXIT                 1004
 #define IDC_EDIT_PW                     1005
+#define IDC_BUTTON_MYINFO2              1005
 #define IDC_BUTTON_SIGNUP               1006
+#define IDC_LIST_ROOM                   1006
 #define IDC_BUTTON_SIGNIN               1007
+#define IDC_LIST_WAITING_FRIENDS        1007
 #define IDC_BUTTON_SEARCHID             1008
+#define IDC_BUTTON_FRIENDS              1008
 #define IDC_BUTTON_SEARCHPW             1009
+#define IDC_STATIC_ROOMLIST             1009
+#define IDC_STATIC_FRIENDSLIST          1010
 
 // Next default values for new objects
 // 
@@ -29,7 +38,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        133
 #define _APS_NEXT_COMMAND_VALUE         32771
-#define _APS_NEXT_CONTROL_VALUE         1002
+#define _APS_NEXT_CONTROL_VALUE         1010
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

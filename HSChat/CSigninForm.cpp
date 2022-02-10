@@ -10,7 +10,7 @@ IMPLEMENT_DYNAMIC(CSigninForm, CFormView)
 CSigninForm::CSigninForm()
 	: CFormView(IDD_FORMVIEW_SIGNIN)
 {
-
+	m_pDlg = (CHSChatDlg*)::AfxGetMainWnd();
 }
 
 CSigninForm::CSigninForm(UINT nIDTemplate)
@@ -60,9 +60,7 @@ void CSigninForm::OnBnClickedButtonSignin()
 	CString strID, strPW;
 	GetDlgItemText(IDC_EDIT_ID, strID);
 	GetDlgItemText(IDC_EDIT_PW, strPW);
-	// 다른 클래스에서 메인 다이얼로그의 포이터 얻기
-	CHSChatDlg* pDlg = (CHSChatDlg*)::AfxGetMainWnd();
 
-	pDlg->ShowForm(1);
+	m_pDlg->ShowForm(1);
 		
 }

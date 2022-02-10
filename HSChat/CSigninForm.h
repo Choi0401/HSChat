@@ -1,5 +1,7 @@
 #pragma once
 
+class CHSChatDlg;
+
 class CSigninForm : public CFormView
 {
 	DECLARE_DYNAMIC(CSigninForm)
@@ -22,4 +24,5 @@ public:
 	virtual BOOL Create(LPCTSTR lpszClassName, LPCTSTR lpszWindowName, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID, CCreateContext* pContext = NULL);
 	virtual void OnInitialUpdate();
 	afx_msg void OnBnClickedButtonSignin();
+	CHSChatDlg* m_pDlg;
 };
