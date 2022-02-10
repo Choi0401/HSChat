@@ -31,6 +31,8 @@ public:
 // 구현입니다.
 protected:
 	DECLARE_MESSAGE_MAP()
+public:
+//	virtual BOOL PreTranslateMessage(MSG* pMsg);
 };
 
 CAboutDlg::CAboutDlg() : CDialogEx(IDD_ABOUTBOX)
@@ -153,3 +155,53 @@ HCURSOR CHSChatDlg::OnQueryDragIcon()
 	return static_cast<HCURSOR>(m_hIcon);
 }
 
+
+void CHSChatDlg::AllocForm()
+{
+	CCreateContext context;
+	ZeroMemory(&context, sizeof(context));
+
+	CRect rectOfPanelArea;
+
+	GetDlgItem(IDC_PICTURE_CONTROL)->GetWindowRect(&rectOfPanelArea);
+	ScreenToClient(&rectOfPanelArea);
+	m_pSigninForm = new CSigninForm();
+	m_pSigninForm->Create(NULL, NULL, WS_CHILD | WS_VSCROLL | WS_HSCROLL, rectOfPanelArea, this, IDD_FORMVIEW_SIGNIN, &context);
+	m_pSigninForm->OnInitialUpdate();
+	m_pSigninForm->ShowWindow(SW_SHOW);
+
+	m_pWatingForm = new CWaitingForm();
+	m_pWatingForm->Create(NULL, NULL, WS_CHILD | WS_VSCROLL | WS_HSCROLL, rectOfPanelArea, this, IDD_FORMVIEW_WAITING, &context);
+	m_pWatingForm->OnInitialUpdate();
+	m_pWatingForm->ShowWindow(SW_HIDE);
+
+	GetDlgItem(IDC_PICTURE_CONTROL)->DestroyWindow();
+}
+
+
+void CHSChatDlg::ShowForm(int idx)
+{
+	switch (idx)
+	{
+	case 0:
+		m_pSigninForm->ShowWindow(SW_SHOW);
+		m_pWatingForm->ShowWindow(SW_HIDE);
+		
+		break;
+	case 1:
+		m_pSigninForm->ShowWindow(SW_HIDE);
+		m_pWatingForm->ShowWindow(SW_SHOW);
+		
+		break;
+	
+	}
+}
+
+
+void CHSChatDlg::OnSize(UINT nType, int cx, int cy)
+{
+	CDialogEx::OnSize(nType, cx, cy);
+
+	// TODO: 창 크기 변화할 때 호출
+
+}

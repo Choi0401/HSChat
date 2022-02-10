@@ -3,8 +3,8 @@
 //
 
 #pragma once
-
-
+#include "CSigninForm.h"
+#include "CWaitingForm.h"
 // CHSChatDlg 대화 상자
 class CHSChatDlg : public CDialogEx
 {
@@ -31,4 +31,13 @@ protected:
 	afx_msg void OnPaint();
 	afx_msg HCURSOR OnQueryDragIcon();
 	DECLARE_MESSAGE_MAP()
+public:
+	afx_msg void OnSize(UINT nType, int cx, int cy);
+
+	CSigninForm *m_pSigninForm;
+	CWaitingForm* m_pWatingForm;
+
+	void AllocForm();	
+	void ShowForm(int idx);
+
 };
