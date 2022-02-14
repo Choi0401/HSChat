@@ -1,19 +1,17 @@
 #pragma once
-
-class CHSChatDlg;
-
-class CSigninForm : public CFormView
+#include <afxext.h>
+class CSearchIDForm : public CFormView
 {
-	DECLARE_DYNAMIC(CSigninForm)
+	DECLARE_DYNAMIC(CSearchIDForm)
 
 public:
-	CSigninForm();
-	CSigninForm(UINT nIDTemplate);
-	virtual ~CSigninForm();
+	CSearchIDForm();
+	CSearchIDForm(UINT nIDTemplate);
+	virtual ~CSearchIDForm();
 
 	// 대화 상자 데이터입니다.
 #ifdef AFX_DESIGN_TIME
-	enum { IDD = IDD_FORMVIEW_SIGNIN };
+	enum { IDD = IDD_FORMVIEW_SEARCHIDs };
 #endif
 
 protected:
@@ -24,8 +22,10 @@ public:
 	virtual BOOL Create(LPCTSTR lpszClassName, LPCTSTR lpszWindowName, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID, CCreateContext* pContext = NULL);
 	virtual void OnInitialUpdate();
 
+
 	CHSChatDlg* m_pDlg;
-	afx_msg void OnBnClickedButtonSigninSignup();
-	afx_msg void OnBnClickedButtonSigninSignin();
-	afx_msg void OnBnClickedButtonSigninSearchID();
+
+	afx_msg void OnBnClickedButtonSearchIDOK();
+	afx_msg void OnBnClickedButtonSearchIDCancel();
 };
+

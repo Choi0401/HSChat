@@ -32,6 +32,7 @@ void CSigninForm::DoDataExchange(CDataExchange* pDX)
 BEGIN_MESSAGE_MAP(CSigninForm, CFormView)
 	ON_BN_CLICKED(IDC_BUTTON_SIGNIN_SIGNUP, &CSigninForm::OnBnClickedButtonSigninSignup)
 	ON_BN_CLICKED(IDC_BUTTON_SIGNIN_SIGNIN, &CSigninForm::OnBnClickedButtonSigninSignin)
+	ON_BN_CLICKED(IDC_BUTTON_SIGNIN_SEARCHID, &CSigninForm::OnBnClickedButtonSigninSearchID)
 END_MESSAGE_MAP()
 
 
@@ -75,4 +76,10 @@ void CSigninForm::OnBnClickedButtonSigninSignin()
 	SetDlgItemText(IDC_EDIT_SIGNIN_ID, _T(""));
 	SetDlgItemText(IDC_EDIT_SIGNIN_PW, _T(""));
 		
+}
+
+
+void CSigninForm::OnBnClickedButtonSigninSearchID()
+{
+	m_pDlg->ShowForm(2);
 }

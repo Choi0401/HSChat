@@ -185,6 +185,7 @@
   <ItemGroup>
     <ClInclude Include="CChatRoomForm.h" />
     <ClInclude Include="CMakeRoomDlg.h" />
+    <ClInclude Include="CSearchIDForm.h" />
     <ClInclude Include="CSigninForm.h" />
     <ClInclude Include="CWaitingForm.h" />
     <ClInclude Include="framework.h" />
@@ -197,6 +198,7 @@
   <ItemGroup>
     <ClCompile Include="CChatRoomForm.cpp" />
     <ClCompile Include="CMakeRoomDlg.cpp" />
+    <ClCompile Include="CSearchIDForm.cpp" />
     <ClCompile Include="CSigninForm.cpp" />
     <ClCompile Include="CWaitingForm.cpp" />
     <ClCompile Include="HSChat.cpp" />

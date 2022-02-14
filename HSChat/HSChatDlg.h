@@ -3,6 +3,7 @@
 //
 #pragma once
 #include "CSigninForm.h"
+#include "CSearchIDForm.h"
 #include "CWaitingForm.h"
 #include "CChatRoomForm.h"
 // CHSChatDlg 대화 상자
@@ -35,8 +36,9 @@ public:
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 
 	CSigninForm *m_pSigninForm;
+	CSearchIDForm* m_pSearchIDForm;
 	CWaitingForm *m_pWatingForm;
-	CChatRoomForm *m_pChatRoomForm;
+	CChatRoomForm *m_pChatRoomForm;	
 
 	void AllocForm();	
 	void ShowForm(int idx);

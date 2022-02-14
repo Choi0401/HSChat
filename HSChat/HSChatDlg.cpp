@@ -181,6 +181,11 @@ void CHSChatDlg::AllocForm()
 	m_pChatRoomForm->OnInitialUpdate();
 	m_pChatRoomForm->ShowWindow(SW_HIDE);
 
+	m_pSearchIDForm = new CSearchIDForm();
+	m_pSearchIDForm->Create(NULL, NULL, WS_CHILD | WS_VSCROLL | WS_HSCROLL, rectOfPanelArea, this, IDD_FORMVIEW_SEARCHID, &context);
+	m_pSearchIDForm->OnInitialUpdate();
+	m_pSearchIDForm->ShowWindow(SW_HIDE);
+
 
 
 	GetDlgItem(IDC_PICTURE_CONTROL)->DestroyWindow();
@@ -191,20 +196,28 @@ void CHSChatDlg::ShowForm(int idx)
 {
 	switch (idx)
 	{
-	case 0:
+	case 0:		// 로그인 화면
 		m_pSigninForm->ShowWindow(SW_SHOW);
+		m_pSearchIDForm->ShowWindow(SW_HIDE);
+		m_pWatingForm->ShowWindow(SW_HIDE);
+		m_pChatRoomForm->ShowWindow(SW_HIDE);
+		break;
+	case 2:		// ID찾기 화면
+		m_pSigninForm->ShowWindow(SW_HIDE);
+		m_pSearchIDForm->ShowWindow(SW_SHOW);
 		m_pWatingForm->ShowWindow(SW_HIDE);
 		m_pChatRoomForm->ShowWindow(SW_HIDE);
 		break;
 
-	case 1:
+	case 5:		// 대기실 화면
 		m_pSigninForm->ShowWindow(SW_HIDE);
 		m_pWatingForm->ShowWindow(SW_SHOW);
 		m_pChatRoomForm->ShowWindow(SW_HIDE);
 		break;
 
-	case 5:
+	case 6:
 		m_pSigninForm->ShowWindow(SW_HIDE);
+		m_pSearchIDForm->ShowWindow(SW_HIDE);
 		m_pWatingForm->ShowWindow(SW_HIDE);
 		m_pChatRoomForm->ShowWindow(SW_SHOW);
 		CEdit* p_EditSend = NULL;
