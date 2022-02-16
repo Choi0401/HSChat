@@ -7,7 +7,7 @@ using namespace std;
 CClient::CClient()
 {
     m_socket = INVALID_SOCKET;
-    m_connstate = -1;
+    m_connstate = CLIENT_DISCONNECTED;
     memset(&m_addr, 0, sizeof(m_addr));
 }
 void CClient::m_OpenConnection()
