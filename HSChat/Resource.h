@@ -14,6 +14,7 @@
 #define IDD_FORMVIEW_CHATROOM           134
 #define IDD_FORMVIEW_SEARCHID           135
 #define IDD_FORMVIEW_SEARCHPW           136
+#define IDD_FORMVIEW_SIGNUP             137
 #define IDC_PICTURE_CONTROL             1000
 #define IDC_STATIC_HSCHAT               1001
 #define IDC_STATIC_ID                   1003
@@ -22,8 +23,11 @@
 #define IDC_BUTTON_LOGOUT               1006
 #define IDC_STATIC_SEARCHPW_ID          1006
 #define IDC_BUTTON_EXIT                 1007
+#define IDC_STATIC_SIGNUP_NICKNAME      1007
 #define IDC_EDIT_SIGNIN_ID              1008
+#define IDC_STATIC_SIGNUP_PW            1008
 #define IDC_EDIT_SIGNIN_PW              1009
+#define IDC_STATIC_SIGNUP_PWOK          1009
 #define IDC_LIST_ROOM                   1010
 #define IDC_BUTTON_SIGNIN_SIGNUP        1011
 #define IDC_LIST_WAITING_FRIENDS        1012
@@ -65,6 +69,19 @@
 #define IDC_BUTTON_SEARCHPW_OK          1036
 #define IDC_RADIO_PRIVATE               1037
 #define IDC_BUTTON_SEARCHID_OK          1037
+#define IDC_EDIT_SEARCHPW_ID            1038
+#define IDC_EDIT_SIGNUP_NICKNAME        1039
+#define IDC_EDIT_SIGNUP_PW              1040
+#define IDC_EDIT_SEARCHPW_ID4           1041
+#define IDC_EDIT_SIGNUP_PWOK            1041
+#define IDC_STATIC_SIGNUP_NAME          1042
+#define IDC_STATIC_SIGNUP_BIRTH         1043
+#define IDC_STATIC_SIGNUP_ID            1044
+#define IDC_EDIT_SIGNUP_NAME            1045
+#define IDC_EDIT_SIGNUP_BIRTH           1046
+#define IDC_EDIT_SIGNUP_ID              1047
+#define IDC_BUTTON_SIGNUP_OK            1048
+#define IDC_BUTTON_SIGNUP_CANCEL        1049
 
 // Next default values for new objects
 // 
@@ -72,7 +89,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        135
 #define _APS_NEXT_COMMAND_VALUE         32771
-#define _APS_NEXT_CONTROL_VALUE         1038
+#define _APS_NEXT_CONTROL_VALUE         1050
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

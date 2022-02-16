@@ -3,9 +3,12 @@
 //
 #pragma once
 #include "CSigninForm.h"
+#include "CSignupForm.h"
 #include "CSearchIDForm.h"
+#include "CSearchPWForm.h"
 #include "CWaitingForm.h"
 #include "CChatRoomForm.h"
+
 // CHSChatDlg 대화 상자
 class CHSChatDlg : public CDialogEx
 {
@@ -36,7 +39,9 @@ public:
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 
 	CSigninForm *m_pSigninForm;
+	CSignupForm* m_pSignupForm;
 	CSearchIDForm* m_pSearchIDForm;
+	CSearchPWForm* m_pSearchPWForm;
 	CWaitingForm *m_pWatingForm;
 	CChatRoomForm *m_pChatRoomForm;	
 

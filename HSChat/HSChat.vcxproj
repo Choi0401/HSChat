@@ -24,6 +24,7 @@
     <Keyword>MFCProj</Keyword>
     <RootNamespace>HSChat</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>HSChat_Client</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -186,7 +187,9 @@
     <ClInclude Include="CChatRoomForm.h" />
     <ClInclude Include="CMakeRoomDlg.h" />
     <ClInclude Include="CSearchIDForm.h" />
+    <ClInclude Include="CSearchPWForm.h" />
     <ClInclude Include="CSigninForm.h" />
+    <ClInclude Include="CSignupForm.h" />
     <ClInclude Include="CWaitingForm.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="HSChat.h" />
@@ -199,7 +202,9 @@
     <ClCompile Include="CChatRoomForm.cpp" />
     <ClCompile Include="CMakeRoomDlg.cpp" />
     <ClCompile Include="CSearchIDForm.cpp" />
+    <ClCompile Include="CSearchPWForm.cpp" />
     <ClCompile Include="CSigninForm.cpp" />
+    <ClCompile Include="CSignupForm.cpp" />
     <ClCompile Include="CWaitingForm.cpp" />
     <ClCompile Include="HSChat.cpp" />
     <ClCompile Include="HSChatDlg.cpp" />

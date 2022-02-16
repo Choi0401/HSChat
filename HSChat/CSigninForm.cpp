@@ -33,6 +33,7 @@ BEGIN_MESSAGE_MAP(CSigninForm, CFormView)
 	ON_BN_CLICKED(IDC_BUTTON_SIGNIN_SIGNUP, &CSigninForm::OnBnClickedButtonSigninSignup)
 	ON_BN_CLICKED(IDC_BUTTON_SIGNIN_SIGNIN, &CSigninForm::OnBnClickedButtonSigninSignin)
 	ON_BN_CLICKED(IDC_BUTTON_SIGNIN_SEARCHID, &CSigninForm::OnBnClickedButtonSigninSearchID)
+	ON_BN_CLICKED(IDC_BUTTON_SIGNIN_SEARCHPW, &CSigninForm::OnBnClickedButtonSigninSearchPW)
 END_MESSAGE_MAP()
 
 
@@ -55,9 +56,21 @@ void CSigninForm::OnInitialUpdate()
 }
 
 
-void CSigninForm::OnBnClickedButtonSigninSignup()
+void CSigninForm::OnBnClickedButtonSigninSignup()  {
+	m_pDlg->ShowForm(1);
+
+}
+
+
+void CSigninForm::OnBnClickedButtonSigninSearchID()
 {
-	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
+	m_pDlg->ShowForm(2);
+}
+
+
+void CSigninForm::OnBnClickedButtonSigninSearchPW()
+{
+	m_pDlg->ShowForm(3);
 }
 
 
@@ -72,14 +85,8 @@ void CSigninForm::OnBnClickedButtonSigninSignin()
 	// 로그인 실패
 
 	// 로그인 성공
-	m_pDlg->ShowForm(1);	
+	m_pDlg->ShowForm(4);
 	SetDlgItemText(IDC_EDIT_SIGNIN_ID, _T(""));
 	SetDlgItemText(IDC_EDIT_SIGNIN_PW, _T(""));
-		
-}
 
-
-void CSigninForm::OnBnClickedButtonSigninSearchID()
-{
-	m_pDlg->ShowForm(2);
 }

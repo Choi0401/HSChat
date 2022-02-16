@@ -171,6 +171,21 @@ void CHSChatDlg::AllocForm()
 	m_pSigninForm->OnInitialUpdate();
 	m_pSigninForm->ShowWindow(SW_SHOW);
 
+	m_pSignupForm = new CSignupForm();
+	m_pSignupForm->Create(NULL, NULL, WS_CHILD | WS_VSCROLL | WS_HSCROLL, rectOfPanelArea, this, IDD_FORMVIEW_SIGNUP, &context);
+	m_pSignupForm->OnInitialUpdate();
+	m_pSignupForm->ShowWindow(SW_HIDE);
+
+	m_pSearchIDForm = new CSearchIDForm();
+	m_pSearchIDForm->Create(NULL, NULL, WS_CHILD | WS_VSCROLL | WS_HSCROLL, rectOfPanelArea, this, IDD_FORMVIEW_SEARCHID, &context);
+	m_pSearchIDForm->OnInitialUpdate();
+	m_pSearchIDForm->ShowWindow(SW_HIDE);
+
+	m_pSearchPWForm = new CSearchPWForm();
+	m_pSearchPWForm->Create(NULL, NULL, WS_CHILD | WS_VSCROLL | WS_HSCROLL, rectOfPanelArea, this, IDD_FORMVIEW_SEARCHPW, &context);
+	m_pSearchPWForm->OnInitialUpdate();
+	m_pSearchPWForm->ShowWindow(SW_HIDE);
+
 	m_pWatingForm = new CWaitingForm();
 	m_pWatingForm->Create(NULL, NULL, WS_CHILD | WS_VSCROLL | WS_HSCROLL, rectOfPanelArea, this, IDD_FORMVIEW_WAITING, &context);
 	m_pWatingForm->OnInitialUpdate();
@@ -181,10 +196,7 @@ void CHSChatDlg::AllocForm()
 	m_pChatRoomForm->OnInitialUpdate();
 	m_pChatRoomForm->ShowWindow(SW_HIDE);
 
-	m_pSearchIDForm = new CSearchIDForm();
-	m_pSearchIDForm->Create(NULL, NULL, WS_CHILD | WS_VSCROLL | WS_HSCROLL, rectOfPanelArea, this, IDD_FORMVIEW_SEARCHID, &context);
-	m_pSearchIDForm->OnInitialUpdate();
-	m_pSearchIDForm->ShowWindow(SW_HIDE);
+	
 
 
 
@@ -198,26 +210,55 @@ void CHSChatDlg::ShowForm(int idx)
 	{
 	case 0:		// 로그인 화면
 		m_pSigninForm->ShowWindow(SW_SHOW);
+		m_pSignupForm->ShowWindow(SW_HIDE);
 		m_pSearchIDForm->ShowWindow(SW_HIDE);
-		m_pWatingForm->ShowWindow(SW_HIDE);
-		m_pChatRoomForm->ShowWindow(SW_HIDE);
-		break;
-	case 2:		// ID찾기 화면
-		m_pSigninForm->ShowWindow(SW_HIDE);
-		m_pSearchIDForm->ShowWindow(SW_SHOW);
+		m_pSearchPWForm->ShowWindow(SW_HIDE);
 		m_pWatingForm->ShowWindow(SW_HIDE);
 		m_pChatRoomForm->ShowWindow(SW_HIDE);
 		break;
 
-	case 5:		// 대기실 화면
+	case 1:		// 회원가입 화면
 		m_pSigninForm->ShowWindow(SW_HIDE);
+		m_pSignupForm->ShowWindow(SW_SHOW);
+		m_pSearchIDForm->ShowWindow(SW_HIDE);
+		m_pSearchPWForm->ShowWindow(SW_HIDE);
+		m_pWatingForm->ShowWindow(SW_HIDE);
+		m_pChatRoomForm->ShowWindow(SW_HIDE);
+		break;
+
+
+	case 2:		// ID찾기 화면
+		m_pSigninForm->ShowWindow(SW_HIDE);
+		m_pSignupForm->ShowWindow(SW_HIDE);
+		m_pSearchIDForm->ShowWindow(SW_SHOW);
+		m_pSearchPWForm->ShowWindow(SW_HIDE);
+		m_pWatingForm->ShowWindow(SW_HIDE);
+		m_pChatRoomForm->ShowWindow(SW_HIDE);
+		break;
+
+	case 3:		// PW찾기 화면
+		m_pSigninForm->ShowWindow(SW_HIDE);
+		m_pSignupForm->ShowWindow(SW_HIDE);
+		m_pSearchIDForm->ShowWindow(SW_HIDE);
+		m_pSearchPWForm->ShowWindow(SW_SHOW);
+		m_pWatingForm->ShowWindow(SW_HIDE);
+		m_pChatRoomForm->ShowWindow(SW_HIDE);
+		break;
+
+	case 4:		// 대기실 화면
+		m_pSigninForm->ShowWindow(SW_HIDE);
+		m_pSignupForm->ShowWindow(SW_HIDE);
+		m_pSearchIDForm->ShowWindow(SW_HIDE);
+		m_pSearchPWForm->ShowWindow(SW_HIDE);
 		m_pWatingForm->ShowWindow(SW_SHOW);
 		m_pChatRoomForm->ShowWindow(SW_HIDE);
 		break;
 
-	case 6:
+	case 5:
 		m_pSigninForm->ShowWindow(SW_HIDE);
+		m_pSignupForm->ShowWindow(SW_HIDE);
 		m_pSearchIDForm->ShowWindow(SW_HIDE);
+		m_pSearchPWForm->ShowWindow(SW_HIDE);
 		m_pWatingForm->ShowWindow(SW_HIDE);
 		m_pChatRoomForm->ShowWindow(SW_SHOW);
 		CEdit* p_EditSend = NULL;
