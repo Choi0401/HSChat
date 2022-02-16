@@ -216,7 +216,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="HSChat.rc" />
+    <ResourceCompile Include="HSChat_Client.rc" />
   </ItemGroup>
   <ItemGroup>
     <None Include="res\HSChat.rc2" />

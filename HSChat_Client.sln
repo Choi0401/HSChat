@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.32014.148
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "HSChat", "HSChat\HSChat.vcxproj", "{7BB3DF07-556E-4FE0-8C82-AA55EDABAB1C}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "HSChat_Client", "HSChat_Client\HSChat_Client.vcxproj", "{7BB3DF07-556E-4FE0-8C82-AA55EDABAB1C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
