@@ -6,6 +6,8 @@
 #include "HSChat.h"
 #include "HSChatDlg.h"
 #include "afxdialogex.h"
+#include "json/json.h"
+
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -325,9 +327,57 @@ UINT CHSChatDlg::m_RecvThread(LPVOID _mothod)
 		}
 		else 
 		{									
-			// Connect 성공			
+			// Success Connect 
+			int ret_read = 0;
+			fir->m_pClient->m_recvmsg.resize(1000);
+			ret_read = SSL_read(fir->m_pOpenssl->m_pSSL, &fir->m_pClient->m_recvmsg[0], fir->m_pClient->m_recvmsg.size());
+			if (ret_read > 0)
+			{
+				Json::Value recvroot;
+				Json::Reader reader;
+				bool parsingSuccessful = reader.parse(fir->m_pClient->m_recvmsg, recvroot);
+				if (parsingSuccessful == false)
+				{
+					//AfxMessageBox(_T("Failed to parse configuration")); // reader.getFormatedErrorMessages();
+					exit(1);
+				}
+				else {
+					string action = recvroot["action"].asString();
+					// 로그인 응답
+					if (action == "signin") {
+						// parse json
+						string result = recvroot["result"].asString();
+						string msg = recvroot["msg"].asString();
+						CString cstr;
+						cstr = msg.c_str();
+						// 성공
+						if (result == "true")
+						{
+							fir->m_ShowForm(4);							
+							fir->m_pSigninForm->SetDlgItemText(IDC_EDIT_SIGNIN_ID, _T(""));
+							fir->m_pSigninForm->SetDlgItemText(IDC_EDIT_SIGNIN_PW, _T(""));	
+							
+							AfxMessageBox(cstr);
+						}
+						// 실패						
+						else if(result == "false") 
+						{
+
+						}
+
+					}
+
+				}
+
+
+				// 메시지 초기화 
+				fir->m_pClient->m_recvmsg.clear();
+			}
+			else {
+				//AfxMessageBox(_T("ERROR"));
+			}
 			
-			
+
 		}
 		
 	}	

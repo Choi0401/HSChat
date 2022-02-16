@@ -2,6 +2,10 @@
 #include "HSChat.h"
 #include "HSChatDlg.h"
 #include "CSigninForm.h"
+#include "json/json.h"
+
+using namespace std;
+
 
 // CSigninForm 대화 상자
 
@@ -77,15 +81,32 @@ void CSigninForm::OnBnClickedButtonSigninSignin()
 {
 	// 서버에 로그인 메시지 전송
 	CString strID, strPW;
+	string signinJson;
+	Json::Value root;
+	Json::StyledWriter writer;
+
 	GetDlgItemText(IDC_EDIT_SIGNIN_ID, strID);
 	GetDlgItemText(IDC_EDIT_SIGNIN_PW, strPW);
+
+	root["action"] = "signin";
+	root["id"] = std::string(CT2CA(strID));
+	root["pw"] = std::string(CT2CA(strPW));
+	
+	signinJson = writer.write(root);
+	int ret_write = 0;
+	if ((ret_write = SSL_write(m_pDlg->m_pOpenssl->m_pSSL, signinJson.c_str(), signinJson.size())) <= 0)
+	{
+		;
+	}
+
 
 
 	// 로그인 실패
 
 	// 로그인 성공
-	m_pDlg->m_ShowForm(4);
-	SetDlgItemText(IDC_EDIT_SIGNIN_ID, _T(""));
-	SetDlgItemText(IDC_EDIT_SIGNIN_PW, _T(""));
+
+	//m_pDlg->m_ShowForm(4);
+	//SetDlgItemText(IDC_EDIT_SIGNIN_ID, _T(""));
+	//SetDlgItemText(IDC_EDIT_SIGNIN_PW, _T(""));
 
 }
