@@ -84,7 +84,7 @@ void CMakeRoomDlg::OnBnClickedButtonMakeroom()
 
 		//TODO : 폼 전환(채팅방)		
 		CHSChatDlg* pDlg = (CHSChatDlg*)AfxGetMainWnd();
-		pDlg->ShowForm(5);	
+		pDlg->m_ShowForm(5);	
 
 
 		//CEdit* pedit = (CEdit*)GetDlgItem(IDC_EDIT_CHATROOM_SENDMSG);

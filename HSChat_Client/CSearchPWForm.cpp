@@ -97,12 +97,12 @@ void CSearchPWForm::OnBnClickedButtonSearchPWOK()
 		pEdit3->SetSel(0, -1);
 		pEdit3->Clear();
 
-		m_pDlg->ShowForm(0);
+		m_pDlg->m_ShowForm(0);
 	}
 }
 
 
 void CSearchPWForm::OnBnClickedButtonSearchPWCancel()
 {
-	m_pDlg->ShowForm(0);
+	m_pDlg->m_ShowForm(0);
 }

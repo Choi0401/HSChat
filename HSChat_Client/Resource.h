@@ -1,6 +1,6 @@
 ﻿//{{NO_DEPENDENCIES}}
 // Microsoft Visual C++에서 생성한 포함 파일입니다.
-// HSChat.rc에서 사용되고 있습니다.
+// HSChat_Client.rc에서 사용되고 있습니다.
 //
 #define IDM_ABOUTBOX                    0x0010
 #define IDD_ABOUTBOX                    100
@@ -17,6 +17,7 @@
 #define IDD_FORMVIEW_SIGNUP             137
 #define IDC_PICTURE_CONTROL             1000
 #define IDC_STATIC_HSCHAT               1001
+#define IDC_STATIC_SIGNIN_STATE         1002
 #define IDC_STATIC_ID                   1003
 #define IDC_BUTTON_MYINFO               1004
 #define IDC_STATIC_PW                   1005

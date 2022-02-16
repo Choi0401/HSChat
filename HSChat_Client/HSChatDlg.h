@@ -9,6 +9,9 @@
 #include "CWaitingForm.h"
 #include "CChatRoomForm.h"
 #include "CClient.h"
+#include "COpenSSL.h"
+
+#define MESSAGE_SET_STATE 9999
 
 // CHSChatDlg 대화 상자
 class CHSChatDlg : public CDialogEx
@@ -47,8 +50,13 @@ public:
 	CChatRoomForm *m_pChatRoomForm;	
 
 	CClient* m_pClient;
+	COpenSSL* m_pOpenssl;
 
-	void AllocForm();	
-	void ShowForm(int idx);
+	void m_AllocForm();	
+	void m_ShowForm(int idx);
+
+	static UINT m_RecvThread(LPVOID _mothod);
+	LRESULT m_SetState(WPARAM wParam, LPARAM lParam);
+
 
 };

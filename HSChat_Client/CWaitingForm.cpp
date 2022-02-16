@@ -66,7 +66,7 @@ void CWaitingForm::OnBnClickedButtonLogout()
 	// 로그아웃 실패
 
 	// 로그아웃 성공
-	m_pDlg->ShowForm(0);
+	m_pDlg->m_ShowForm(0);
 }
 
 

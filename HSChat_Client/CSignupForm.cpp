@@ -114,7 +114,7 @@ void CSignupForm::OnBnClickedButtonSignupOK()
 		pEdit5->Clear();
 		pEdit6->SetSel(0, -1);
 		pEdit6->Clear();
-		m_pDlg->ShowForm(0);
+		m_pDlg->m_ShowForm(0);
 	}
 	//AfxMessageBox(_T("회원가입 완료입니다!\n반갑습니다!"), MB_ICONINFORMATION);
 	//m_pDlg->ShowForm(0);
@@ -124,5 +124,5 @@ void CSignupForm::OnBnClickedButtonSignupOK()
 
 void CSignupForm::OnBnClickedButtonSignupCancel()
 {
-	m_pDlg->ShowForm(0);
+	m_pDlg->m_ShowForm(0);
 }

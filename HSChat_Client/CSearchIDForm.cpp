@@ -85,12 +85,12 @@ void CSearchIDForm::OnBnClickedButtonSearchIDOK()
 		pEdit2->SetSel(0, -1);
 		pEdit2->Clear();
 
-		m_pDlg->ShowForm(0);
+		m_pDlg->m_ShowForm(0);
 	}
 }
 
 
 void CSearchIDForm::OnBnClickedButtonSearchIDCancel()
 {
-	m_pDlg->ShowForm(0);
+	m_pDlg->m_ShowForm(0);
 }

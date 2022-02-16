@@ -61,6 +61,7 @@ CHSChatDlg::CHSChatDlg(CWnd* pParent /*=nullptr*/)
 	m_pSearchPWForm = NULL;
 	m_pWatingForm = NULL;	
 	m_pClient = new CClient();
+	m_pOpenssl = new COpenSSL();
 }
 
 void CHSChatDlg::DoDataExchange(CDataExchange* pDX)
@@ -73,6 +74,7 @@ BEGIN_MESSAGE_MAP(CHSChatDlg, CDialogEx)
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()	
 	ON_WM_SIZE()
+	ON_MESSAGE(MESSAGE_SET_STATE, &CHSChatDlg::m_SetState)
 END_MESSAGE_MAP()
 
 
@@ -109,7 +111,24 @@ BOOL CHSChatDlg::OnInitDialog()
 
 	// TODO: 여기에 추가 초기화 작업을 추가합니다.
 	
-	AllocForm();
+
+	CWinThread* pRecvthread = NULL;
+	m_pOpenssl->m_InitCTX();
+	if (m_pOpenssl->m_CheckCertKey() == 0)
+		AfxMessageBox(_T("m_CheckCertKey() Error"));
+
+	pRecvthread = AfxBeginThread(m_RecvThread, this);
+
+	if (pRecvthread == NULL)
+	{
+		AfxMessageBox(_T("AfxBeginThread() Error"));
+		exit(1);
+	}
+
+
+	m_AllocForm();
+
+
 
 	
 
@@ -166,7 +185,7 @@ HCURSOR CHSChatDlg::OnQueryDragIcon()
 }
 
 
-void CHSChatDlg::AllocForm()
+void CHSChatDlg::m_AllocForm()
 {
 	CCreateContext context;
 	ZeroMemory(&context, sizeof(context));
@@ -213,7 +232,7 @@ void CHSChatDlg::AllocForm()
 }
 
 
-void CHSChatDlg::ShowForm(int idx)
+void CHSChatDlg::m_ShowForm(int idx)
 {
 	switch (idx)
 	{
@@ -281,6 +300,45 @@ void CHSChatDlg::ShowForm(int idx)
 
 	}
 
+}
+
+UINT CHSChatDlg::m_RecvThread(LPVOID _mothod)
+{
+	CHSChatDlg* fir = (CHSChatDlg*)_mothod;	
+	while (1)
+	{		
+		// Connect 시도
+		if (fir->m_pClient->m_connstate == CLIENT_DISCONNECTED) {
+			fir->m_pClient->m_OpenConnection();
+			fir->m_pOpenssl->m_pSSL = SSL_new(fir->m_pOpenssl->m_pCTX);
+			SSL_set_fd(fir->m_pOpenssl->m_pSSL, fir->m_pClient->m_socket);
+			if (SSL_connect(fir->m_pOpenssl->m_pSSL) == -1)
+			{
+				fir->m_pClient->m_connstate = CLIENT_DISCONNECTED;
+				//AfxMessageBox(_T("SSL_connect() Error"));
+			}
+			else
+			{
+				fir->m_pClient->m_connstate = CLIENT_CONNECTED;
+				::PostMessage(fir->m_hWnd, MESSAGE_SET_STATE, NULL, NULL);
+			}
+		}
+		else 
+		{									
+			// Connect 성공			
+			
+			
+		}
+		
+	}	
+}
+
+
+LRESULT CHSChatDlg::m_SetState(WPARAM wParam, LPARAM lParam)
+{
+	m_pSigninForm->GetDlgItem(IDC_STATIC_SIGNIN_STATE)->SetWindowText(_T("서버에 접속하셨습니다."));
+
+	return 0;
 }
 
 

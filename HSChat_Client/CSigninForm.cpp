@@ -51,26 +51,25 @@ BOOL CSigninForm::Create(LPCTSTR lpszClassName, LPCTSTR lpszWindowName, DWORD dw
 void CSigninForm::OnInitialUpdate()
 {
 	CFormView::OnInitialUpdate();
-	// TODO: 여기에 특수화된 코드를 추가 및/또는 기본 클래스를 호출합니다.
-	m_pDlg->m_pClient->m_OpenConnection();
+	// TODO: 여기에 특수화된 코드를 추가 및/또는 기본 클래스를 호출합니다.	
 }
 
 
 void CSigninForm::OnBnClickedButtonSigninSignup()  {
-	m_pDlg->ShowForm(1);
+	m_pDlg->m_ShowForm(1);
 
 }
 
 
 void CSigninForm::OnBnClickedButtonSigninSearchID()
 {
-	m_pDlg->ShowForm(2);
+	m_pDlg->m_ShowForm(2);
 }
 
 
 void CSigninForm::OnBnClickedButtonSigninSearchPW()
 {
-	m_pDlg->ShowForm(3);
+	m_pDlg->m_ShowForm(3);
 }
 
 
@@ -85,7 +84,7 @@ void CSigninForm::OnBnClickedButtonSigninSignin()
 	// 로그인 실패
 
 	// 로그인 성공
-	m_pDlg->ShowForm(4);
+	m_pDlg->m_ShowForm(4);
 	SetDlgItemText(IDC_EDIT_SIGNIN_ID, _T(""));
 	SetDlgItemText(IDC_EDIT_SIGNIN_PW, _T(""));
 
