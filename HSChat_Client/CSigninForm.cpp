@@ -51,8 +51,8 @@ BOOL CSigninForm::Create(LPCTSTR lpszClassName, LPCTSTR lpszWindowName, DWORD dw
 void CSigninForm::OnInitialUpdate()
 {
 	CFormView::OnInitialUpdate();
-
 	// TODO: 여기에 특수화된 코드를 추가 및/또는 기본 클래스를 호출합니다.
+	m_pDlg->m_pClient->m_OpenConnection();
 }
 
 

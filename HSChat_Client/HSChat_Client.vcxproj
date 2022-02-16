@@ -91,12 +91,13 @@
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
-      <SDLCheck>true</SDLCheck>
+      <SDLCheck>false</SDLCheck>
       <PreprocessorDefinitions>_WINDOWS;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
+      <AdditionalDependencies>ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>
@@ -185,7 +186,9 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="CChatRoomForm.h" />
+    <ClInclude Include="CClient.h" />
     <ClInclude Include="CMakeRoomDlg.h" />
+    <ClInclude Include="COpenSSL.h" />
     <ClInclude Include="CSearchIDForm.h" />
     <ClInclude Include="CSearchPWForm.h" />
     <ClInclude Include="CSigninForm.h" />
@@ -200,7 +203,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CChatRoomForm.cpp" />
+    <ClCompile Include="CClient.cpp" />
     <ClCompile Include="CMakeRoomDlg.cpp" />
+    <ClCompile Include="COpenSSL.cpp" />
     <ClCompile Include="CSearchIDForm.cpp" />
     <ClCompile Include="CSearchPWForm.cpp" />
     <ClCompile Include="CSigninForm.cpp" />
@@ -219,10 +224,10 @@
     <ResourceCompile Include="HSChat_Client.rc" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="res\HSChat.rc2" />
+    <None Include="res\HSChat_Client.rc2" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="res\HSChat.ico" />
+    <Image Include="res\HSChat_Client.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -8,6 +8,7 @@
 #include "CSearchPWForm.h"
 #include "CWaitingForm.h"
 #include "CChatRoomForm.h"
+#include "CClient.h"
 
 // CHSChatDlg 대화 상자
 class CHSChatDlg : public CDialogEx
@@ -44,6 +45,8 @@ public:
 	CSearchPWForm* m_pSearchPWForm;
 	CWaitingForm *m_pWatingForm;
 	CChatRoomForm *m_pChatRoomForm;	
+
+	CClient* m_pClient;
 
 	void AllocForm();	
 	void ShowForm(int idx);

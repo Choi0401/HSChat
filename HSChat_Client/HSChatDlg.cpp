@@ -55,6 +55,12 @@ CHSChatDlg::CHSChatDlg(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_HSCHAT_DIALOG, pParent)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
+	m_pSigninForm = NULL;
+	m_pSignupForm = NULL;
+	m_pSearchIDForm = NULL;
+	m_pSearchPWForm = NULL;
+	m_pWatingForm = NULL;	
+	m_pClient = new CClient();
 }
 
 void CHSChatDlg::DoDataExchange(CDataExchange* pDX)
@@ -102,7 +108,10 @@ BOOL CHSChatDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// 작은 아이콘을 설정합니다.
 
 	// TODO: 여기에 추가 초기화 작업을 추가합니다.
+	
 	AllocForm();
+
+	
 
 	return TRUE;  // 포커스를 컨트롤에 설정하지 않으면 TRUE를 반환합니다.
 }
