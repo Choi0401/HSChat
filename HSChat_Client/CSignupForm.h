@@ -25,5 +25,6 @@ public:
 	CHSChatDlg* m_pDlg;	
 	afx_msg void OnBnClickedButtonSignupOK();
 	afx_msg void OnBnClickedButtonSignupCancel();
+	virtual BOOL PreTranslateMessage(MSG* pMsg);
 };
 

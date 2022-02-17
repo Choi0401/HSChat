@@ -29,4 +29,5 @@ public:
 	afx_msg void OnBnClickedButtonSigninSignin();
 	afx_msg void OnBnClickedButtonSigninSearchID();
 	afx_msg void OnBnClickedButtonSigninSearchPW();
+	virtual BOOL PreTranslateMessage(MSG* pMsg);
 };

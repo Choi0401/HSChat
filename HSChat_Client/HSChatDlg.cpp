@@ -254,6 +254,10 @@ void CHSChatDlg::m_ShowForm(int idx)
 		m_pSearchPWForm->ShowWindow(SW_HIDE);
 		m_pWatingForm->ShowWindow(SW_HIDE);
 		m_pChatRoomForm->ShowWindow(SW_HIDE);
+		CEdit* p_EditName;
+		p_EditName = (CEdit*)m_pSignupForm->GetDlgItem(IDC_EDIT_SIGNUP_NAME);
+		p_EditName->SetSel(-1);
+		p_EditName->SetFocus();
 		break;
 
 
@@ -284,7 +288,7 @@ void CHSChatDlg::m_ShowForm(int idx)
 		m_pChatRoomForm->ShowWindow(SW_HIDE);
 		break;
 
-	case 5:
+	case 5:		// 채팅방 화면
 		m_pSigninForm->ShowWindow(SW_HIDE);
 		m_pSignupForm->ShowWindow(SW_HIDE);
 		m_pSearchIDForm->ShowWindow(SW_HIDE);
@@ -344,7 +348,8 @@ UINT CHSChatDlg::m_RecvThread(LPVOID _mothod)
 				else {
 					string action = recvroot["action"].asString();
 					// 로그인 응답
-					if (action == "signin") {
+					if (action == "signin") 
+					{
 						// parse json
 						string result = recvroot["result"].asString();
 						string msg = recvroot["msg"].asString();
@@ -354,17 +359,35 @@ UINT CHSChatDlg::m_RecvThread(LPVOID _mothod)
 						if (result == "true")
 						{
 							fir->m_ShowForm(4);							
-							fir->m_pSigninForm->SetDlgItemText(IDC_EDIT_SIGNIN_ID, _T(""));
-							fir->m_pSigninForm->SetDlgItemText(IDC_EDIT_SIGNIN_PW, _T(""));	
-							
-							AfxMessageBox(cstr);
+							//fir->m_pSigninForm->SetDlgItemText(IDC_EDIT_SIGNIN_ID, _T(""));
+							//fir->m_pSigninForm->SetDlgItemText(IDC_EDIT_SIGNIN_PW, _T(""));								
+							AfxMessageBox(cstr, MB_ICONINFORMATION);
 						}
 						// 실패						
 						else if(result == "false") 
 						{
 
 						}
+					}
+					// 회원가입 응답
+					else if (action == "signup")
+					{
+						// parse json
+						string result = recvroot["result"].asString();
+						string msg = recvroot["msg"].asString();
+						CString cstr;
+						cstr = msg.c_str();
+						// 성공
+						if (result == "true")
+						{
+							fir->m_ShowForm(0);
+							AfxMessageBox(cstr, MB_ICONINFORMATION);
+						}
+						// 실패						
+						else if (result == "false")
+						{
 
+						}
 					}
 
 				}
@@ -374,7 +397,10 @@ UINT CHSChatDlg::m_RecvThread(LPVOID _mothod)
 				fir->m_pClient->m_recvmsg.clear();
 			}
 			else {
-				//AfxMessageBox(_T("ERROR"));
+				fir->m_pClient->m_connstate = CLIENT_DISCONNECTED;
+				AfxMessageBox(_T("서버와 연결이 끊어졌습니다."), MB_ICONERROR);
+				::PostMessage(fir->m_hWnd, MESSAGE_SET_STATE, NULL, NULL);
+				fir->m_ShowForm(0);
 			}
 			
 
@@ -386,7 +412,10 @@ UINT CHSChatDlg::m_RecvThread(LPVOID _mothod)
 
 LRESULT CHSChatDlg::m_SetState(WPARAM wParam, LPARAM lParam)
 {
-	m_pSigninForm->GetDlgItem(IDC_STATIC_SIGNIN_STATE)->SetWindowText(_T("서버에 접속하셨습니다."));
+	if(m_pClient->m_connstate == CLIENT_DISCONNECTED)
+		m_pSigninForm->GetDlgItem(IDC_STATIC_SIGNIN_STATE)->SetWindowText(_T("서버에 접속중입니다..."));
+	else
+		m_pSigninForm->GetDlgItem(IDC_STATIC_SIGNIN_STATE)->SetWindowText(_T("환영합니다. 서버에 접속하셨습니다."));
 
 	return 0;
 }

@@ -88,25 +88,40 @@ void CSigninForm::OnBnClickedButtonSigninSignin()
 	GetDlgItemText(IDC_EDIT_SIGNIN_ID, strID);
 	GetDlgItemText(IDC_EDIT_SIGNIN_PW, strPW);
 
-	root["action"] = "signin";
-	root["id"] = std::string(CT2CA(strID));
-	root["pw"] = std::string(CT2CA(strPW));
-	
-	signinJson = writer.write(root);
-	int ret_write = 0;
-	if ((ret_write = SSL_write(m_pDlg->m_pOpenssl->m_pSSL, signinJson.c_str(), signinJson.size())) <= 0)
+	if (strID.GetLength() == 0) 
+		AfxMessageBox(_T("아이디를 입력하세요!"), MB_ICONSTOP);
+	else if (strPW.GetLength() == 0)
+		AfxMessageBox(_T("비밀번호를 입력하세요!"), MB_ICONSTOP);
+	else
 	{
-		;
+		root["action"] = "signin";
+		root["id"] = std::string(CT2CA(strID));
+		root["pw"] = std::string(CT2CA(strPW));
+
+		signinJson = writer.write(root);
+		int ret_write = 0;
+		if ((ret_write = SSL_write(m_pDlg->m_pOpenssl->m_pSSL, signinJson.c_str(), signinJson.size())) <= 0)
+		{
+			AfxMessageBox(_T("서버에 연결할 수 없습니다."));
+		}
+		else
+		{
+			SetDlgItemText(IDC_EDIT_SIGNIN_ID, _T(""));
+			SetDlgItemText(IDC_EDIT_SIGNIN_PW, _T(""));
+		}
+	}
+}
+
+BOOL CSigninForm::PreTranslateMessage(MSG* pMsg)
+{
+	// TODO: 여기에 특수화된 코드를 추가 및/또는 기본 클래스를 호출합니다.
+	if (pMsg->message == WM_KEYDOWN && (pMsg->wParam == VK_RETURN))
+	{
+		OnBnClickedButtonSigninSignin();
+		return TRUE;
 	}
 
 
-
-	// 로그인 실패
-
-	// 로그인 성공
-
-	//m_pDlg->m_ShowForm(4);
-	//SetDlgItemText(IDC_EDIT_SIGNIN_ID, _T(""));
-	//SetDlgItemText(IDC_EDIT_SIGNIN_PW, _T(""));
+	return CFormView::PreTranslateMessage(pMsg);
 
 }

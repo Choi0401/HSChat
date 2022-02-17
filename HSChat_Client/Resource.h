@@ -83,6 +83,9 @@
 #define IDC_EDIT_SIGNUP_ID              1047
 #define IDC_BUTTON_SIGNUP_OK            1048
 #define IDC_BUTTON_SIGNUP_CANCEL        1049
+#define IDC_STATIC_SIGNUP_PHONE         1050
+#define IDC_EDIT_SIGNUP_ID2             1051
+#define IDC_EDIT_SIGNUP_PHONE           1051
 
 // Next default values for new objects
 // 

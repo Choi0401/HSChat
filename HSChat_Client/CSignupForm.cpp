@@ -2,6 +2,7 @@
 #include "HSChat.h"
 #include "HSChatDlg.h"
 #include "CSignupForm.h"
+#include "json/json.h"
 
 
 
@@ -59,70 +60,82 @@ void CSignupForm::OnInitialUpdate()
 
 void CSignupForm::OnBnClickedButtonSignupOK()
 {
-	CEdit* pEdit1;
-	CEdit* pEdit2;
-	CEdit* pEdit3;
-	CEdit* pEdit4;
-	CEdit* pEdit5;
-	CEdit* pEdit6;
+	CEdit* pEditName, *pEditBirth, *pEditPhone, *pEditID, *pEditNickname, *pEditPW, *pEditPWOK;	
+	CString strName, strBirth, strPhone, strID, strNickname, strPW, strPWOK;
+	string signupJson;
+	Json::Value root;
+	Json::StyledWriter writer;
 
-	CString name;
-	CString birth;
-	CString id;
-	CString nickname;
-	CString pw;
-	CString checkpw;
+	GetDlgItemText(IDC_EDIT_SIGNUP_NAME, strName);
+	GetDlgItemText(IDC_EDIT_SIGNUP_BIRTH, strBirth);
+	GetDlgItemText(IDC_EDIT_SIGNUP_PHONE, strPhone);
+	GetDlgItemText(IDC_EDIT_SIGNUP_ID, strID);
+	GetDlgItemText(IDC_EDIT_SIGNUP_NICKNAME, strNickname);
+	GetDlgItemText(IDC_EDIT_SIGNUP_PW, strPW);
+	GetDlgItemText(IDC_EDIT_SIGNUP_PWOK, strPWOK);
 
-	GetDlgItemText(IDC_EDIT_SIGNUP_NAME, name);
-	GetDlgItemText(IDC_EDIT_SIGNUP_BIRTH, birth);
-	GetDlgItemText(IDC_EDIT_SIGNUP_ID, id);
-	GetDlgItemText(IDC_EDIT_SIGNUP_NICKNAME, nickname);
-	GetDlgItemText(IDC_EDIT_SIGNUP_PW, pw);
-	GetDlgItemText(IDC_EDIT_SIGNUP_PWOK, checkpw);
-
-	if (name.GetLength() == 0)
+	if (strName.GetLength() == 0)
 		AfxMessageBox(_T("이름을 입력하세요!"), MB_ICONSTOP);
-	else if (birth.GetLength() == 0)
+	else if (strBirth.GetLength() == 0)
 		AfxMessageBox(_T("생년월일을 입력하세요!"), MB_ICONSTOP);
-	else if (id.GetLength() == 0)
+	else if (strPhone.GetLength() == 0)
+		AfxMessageBox(_T("전화번호를 입력하세요!"), MB_ICONSTOP);
+	else if (strID.GetLength() == 0)
 		AfxMessageBox(_T("아이디를 입력하세요!"), MB_ICONSTOP);
-	else if (nickname.GetLength() == 0)
+	else if (strNickname.GetLength() == 0)
 		AfxMessageBox(_T("닉네임을 입력하세요!"), MB_ICONSTOP);
-	else if (pw.GetLength() == 0)
+	else if (strPW.GetLength() == 0)
 		AfxMessageBox(_T("비밀번호를 입력하세요!"), MB_ICONSTOP);
-	else if (pw != checkpw)
+	else if (strPW != strPWOK)
 		AfxMessageBox(_T("비밀번호를 확인하세요!"), MB_ICONSTOP);
-	else {
-		AfxMessageBox(_T("회원님의 아이디는 " + id + " 입니다!\n환영합니다!"), MB_ICONINFORMATION);
-		pEdit1 = (CEdit*)GetDlgItem(IDC_EDIT_SIGNUP_NAME);
-		pEdit2 = (CEdit*)GetDlgItem(IDC_EDIT_SIGNUP_BIRTH);
-		pEdit3 = (CEdit*)GetDlgItem(IDC_EDIT_SIGNUP_ID);
-		pEdit4 = (CEdit*)GetDlgItem(IDC_EDIT_SIGNUP_NICKNAME);
-		pEdit5 = (CEdit*)GetDlgItem(IDC_EDIT_SIGNUP_PW);
-		pEdit6 = (CEdit*)GetDlgItem(IDC_EDIT_SIGNUP_PWOK);
+	else {		
+		pEditName = (CEdit*)GetDlgItem(IDC_EDIT_SIGNUP_NAME);
+		pEditBirth = (CEdit*)GetDlgItem(IDC_EDIT_SIGNUP_BIRTH);
+		pEditPhone = (CEdit*)GetDlgItem(IDC_EDIT_SIGNUP_PHONE);
+		pEditID = (CEdit*)GetDlgItem(IDC_EDIT_SIGNUP_ID);
+		pEditNickname= (CEdit*)GetDlgItem(IDC_EDIT_SIGNUP_NICKNAME);
+		pEditPW = (CEdit*)GetDlgItem(IDC_EDIT_SIGNUP_PW);
+		pEditPWOK = (CEdit*)GetDlgItem(IDC_EDIT_SIGNUP_PWOK);
+		
+		root["action"] = "signup";
+		root["name"] = std::string(CT2CA(strName));
+		root["birth"] = std::string(CT2CA(strBirth));
+		root["phone"] = std::string(CT2CA(strPhone));
+		root["id"] = std::string(CT2CA(strID));
+		root["nickname"] = std::string(CT2CA(strNickname));
+		root["pw"] = std::string(CT2CA(strPW));
 
 
-		pEdit1->SetSel(0, -1);
-		pEdit1->Clear();
-		pEdit2->SetSel(0, -1);
-		pEdit2->Clear();
-		pEdit3->SetSel(0, -1);
-		pEdit3->Clear();
-		pEdit4->SetSel(0, -1);
-		pEdit4->Clear();
-		pEdit5->SetSel(0, -1);
-		pEdit5->Clear();
-		pEdit6->SetSel(0, -1);
-		pEdit6->Clear();
-		m_pDlg->m_ShowForm(0);
-	}
-	//AfxMessageBox(_T("회원가입 완료입니다!\n반갑습니다!"), MB_ICONINFORMATION);
-	//m_pDlg->ShowForm(0);
-	//MessageBox(_T(""), _T("회원가입"), MB_OK); //내용에 CString값 표시 가능
+		signupJson = writer.write(root);
+		int ret_write = 0;
+		if ((ret_write = SSL_write(m_pDlg->m_pOpenssl->m_pSSL, signupJson.c_str(), signupJson.size())) <= 0)
+		{
+			AfxMessageBox(_T("서버에 연결할 수 없습니다."));
+		}
+		SetDlgItemText(IDC_EDIT_SIGNUP_NAME, _T(""));
+		SetDlgItemText(IDC_EDIT_SIGNUP_BIRTH, _T(""));
+		SetDlgItemText(IDC_EDIT_SIGNUP_PHONE, _T(""));
+		SetDlgItemText(IDC_EDIT_SIGNUP_ID, _T(""));
+		SetDlgItemText(IDC_EDIT_SIGNUP_NICKNAME, _T(""));
+		SetDlgItemText(IDC_EDIT_SIGNUP_PW, _T(""));
+		SetDlgItemText(IDC_EDIT_SIGNUP_PWOK, _T(""));
+	}	
 }
 
 
 void CSignupForm::OnBnClickedButtonSignupCancel()
 {
 	m_pDlg->m_ShowForm(0);
+}
+
+
+BOOL CSignupForm::PreTranslateMessage(MSG* pMsg)
+{
+	// TODO: 여기에 특수화된 코드를 추가 및/또는 기본 클래스를 호출합니다.
+	if (pMsg->message == WM_KEYDOWN && (pMsg->wParam == VK_RETURN))
+	{
+		OnBnClickedButtonSignupOK();
+		return TRUE;
+	}
+	return CFormView::PreTranslateMessage(pMsg);
 }
