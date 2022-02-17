@@ -7,7 +7,8 @@ using namespace std;
 CClient::CClient()
 {
     m_socket = INVALID_SOCKET;
-    m_connstate = -1;
+    m_connstate = CLIENT_DISCONNECTED;
+    m_recvmsg = "";
     memset(&m_addr, 0, sizeof(m_addr));
 }
 void CClient::m_OpenConnection()
@@ -24,9 +25,9 @@ void CClient::m_OpenConnection()
     }
     memset(&m_addr, 0, sizeof(m_addr));
     m_addr.sin_family = AF_INET;    
-    m_addr.sin_addr.s_addr = inet_addr("192.168.1.125");
-    //m_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
-    m_addr.sin_port = htons(8282);
+    //m_addr.sin_addr.s_addr = inet_addr("192.168.1.125");
+    m_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+    m_addr.sin_port = htons(7777);
 
 
     if (connect(m_socket, (SOCKADDR*)&m_addr, sizeof(m_addr)) == SOCKET_ERROR)

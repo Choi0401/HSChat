@@ -98,6 +98,9 @@
     <ClCompile Include="COpenSSL.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="jsoncpp.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="HSChat_Client.rc">
