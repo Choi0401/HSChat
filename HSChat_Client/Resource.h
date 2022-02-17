@@ -15,26 +15,32 @@
 #define IDD_FORMVIEW_SEARCHID           135
 #define IDD_FORMVIEW_SEARCHPW           136
 #define IDD_FORMVIEW_SIGNUP             137
+#define IDD_FORMVIEW_MYINFO             138
 #define IDC_PICTURE_CONTROL             1000
 #define IDC_STATIC_HSCHAT               1001
 #define IDC_STATIC_SIGNIN_STATE         1002
 #define IDC_STATIC_ID                   1003
 #define IDC_BUTTON_MYINFO               1004
+#define IDC_BUTTON_WATING_MYINFO        1004
 #define IDC_STATIC_PW                   1005
 #define IDC_BUTTON_LOGOUT               1006
 #define IDC_STATIC_SEARCHPW_ID          1006
+#define IDC_BUTTON_WATING_LOGOUT        1006
 #define IDC_BUTTON_EXIT                 1007
 #define IDC_STATIC_SIGNUP_NICKNAME      1007
+#define IDC_BUTTON_WATING_EXIT          1007
 #define IDC_EDIT_SIGNIN_ID              1008
 #define IDC_STATIC_SIGNUP_PW            1008
 #define IDC_EDIT_SIGNIN_PW              1009
 #define IDC_STATIC_SIGNUP_PWOK          1009
 #define IDC_LIST_ROOM                   1010
+#define IDC_LIST_WATING_ROOM            1010
 #define IDC_BUTTON_SIGNIN_SIGNUP        1011
 #define IDC_LIST_WAITING_FRIENDS        1012
 #define IDC_BUTTON_SIGNIN_SIGNIN        1013
 #define IDC_BUTTON_SEARCHID             1014
 #define IDC_BUTTON_FRIENDS              1015
+#define IDC_BUTTON_WATING_FRIENDS       1015
 #define IDC_BUTTON_SIGNIN_SEARCHID      1016
 #define IDC_BUTTON_SEARCHPW             1017
 #define IDC_BUTTON_SEARCHPW_CANCEL      1017
@@ -75,7 +81,6 @@
 #define IDC_EDIT_SEARCHPW_PHONE         1037
 #define IDC_EDIT_SEARCHPW_ID            1038
 #define IDC_EDIT_SIGNUP_NICKNAME        1039
-#define IDC_STATIC_SEARCHPW_BIRTH2      1039
 #define IDC_STATIC_SEARCHPW_PHONE       1039
 #define IDC_EDIT_SIGNUP_PW              1040
 #define IDC_EDIT_SEARCHPW_ID4           1041
@@ -89,7 +94,26 @@
 #define IDC_BUTTON_SIGNUP_OK            1048
 #define IDC_BUTTON_SIGNUP_CANCEL        1049
 #define IDC_STATIC_SIGNUP_PHONE         1050
+#define IDC_BUTTON_WATING_MAKEROOM      1050
 #define IDC_EDIT_SIGNUP_PHONE           1051
+#define IDC_EDIT_MYINFO_NAME            1052
+#define IDC_EDIT_MYINFO_BIRTH           1053
+#define IDC_STATIC_MYINFO_NAME          1054
+#define IDC_STATIC_MYINFO_BIRTH         1055
+#define IDC_STATIC_MYINFO_ID            1056
+#define IDC_EDIT_MYINFO_ID              1057
+#define IDC_EDIT_MYINFO_PHONE           1058
+#define IDC_STATIC_MYINFO_PHONE         1059
+#define IDC_EDIT_MYINFO_NICKNAME        1060
+#define IDC_STATIC_MYINFO_NICKNAME      1061
+#define IDC_EDIT_MYINFO_PW              1062
+#define IDC_STATIC_MYINFO_PW            1063
+#define IDC_STATIC_MYINFO_PWOK          1064
+#define IDC_EDIT_MYINFO_PWOK            1066
+#define IDC_BUTTON_MYINFO_CANCEL        1067
+#define IDC_BUTTON_MYINFO_OK            1068
+#define IDC_BUTTON_MYINFO_OK2           1069
+#define IDC_BUTTON_MYINFO_DELETE        1069
 
 // Next default values for new objects
 // 
@@ -97,7 +121,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        135
 #define _APS_NEXT_COMMAND_VALUE         32771
-#define _APS_NEXT_CONTROL_VALUE         1050
+#define _APS_NEXT_CONTROL_VALUE         1069
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

@@ -129,7 +129,5 @@ BOOL CSigninForm::PreTranslateMessage(MSG* pMsg)
 		return TRUE;
 	}
 
-
 	return CFormView::PreTranslateMessage(pMsg);
-
 }

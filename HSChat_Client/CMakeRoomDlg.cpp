@@ -6,7 +6,7 @@
 #include "HSChatDlg.h"
 #include "afxdialogex.h"
 #include "CMakeRoomDlg.h"
-
+#include "json/json.h"
 
 // CMakeRoomDlg 대화 상자
 
@@ -15,7 +15,7 @@ IMPLEMENT_DYNAMIC(CMakeRoomDlg, CDialogEx)
 CMakeRoomDlg::CMakeRoomDlg(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_DIALOG_MAKEROOM, pParent)
 {
-
+	m_pDlg = (CHSChatDlg*)::AfxGetMainWnd();
 }
 
 CMakeRoomDlg::~CMakeRoomDlg()
@@ -39,22 +39,11 @@ END_MESSAGE_MAP()
 BOOL CMakeRoomDlg::OnInitDialog()
 
 {
-	CButton* pRB_public = NULL;
-	if ((pRB_public = (CButton*)GetDlgItem(IDC_RADIO_PUBLIC)) == NULL)
-	{
-		AfxMessageBox(_T("ERROR[GetDlgItem()] : Failed to get IDC_RADIO_PUBLIC"));
-		// TODO : 소켓 닫기 필요
-		::PostQuitMessage(WM_QUIT);
-	}
+	m_pRB_public = (CButton*)GetDlgItem(IDC_RADIO_PUBLIC);
+	m_pRB_public->SetCheck(TRUE);
 
-	pRB_public->SetCheck(TRUE);
-	CEdit* pEDC_name = NULL;
-	if ((pEDC_name = (CEdit*)GetDlgItem(IDC_EDIT_MAKEROOM_NAME)) == NULL)
-	{
-		AfxMessageBox(_T("ERROR[GetDlgItem()] : Failed to get IDC_EDIT_MAKEROOM_NAME"));
-	}
-	pEDC_name->SetSel(-1);
-	pEDC_name->SetFocus();
+	this->GetDlgItem(IDC_EDIT_MAKEROOM_NAME)->SetFocus();
+
 
 	return FALSE;
 
@@ -62,14 +51,17 @@ BOOL CMakeRoomDlg::OnInitDialog()
 
 void CMakeRoomDlg::OnBnClickedButtonMakeroom()
 {
-	CString strName = _T("");
+	CString strRoomName;
 	int userNum = 0;
-	GetDlgItemText(IDC_EDIT_MAKEROOM_NAME, strName);
+	Json::Value root;
+	Json::StyledWriter writer;
+
+	GetDlgItemText(IDC_EDIT_MAKEROOM_NAME, strRoomName);
 	userNum = GetDlgItemInt(IDC_EDIT_MAKEROOM_NUM);
 
-	if (strName.GetLength() == 0 || userNum == 0)
+	if (strRoomName.GetLength() == 0 || userNum == 0)
 	{
-		if(strName.GetLength() == 0)
+		if(strRoomName.GetLength() == 0)
 			AfxMessageBox(_T("방 이름을 입력해주세요."));
 		else if(userNum == 0)
 			AfxMessageBox(_T("방 인원을 입력해주세요."));
@@ -77,33 +69,32 @@ void CMakeRoomDlg::OnBnClickedButtonMakeroom()
 	else
 	{
 		//TODO : 방 만드는 메시지 서버에 전송
+		root["action"] = "createroom";
+		root["master"] = m_pDlg->m_pClient->m_getNickname();
+		root["roomname"] = std::string(CT2CA(strRoomName));
+		root["usernum"] = userNum;
+		if (m_pRB_public->GetCheck())
+			root["private"] = "false";
+		else
+			root["private"] = "true";
 
-		//TODO : 서버로부터 메시지 받기
-
+		m_pDlg->m_pClient->m_data.msg = writer.write(root);
+		m_pDlg->m_pClient->m_data.size = m_pDlg->m_pClient->m_data.msg.size();
+		int ret_HeadWrite = 0;
+		if (m_pDlg->m_pClient->m_connstate == CLIENT_DISCONNECTED || (ret_HeadWrite = SSL_write(m_pDlg->m_pOpenssl->m_pSSL, &m_pDlg->m_pClient->m_data.size, sizeof(int))) <= 0)
+		{
+			AfxMessageBox(_T("서버에 연결할 수 없습니다."));
+		}
+		else
+		{
+			int ret_BodyWrite = 0;
+			if (m_pDlg->m_pClient->m_connstate == CLIENT_DISCONNECTED || (ret_BodyWrite = SSL_write(m_pDlg->m_pOpenssl->m_pSSL, &m_pDlg->m_pClient->m_data.msg[0], m_pDlg->m_pClient->m_data.size)) <= 0)
+			{
+				AfxMessageBox(_T("서버에 연결할 수 없습니다."));
+			}
+		}
+		m_pDlg->m_pClient->m_InitData();
 		EndDialog(IDOK);
-
-		//TODO : 폼 전환(채팅방)		
-		CHSChatDlg* pDlg = (CHSChatDlg*)AfxGetMainWnd();
-		pDlg->m_ShowForm(5);	
-
-
-		//CEdit* pedit = (CEdit*)GetDlgItem(IDC_EDIT_CHATROOM_SENDMSG);
-		//if (pedit == NULL)
-		//	AfxMessageBox(_T("오류오류"));
-		
-		
-		/*
-		CEdit* pedit = (CEdit*)GetDlgItem(IDC_EDIT_CHATROOM_SENDMSG);		
-		//pedit->SetFocus();
-		pedit->SetSel(-1);
-
-		int nID = GetFocus()->GetDlgCtrlID();
-		CString str;
-		str.Format(_T("%d"), nID);
-		AfxMessageBox(str);
-		*/
-	
-	
 	}
 
 }

@@ -7,6 +7,7 @@
 #include "CSearchIDForm.h"
 #include "CSearchPWForm.h"
 #include "CWaitingForm.h"
+#include "CMyInfoForm.h"
 #include "CChatRoomForm.h"
 #include "CClient.h"
 #include "COpenSSL.h"
@@ -48,6 +49,7 @@ public:
 	CSearchIDForm* m_pSearchIDForm;
 	CSearchPWForm* m_pSearchPWForm;
 	CWaitingForm *m_pWatingForm;
+	CMyInfoForm* m_pMyInfomForm;
 	CChatRoomForm *m_pChatRoomForm;	
 
 	CClient* m_pClient;

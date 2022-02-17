@@ -190,6 +190,7 @@
     <ClInclude Include="CChatRoomForm.h" />
     <ClInclude Include="CClient.h" />
     <ClInclude Include="CMakeRoomDlg.h" />
+    <ClInclude Include="CMyInfoForm.h" />
     <ClInclude Include="COpenSSL.h" />
     <ClInclude Include="CSearchIDForm.h" />
     <ClInclude Include="CSearchPWForm.h" />
@@ -207,6 +208,7 @@
     <ClCompile Include="CChatRoomForm.cpp" />
     <ClCompile Include="CClient.cpp" />
     <ClCompile Include="CMakeRoomDlg.cpp" />
+    <ClCompile Include="CMyInfoForm.cpp" />
     <ClCompile Include="COpenSSL.cpp" />
     <ClCompile Include="CSearchIDForm.cpp" />
     <ClCompile Include="CSearchPWForm.cpp" />

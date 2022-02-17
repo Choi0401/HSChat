@@ -65,6 +65,8 @@ CHSChatDlg::CHSChatDlg(CWnd* pParent /*=nullptr*/)
 	m_pSearchIDForm = NULL;
 	m_pSearchPWForm = NULL;
 	m_pWatingForm = NULL;	
+	m_pMyInfomForm = NULL;
+	m_pChatRoomForm = NULL;
 	m_pClient = new CClient();
 	m_pOpenssl = new COpenSSL();
 }
@@ -149,6 +151,8 @@ void CHSChatDlg::OnSysCommand(UINT nID, LPARAM lParam)
 	{
 		if (AfxMessageBox(_T("프로그램을 종료하시겠습니까?"), MB_YESNO | MB_ICONQUESTION) == IDYES)
 		{
+
+			//TODO: 종료하기전에 서버에 종료 메시지 보내줘야함
 			m_pClient->m_CloseSocket();
 			ExitProcess(0);
 			
@@ -235,6 +239,11 @@ void CHSChatDlg::m_AllocForm()
 	m_pWatingForm->OnInitialUpdate();
 	m_pWatingForm->ShowWindow(SW_HIDE);
 
+	m_pMyInfomForm = new CMyInfoForm();
+	m_pMyInfomForm->Create(NULL, NULL, WS_CHILD | WS_VSCROLL | WS_HSCROLL, rectOfPanelArea, this, IDD_FORMVIEW_MYINFO, &context);
+	m_pMyInfomForm->OnInitialUpdate();
+	m_pMyInfomForm->ShowWindow(SW_HIDE);
+
 	m_pChatRoomForm = new CChatRoomForm();
 	m_pChatRoomForm->Create(NULL, NULL, WS_CHILD | WS_VSCROLL | WS_HSCROLL, rectOfPanelArea, this, IDD_FORMVIEW_CHATROOM, &context);
 	m_pChatRoomForm->OnInitialUpdate();
@@ -258,6 +267,7 @@ void CHSChatDlg::m_ShowForm(int idx)
 		m_pSearchIDForm->ShowWindow(SW_HIDE);
 		m_pSearchPWForm->ShowWindow(SW_HIDE);
 		m_pWatingForm->ShowWindow(SW_HIDE);
+		m_pMyInfomForm->ShowWindow(SW_HIDE);
 		m_pChatRoomForm->ShowWindow(SW_HIDE);
 		m_pSigninForm->GetDlgItem(IDC_EDIT_SIGNIN_ID)->SetFocus();
 		break;
@@ -268,6 +278,7 @@ void CHSChatDlg::m_ShowForm(int idx)
 		m_pSearchIDForm->ShowWindow(SW_HIDE);
 		m_pSearchPWForm->ShowWindow(SW_HIDE);
 		m_pWatingForm->ShowWindow(SW_HIDE);
+		m_pMyInfomForm->ShowWindow(SW_HIDE);
 		m_pChatRoomForm->ShowWindow(SW_HIDE);		
 		m_pSignupForm->GetDlgItem(IDC_EDIT_SIGNUP_NAME)->SetFocus();
 		break;
@@ -279,6 +290,7 @@ void CHSChatDlg::m_ShowForm(int idx)
 		m_pSearchIDForm->ShowWindow(SW_SHOW);
 		m_pSearchPWForm->ShowWindow(SW_HIDE);
 		m_pWatingForm->ShowWindow(SW_HIDE);
+		m_pMyInfomForm->ShowWindow(SW_HIDE);
 		m_pChatRoomForm->ShowWindow(SW_HIDE);
 		m_pSearchIDForm->GetDlgItem(IDC_EDIT_SEARCHID_NAME)->SetFocus();
 		break;
@@ -289,6 +301,7 @@ void CHSChatDlg::m_ShowForm(int idx)
 		m_pSearchIDForm->ShowWindow(SW_HIDE);
 		m_pSearchPWForm->ShowWindow(SW_SHOW);
 		m_pWatingForm->ShowWindow(SW_HIDE);
+		m_pMyInfomForm->ShowWindow(SW_HIDE);
 		m_pChatRoomForm->ShowWindow(SW_HIDE);
 		m_pSearchPWForm->GetDlgItem(IDC_EDIT_SEARCHPW_NAME)->SetFocus();
 		break;
@@ -299,15 +312,29 @@ void CHSChatDlg::m_ShowForm(int idx)
 		m_pSearchIDForm->ShowWindow(SW_HIDE);
 		m_pSearchPWForm->ShowWindow(SW_HIDE);
 		m_pWatingForm->ShowWindow(SW_SHOW);
+		m_pMyInfomForm->ShowWindow(SW_HIDE);
 		m_pChatRoomForm->ShowWindow(SW_HIDE);
+		m_pWatingForm->GetDlgItem(IDC_BUTTON_WATING_MAKEROOM)->SetFocus();
 		break;
 
-	case 5:		// 채팅방 화면
+	case 5:		// 내정보 화면
 		m_pSigninForm->ShowWindow(SW_HIDE);
 		m_pSignupForm->ShowWindow(SW_HIDE);
 		m_pSearchIDForm->ShowWindow(SW_HIDE);
 		m_pSearchPWForm->ShowWindow(SW_HIDE);
 		m_pWatingForm->ShowWindow(SW_HIDE);
+		m_pMyInfomForm->ShowWindow(SW_SHOW);
+		m_pChatRoomForm->ShowWindow(SW_HIDE);
+		m_pMyInfomForm->GetDlgItem(IDC_EDIT_MYINFO_PHONE)->SetFocus();
+		break;
+
+	case 6:		// 채팅방 화면
+		m_pSigninForm->ShowWindow(SW_HIDE);
+		m_pSignupForm->ShowWindow(SW_HIDE);
+		m_pSearchIDForm->ShowWindow(SW_HIDE);
+		m_pSearchPWForm->ShowWindow(SW_HIDE);
+		m_pWatingForm->ShowWindow(SW_HIDE);
+		m_pMyInfomForm->ShowWindow(SW_HIDE);
 		m_pChatRoomForm->ShowWindow(SW_SHOW);
 		m_pChatRoomForm->GetDlgItem(IDC_EDIT_CHATROOM_SENDMSG)->SetFocus();
 		/*CEdit* p_EditSend = NULL;
@@ -400,6 +427,7 @@ LRESULT CHSChatDlg::m_Proc(WPARAM wParam, LPARAM lParam)
 			{
 				// parse json
 				string result = recvroot["result"].asString();
+				string nickname = recvroot["nickname"].asString();
 				string msg = recvroot["msg"].asString();
 				CString cstr;
 				cstr = msg.c_str();
@@ -410,7 +438,9 @@ LRESULT CHSChatDlg::m_Proc(WPARAM wParam, LPARAM lParam)
 					//fir->m_pSigninForm->SetDlgItemText(IDC_EDIT_SIGNIN_ID, _T(""));
 					//fir->m_pSigninForm->SetDlgItemText(IDC_EDIT_SIGNIN_PW, _T(""));
 					AfxMessageBox(cstr, MB_ICONINFORMATION);
-					//TODO : 클라이언트의 이름, 아이디를 클래스에 저장해야함
+					//TODO: 클라이언트의 이름, 아이디를 클래스에 저장해야함
+					m_pClient->m_setNickname(nickname);
+					//TODO: 서버에 방, 친구 목록 요청해야함
 				}
 				// 실패
 				else if (result == "false")
@@ -473,6 +503,56 @@ LRESULT CHSChatDlg::m_Proc(WPARAM wParam, LPARAM lParam)
 					string pw = recvroot["pw"].asString();
 					m_ShowForm(0);
 					AfxMessageBox(cstr, MB_ICONINFORMATION);
+				}
+				// 실패
+				else if (result == "false")
+				{
+
+				}
+			}
+			else if (action == "myinfo")
+			{
+				// parse json
+				string result = recvroot["result"].asString();				
+				// 성공
+				if (result == "true")
+				{
+					CString cname, cid, cbirth;
+					string name = recvroot["name"].asString();
+					string id = recvroot["id"].asString();
+					string birth = recvroot["birth"].asString();
+					cname = name.c_str();
+					cid = id.c_str();
+					cbirth = birth.c_str();
+					m_pMyInfomForm->SetDlgItemText(IDC_EDIT_MYINFO_NAME, cname);
+					m_pMyInfomForm->SetDlgItemText(IDC_EDIT_MYINFO_ID, cid);
+					m_pMyInfomForm->SetDlgItemText(IDC_EDIT_MYINFO_BIRTH, cbirth);
+					m_ShowForm(5);
+				}
+				// 실패
+				else if (result == "false")
+				{
+
+				}
+			}
+			// 채팅방 만들기 
+			else if (action == "createroom")
+			{
+				// parse json
+				string result = recvroot["result"].asString();
+				string msg = recvroot["msg"].asString();
+				CString cstr;
+				cstr = msg.c_str();
+				// 성공
+				if (result == "true")
+				{
+					int roomnum = recvroot["roomnum"].asInt();
+					m_pClient->m_roomnum = roomnum;
+					CString str;
+					str.Format(_T("[%d번]채팅방"), roomnum);
+					m_pChatRoomForm->GetDlgItem(IDC_STATIC_CHATROOM)->SetWindowText(str);
+					m_ShowForm(6);
+					//AfxMessageBox(cstr, MB_ICONINFORMATION);
 				}
 				// 실패
 				else if (result == "false")

@@ -86,8 +86,7 @@ void CSignupForm::OnBnClickedButtonSignupOK()
 		AfxMessageBox(_T("비밀번호를 입력하세요!"), MB_ICONSTOP);
 	else if (strPW != strPWOK)
 		AfxMessageBox(_T("비밀번호를 확인하세요!"), MB_ICONSTOP);
-	else {		
-		
+	else {				
 		root["action"] = "signup";
 		root["name"] = std::string(CT2CA(strName));
 		root["birth"] = std::string(CT2CA(strBirth));

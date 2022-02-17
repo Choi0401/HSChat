@@ -8,10 +8,29 @@ CClient::CClient()
 {
     m_socket = INVALID_SOCKET;
     m_connstate = CLIENT_DISCONNECTED;        
-    m_data.size = 0;
+    m_data.size = 0;   
     m_data.msg.clear();
     memset(&m_addr, 0, sizeof(m_addr));
+    m_roomnum = 0;
 }
+
+void CClient::m_setID(string id)
+{
+    m_ID = id;
+}
+void CClient::m_setNickname(string nickname)
+{
+    m_nickname = nickname;
+}
+string CClient::m_getID()
+{
+    return m_ID;
+}
+string CClient::m_getNickname()
+{
+    return m_nickname;
+}
+
 
 void CClient::m_InitSocket()
 {

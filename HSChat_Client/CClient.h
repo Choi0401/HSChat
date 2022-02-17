@@ -17,7 +17,8 @@ typedef struct data
 class CClient
 {
 private:
-
+	string m_ID;
+	string m_nickname;
 public:
 	SOCKET m_socket;
 	SOCKADDR_IN m_addr;
@@ -26,11 +27,17 @@ public:
 
 	Data m_data;
 	TsQueue <string> m_queue;
-	//queue <string> m_queue;
+	
+	int m_roomnum;
+
 
 	//string m_recvmsg;	
 	int m_connstate;
 
+	void m_setID(string id);
+	void m_setNickname(string nickname);
+	string m_getID();
+	string m_getNickname();
 
 	CClient();
 	void m_InitSocket();

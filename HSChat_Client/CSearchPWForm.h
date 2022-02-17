@@ -26,5 +26,6 @@ public:
 	CHSChatDlg* m_pDlg;
 	afx_msg void OnBnClickedButtonSearchPWOK();
 	afx_msg void OnBnClickedButtonSearchPWCancel();
+	virtual BOOL PreTranslateMessage(MSG* pMsg);
 };
 

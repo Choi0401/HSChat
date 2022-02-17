@@ -11,7 +11,7 @@ public:
 
 	// 대화 상자 데이터입니다.
 #ifdef AFX_DESIGN_TIME
-	enum { IDD = IDD_FORMVIEW_SEARCHIDs };
+	enum { IDD = IDD_FORMVIEW_SEARCHID };
 #endif
 
 protected:
@@ -27,5 +27,6 @@ public:
 
 	afx_msg void OnBnClickedButtonSearchIDOK();
 	afx_msg void OnBnClickedButtonSearchIDCancel();
+	virtual BOOL PreTranslateMessage(MSG* pMsg);
 };
 

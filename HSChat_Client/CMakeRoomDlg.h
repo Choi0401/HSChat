@@ -20,7 +20,8 @@ public:
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 지원입니다.
 	virtual BOOL OnInitDialog();
-
+	CButton* m_pRB_public;
+	CHSChatDlg* m_pDlg;
 	DECLARE_MESSAGE_MAP()
 public:
 	afx_msg void OnBnClickedButtonMakeroomCancel();

@@ -3,6 +3,7 @@
 #include "HSChatDlg.h"
 #include "CWaitingForm.h"
 #include "CMakeRoomDlg.h"
+#include "json/json.h"
 
 // CSigninForm 대화 상자
 
@@ -31,9 +32,10 @@ void CWaitingForm::DoDataExchange(CDataExchange* pDX)
 
 
 BEGIN_MESSAGE_MAP(CWaitingForm, CFormView)
-	ON_BN_CLICKED(IDC_BUTTON_LOGOUT, &CWaitingForm::OnBnClickedButtonLogout)
-	ON_BN_CLICKED(IDC_BUTTON_EXIT, &CWaitingForm::OnBnClickedButtonExit)
-	ON_BN_CLICKED(IDC_BUTTON_MAKEROOM, &CWaitingForm::OnBnClickedButtonMakeroom)
+	ON_BN_CLICKED(IDC_BUTTON_WATING_LOGOUT, &CWaitingForm::OnBnClickedButtonWatingLogout)
+	ON_BN_CLICKED(IDC_BUTTON_WATING_EXIT, &CWaitingForm::OnBnClickedButtonWatingExit)
+	ON_BN_CLICKED(IDC_BUTTON_WATING_MAKEROOM, &CWaitingForm::OnBnClickedButtonWatingMakeroom)
+	ON_BN_CLICKED(IDC_BUTTON_WATING_MYINFO, &CWaitingForm::OnBnClickedButtonWatingMyinfo)
 END_MESSAGE_MAP()
 
 
@@ -59,7 +61,7 @@ void CWaitingForm::OnInitialUpdate()
 
 
 
-void CWaitingForm::OnBnClickedButtonLogout()
+void CWaitingForm::OnBnClickedButtonWatingLogout()
 {
 	// 서버에 로그아웃하는 메시지 전송 
 
@@ -70,22 +72,19 @@ void CWaitingForm::OnBnClickedButtonLogout()
 }
 
 
-void CWaitingForm::OnBnClickedButtonExit()
-{
-	// 소켓 닫기
+void CWaitingForm::OnBnClickedButtonWatingExit()
+{	
+	if (AfxMessageBox(_T("프로그램을 종료하시겠습니까?"), MB_YESNO | MB_ICONQUESTION) == IDYES)
+	{
+		//TODO: 종료하기전에 서버에 종료 메시지 보내줘야함
+		m_pDlg->m_pClient->m_CloseSocket();
+		ExitProcess(0);
 
-
-
-
-	/* 
-	* OnClose() : 메모리 충돌 오류 메세지 발생
-	* exit(0) : 비정상적인 terminated, 메모리 누수 발생
-	*/
-	::PostQuitMessage(WM_QUIT);
+	}
 }
 
 
-void CWaitingForm::OnBnClickedButtonMakeroom()
+void CWaitingForm::OnBnClickedButtonWatingMakeroom()
 {
 	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
 	CMakeRoomDlg mr_dlg;
@@ -104,4 +103,32 @@ BOOL CWaitingForm::PreTranslateMessage(MSG* pMsg)
 	}
 
 	return CFormView::PreTranslateMessage(pMsg);
+}
+
+
+void CWaitingForm::OnBnClickedButtonWatingMyinfo()
+{
+	Json::Value root;
+	Json::StyledWriter writer;
+	
+	root["action"] = "myinfo";
+	root["nickname"] = m_pDlg->m_pClient->m_getNickname();
+
+	m_pDlg->m_pClient->m_data.msg = writer.write(root);
+	m_pDlg->m_pClient->m_data.size = m_pDlg->m_pClient->m_data.msg.size();
+
+	int ret_HeadWrite = 0;
+	if (m_pDlg->m_pOpenssl->m_pSSL == NULL || (ret_HeadWrite = SSL_write(m_pDlg->m_pOpenssl->m_pSSL, &m_pDlg->m_pClient->m_data.size, sizeof(int))) <= 0)
+	{
+		AfxMessageBox(_T("서버에 연결할 수 없습니다."));
+	}
+	else
+	{
+		int ret_BodyWrite = 0;
+		if ((ret_BodyWrite = SSL_write(m_pDlg->m_pOpenssl->m_pSSL, &m_pDlg->m_pClient->m_data.msg[0], m_pDlg->m_pClient->m_data.size)) <= 0)
+		{
+			AfxMessageBox(_T("서버에 연결할 수 없습니다."));
+		}
+	}
+	m_pDlg->m_pClient->m_InitData();
 }

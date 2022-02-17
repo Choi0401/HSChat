@@ -1,17 +1,17 @@
 #pragma once
 #include <afxext.h>
-class CWaitingForm : public CFormView
+class CMyInfoForm : public CFormView
 {
-	DECLARE_DYNAMIC(CWaitingForm)
+	DECLARE_DYNAMIC(CMyInfoForm)
 
 public:
-	CWaitingForm();
-	CWaitingForm(UINT nIDTemplate);
-	virtual ~CWaitingForm();
+	CMyInfoForm();
+	CMyInfoForm(UINT nIDTemplate);
+	virtual ~CMyInfoForm();
 
 	// 대화 상자 데이터입니다.
 #ifdef AFX_DESIGN_TIME
-	enum { IDD = IDD_FORMVIEW_WAITING };
+	enum { IDD = IDD_FORMVIEW_MYINFO };
 #endif
 
 protected:
@@ -21,11 +21,11 @@ protected:
 public:
 	virtual BOOL Create(LPCTSTR lpszClassName, LPCTSTR lpszWindowName, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID, CCreateContext* pContext = NULL);
 	virtual void OnInitialUpdate();
-	CHSChatDlg* m_pDlg;
 
-	afx_msg void OnBnClickedButtonWatingLogout();	
-	afx_msg void OnBnClickedButtonWatingExit();
-	afx_msg void OnBnClickedButtonWatingMakeroom();
+	CHSChatDlg* m_pDlg;
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
-	afx_msg void OnBnClickedButtonWatingMyinfo();
+	afx_msg void OnBnClickedButtonMyInfoOK();
+	afx_msg void OnBnClickedButtonMyInfoCancel();
 };
+
+
