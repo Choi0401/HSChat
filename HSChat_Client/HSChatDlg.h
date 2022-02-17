@@ -12,6 +12,7 @@
 #include "COpenSSL.h"
 
 #define MESSAGE_SET_STATE 9999
+#define MESSAGE_PROC 9998
 
 // CHSChatDlg 대화 상자
 class CHSChatDlg : public CDialogEx
@@ -57,6 +58,7 @@ public:
 
 	static UINT m_RecvThread(LPVOID _mothod);
 	LRESULT m_SetState(WPARAM wParam, LPARAM lParam);
+	LRESULT m_Proc(WPARAM wParam, LPARAM lParam);
 
 
 };

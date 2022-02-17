@@ -81,7 +81,6 @@ void CSigninForm::OnBnClickedButtonSigninSignin()
 {
 	// 서버에 로그인 메시지 전송
 	CString strID, strPW;
-	string signinJson;
 	Json::Value root;
 	Json::StyledWriter writer;
 
@@ -96,20 +95,29 @@ void CSigninForm::OnBnClickedButtonSigninSignin()
 	{
 		root["action"] = "signin";
 		root["id"] = std::string(CT2CA(strID));
+		root["id"] = std::string(CT2CA(strID));
 		root["pw"] = std::string(CT2CA(strPW));
 
-		signinJson = writer.write(root);
-		int ret_write = 0;
-		if ((ret_write = SSL_write(m_pDlg->m_pOpenssl->m_pSSL, signinJson.c_str(), signinJson.size())) <= 0)
+		m_pDlg->m_pClient->m_data.msg = writer.write(root);
+		m_pDlg->m_pClient->m_data.size = m_pDlg->m_pClient->m_data.msg.size();
+		int ret_HeadWrite = 0;
+		if ((ret_HeadWrite = SSL_write(m_pDlg->m_pOpenssl->m_pSSL, &m_pDlg->m_pClient->m_data.size, sizeof(int))) <= 0)
 		{
 			AfxMessageBox(_T("서버에 연결할 수 없습니다."));
 		}
 		else
-		{
+		{	
+			int ret_BodyWrite = 0;
+			if ((ret_BodyWrite = SSL_write(m_pDlg->m_pOpenssl->m_pSSL, &m_pDlg->m_pClient->m_data.msg[0], m_pDlg->m_pClient->m_data.size)) <= 0)
+			{
+				AfxMessageBox(_T("서버에 연결할 수 없습니다."));
+			}
+
 			SetDlgItemText(IDC_EDIT_SIGNIN_ID, _T(""));
 			SetDlgItemText(IDC_EDIT_SIGNIN_PW, _T(""));
 		}
-	}
+		m_pDlg->m_pClient->m_InitData();
+	}	
 }
 
 BOOL CSigninForm::PreTranslateMessage(MSG* pMsg)

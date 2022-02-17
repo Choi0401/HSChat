@@ -7,8 +7,10 @@ using namespace std;
 CClient::CClient()
 {
     m_socket = INVALID_SOCKET;
-    m_connstate = CLIENT_DISCONNECTED;
-    m_recvmsg = "";
+    m_connstate = CLIENT_DISCONNECTED;        
+
+    m_data.size = 0;
+    m_data.msg.clear();
     memset(&m_addr, 0, sizeof(m_addr));
 }
 void CClient::m_OpenConnection()
@@ -25,7 +27,8 @@ void CClient::m_OpenConnection()
     }
     memset(&m_addr, 0, sizeof(m_addr));
     m_addr.sin_family = AF_INET;    
-    //m_addr.sin_addr.s_addr = inet_addr("192.168.1.125");
+    //m_addr.sin_addr.s_addr = inet_addr("192.168.1.125");    
+    //m_addr.sin_port = htons(8282);
     m_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
     m_addr.sin_port = htons(7777);
 
@@ -38,6 +41,12 @@ void CClient::m_OpenConnection()
         m_connstate = CLIENT_CONNECTED;
 }
 
+void CClient::m_InitData() 
+{
+    m_data.msg.clear();
+    m_data.size = 0;
+}
+
 void CClient::m_ErrorHandling(CString str)
 {
     CString errstr;
@@ -45,3 +54,5 @@ void CClient::m_ErrorHandling(CString str)
     //AfxMessageBox(errstr);
     //exit(1);
 }
+
+

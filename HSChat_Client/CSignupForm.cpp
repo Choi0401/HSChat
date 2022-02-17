@@ -62,7 +62,6 @@ void CSignupForm::OnBnClickedButtonSignupOK()
 {
 	CEdit* pEditName, *pEditBirth, *pEditPhone, *pEditID, *pEditNickname, *pEditPW, *pEditPWOK;	
 	CString strName, strBirth, strPhone, strID, strNickname, strPW, strPWOK;
-	string signupJson;
 	Json::Value root;
 	Json::StyledWriter writer;
 
@@ -106,19 +105,30 @@ void CSignupForm::OnBnClickedButtonSignupOK()
 		root["pw"] = std::string(CT2CA(strPW));
 
 
-		signupJson = writer.write(root);
-		int ret_write = 0;
-		if ((ret_write = SSL_write(m_pDlg->m_pOpenssl->m_pSSL, signupJson.c_str(), signupJson.size())) <= 0)
+		m_pDlg->m_pClient->m_data.msg = writer.write(root);
+		m_pDlg->m_pClient->m_data.size = m_pDlg->m_pClient->m_data.msg.size();
+		int ret_HeadWrite = 0;
+		if ((ret_HeadWrite = SSL_write(m_pDlg->m_pOpenssl->m_pSSL, &m_pDlg->m_pClient->m_data.size, sizeof(int))) <= 0)
 		{
 			AfxMessageBox(_T("서버에 연결할 수 없습니다."));
 		}
-		SetDlgItemText(IDC_EDIT_SIGNUP_NAME, _T(""));
-		SetDlgItemText(IDC_EDIT_SIGNUP_BIRTH, _T(""));
-		SetDlgItemText(IDC_EDIT_SIGNUP_PHONE, _T(""));
-		SetDlgItemText(IDC_EDIT_SIGNUP_ID, _T(""));
-		SetDlgItemText(IDC_EDIT_SIGNUP_NICKNAME, _T(""));
-		SetDlgItemText(IDC_EDIT_SIGNUP_PW, _T(""));
-		SetDlgItemText(IDC_EDIT_SIGNUP_PWOK, _T(""));
+		else
+		{
+			int ret_BodyWrite = 0;
+			if ((ret_BodyWrite = SSL_write(m_pDlg->m_pOpenssl->m_pSSL, &m_pDlg->m_pClient->m_data.msg[0], m_pDlg->m_pClient->m_data.size)) <= 0)
+			{
+				AfxMessageBox(_T("서버에 연결할 수 없습니다."));
+			}
+			SetDlgItemText(IDC_EDIT_SIGNUP_NAME, _T(""));
+			SetDlgItemText(IDC_EDIT_SIGNUP_BIRTH, _T(""));
+			SetDlgItemText(IDC_EDIT_SIGNUP_PHONE, _T(""));
+			SetDlgItemText(IDC_EDIT_SIGNUP_ID, _T(""));
+			SetDlgItemText(IDC_EDIT_SIGNUP_NICKNAME, _T(""));
+			SetDlgItemText(IDC_EDIT_SIGNUP_PW, _T(""));
+			SetDlgItemText(IDC_EDIT_SIGNUP_PWOK, _T(""));
+		}		
+		m_pDlg->m_pClient->m_InitData();
+
 	}	
 }
 

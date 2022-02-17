@@ -7,12 +7,14 @@
 #include "HSChatDlg.h"
 #include "afxdialogex.h"
 #include "json/json.h"
+#include <chrono>
+#include <thread>
 
+using std::this_thread::sleep_for;
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
-
 
 // 응용 프로그램 정보에 사용되는 CAboutDlg 대화 상자입니다.
 
@@ -77,6 +79,7 @@ BEGIN_MESSAGE_MAP(CHSChatDlg, CDialogEx)
 	ON_WM_QUERYDRAGICON()	
 	ON_WM_SIZE()
 	ON_MESSAGE(MESSAGE_SET_STATE, &CHSChatDlg::m_SetState)
+	ON_MESSAGE(MESSAGE_PROC, &CHSChatDlg::m_Proc)
 END_MESSAGE_MAP()
 
 
@@ -313,13 +316,14 @@ UINT CHSChatDlg::m_RecvThread(LPVOID _mothod)
 	CHSChatDlg* fir = (CHSChatDlg*)_mothod;	
 	while (1)
 	{		
+		Sleep(1);
 		// Connect 시도
 		if (fir->m_pClient->m_connstate == CLIENT_DISCONNECTED) {
 			fir->m_pClient->m_OpenConnection();
 			fir->m_pOpenssl->m_pSSL = SSL_new(fir->m_pOpenssl->m_pCTX);
 			SSL_set_fd(fir->m_pOpenssl->m_pSSL, fir->m_pClient->m_socket);
 			if (SSL_connect(fir->m_pOpenssl->m_pSSL) == -1)
-			{
+			{				
 				fir->m_pClient->m_connstate = CLIENT_DISCONNECTED;
 				//AfxMessageBox(_T("SSL_connect() Error"));
 			}
@@ -331,82 +335,97 @@ UINT CHSChatDlg::m_RecvThread(LPVOID _mothod)
 		}
 		else 
 		{									
-			// Success Connect 
-			int ret_read = 0;
-			fir->m_pClient->m_recvmsg.resize(1000);
-			ret_read = SSL_read(fir->m_pOpenssl->m_pSSL, &fir->m_pClient->m_recvmsg[0], fir->m_pClient->m_recvmsg.size());
-			if (ret_read > 0)
+			// Success Connect 			
+			int ret_HeadRead = 0;			
+			ret_HeadRead = SSL_read(fir->m_pOpenssl->m_pSSL, &fir->m_pClient->m_data.size, sizeof(int));
+						
+			if (ret_HeadRead > 0)
 			{
-				Json::Value recvroot;
-				Json::Reader reader;
-				bool parsingSuccessful = reader.parse(fir->m_pClient->m_recvmsg, recvroot);
-				if (parsingSuccessful == false)
-				{
-					//AfxMessageBox(_T("Failed to parse configuration")); // reader.getFormatedErrorMessages();
-					exit(1);
-				}
-				else {
-					string action = recvroot["action"].asString();
-					// 로그인 응답
-					if (action == "signin") 
-					{
-						// parse json
-						string result = recvroot["result"].asString();
-						string msg = recvroot["msg"].asString();
-						CString cstr;
-						cstr = msg.c_str();
-						// 성공
-						if (result == "true")
-						{
-							fir->m_ShowForm(4);							
-							//fir->m_pSigninForm->SetDlgItemText(IDC_EDIT_SIGNIN_ID, _T(""));
-							//fir->m_pSigninForm->SetDlgItemText(IDC_EDIT_SIGNIN_PW, _T(""));								
-							AfxMessageBox(cstr, MB_ICONINFORMATION);
-						}
-						// 실패						
-						else if(result == "false") 
-						{
+				fir->m_pClient->m_data.msg.resize(fir->m_pClient->m_data.size);
+				int ret_BodyRead = SSL_read(fir->m_pOpenssl->m_pSSL,&fir->m_pClient->m_data.msg[0], fir->m_pClient->m_data.size);
 
-						}
-					}
-					// 회원가입 응답
-					else if (action == "signup")
-					{
-						// parse json
-						string result = recvroot["result"].asString();
-						string msg = recvroot["msg"].asString();
-						CString cstr;
-						cstr = msg.c_str();
-						// 성공
-						if (result == "true")
-						{
-							fir->m_ShowForm(0);
-							AfxMessageBox(cstr, MB_ICONINFORMATION);
-						}
-						// 실패						
-						else if (result == "false")
-						{
-
-						}
-					}
-
-				}
-
-
-				// 메시지 초기화 
-				fir->m_pClient->m_recvmsg.clear();
+				//TODO : 큐가 최대일 때 처리, Locking
+				fir->m_pClient->m_queue.push(fir->m_pClient->m_data.msg);
+				::PostMessage(fir->m_hWnd, MESSAGE_PROC, NULL, NULL);					
 			}
 			else {
 				fir->m_pClient->m_connstate = CLIENT_DISCONNECTED;
 				AfxMessageBox(_T("서버와 연결이 끊어졌습니다."), MB_ICONERROR);
 				::PostMessage(fir->m_hWnd, MESSAGE_SET_STATE, NULL, NULL);
 				fir->m_ShowForm(0);
-			}
-			
 
+			}			
+			fir->m_pClient->m_InitData();
 		}
-		
+		sleep_for(std::chrono::milliseconds(100));
 	}	
+}
+
+LRESULT CHSChatDlg::m_Proc(WPARAM wParam, LPARAM lParam)
+{
+	if (!m_pClient->m_queue.empty())
+	{
+		string recvstr;
+		//recvstr = m_pClient->m_queue.front();
+		recvstr = m_pClient->m_queue.pop();
+		Json::Value recvroot;
+		Json::Reader reader;
+		bool parsingSuccessful = reader.parse(recvstr, recvroot);
+		if (parsingSuccessful == false)
+		{
+			//AfxMessageBox(_T("Failed to parse configuration")); // reader.getFormatedErrorMessages();
+			exit(1);
+		}
+
+		else {
+			string action = recvroot["action"].asString();
+			// 로그인 응답
+			if (action == "signin")
+			{
+				// parse json
+				string result = recvroot["result"].asString();
+				string msg = recvroot["msg"].asString();
+				CString cstr;
+				cstr = msg.c_str();
+				// 성공
+				if (result == "true")
+				{
+					m_ShowForm(4);
+					//fir->m_pSigninForm->SetDlgItemText(IDC_EDIT_SIGNIN_ID, _T(""));
+					//fir->m_pSigninForm->SetDlgItemText(IDC_EDIT_SIGNIN_PW, _T(""));
+					AfxMessageBox(cstr, MB_ICONINFORMATION);
+				}
+				// 실패
+				else if (result == "false")
+				{
+
+				}
+			}
+			// 회원가입 응답
+			else if (action == "signup")
+			{
+				// parse json
+				string result = recvroot["result"].asString();
+				string msg = recvroot["msg"].asString();
+				CString cstr;
+				cstr = msg.c_str();
+				// 성공
+				if (result == "true")
+				{
+					m_ShowForm(0);
+					AfxMessageBox(cstr, MB_ICONINFORMATION);
+				}
+				// 실패
+				else if (result == "false")
+				{
+
+				}
+			}
+
+		}		
+	}
+
+	return 0;
 }
 
 
@@ -428,11 +447,3 @@ void CHSChatDlg::OnSize(UINT nType, int cx, int cy)
 	// TODO: 창 크기 변화할 때 호출
 
 }
-
-
-//BOOL CAboutDlg::PreTranslateMessage(MSG* pMsg)
-//{
-//	// TODO: 여기에 특수화된 코드를 추가 및/또는 기본 클래스를 호출합니다.
-//
-//	return CDialogEx::PreTranslateMessage(pMsg);
-//}
