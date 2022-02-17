@@ -101,7 +101,7 @@ void CSigninForm::OnBnClickedButtonSigninSignin()
 		m_pDlg->m_pClient->m_data.msg = writer.write(root);
 		m_pDlg->m_pClient->m_data.size = m_pDlg->m_pClient->m_data.msg.size();
 		int ret_HeadWrite = 0;
-		if ((ret_HeadWrite = SSL_write(m_pDlg->m_pOpenssl->m_pSSL, &m_pDlg->m_pClient->m_data.size, sizeof(int))) <= 0)
+		if (m_pDlg->m_pOpenssl->m_pSSL == NULL || (ret_HeadWrite = SSL_write(m_pDlg->m_pOpenssl->m_pSSL, &m_pDlg->m_pClient->m_data.size, sizeof(int))) <= 0)
 		{
 			AfxMessageBox(_T("서버에 연결할 수 없습니다."));
 		}

@@ -9,6 +9,7 @@
 #include "json/json.h"
 #include <chrono>
 #include <thread>
+#include <locale.h>
 
 using std::this_thread::sleep_for;
 
@@ -115,9 +116,10 @@ BOOL CHSChatDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// 작은 아이콘을 설정합니다.
 
 	// TODO: 여기에 추가 초기화 작업을 추가합니다.
-	
+	setlocale(LC_ALL, "");
 
 	CWinThread* pRecvthread = NULL;
+	m_pClient->m_InitSocket();
 	m_pOpenssl->m_InitCTX();
 	if (m_pOpenssl->m_CheckCertKey() == 0)
 		AfxMessageBox(_T("m_CheckCertKey() Error"));
@@ -133,10 +135,6 @@ BOOL CHSChatDlg::OnInitDialog()
 
 	m_AllocForm();
 
-
-
-	
-
 	return TRUE;  // 포커스를 컨트롤에 설정하지 않으면 TRUE를 반환합니다.
 }
 
@@ -146,6 +144,19 @@ void CHSChatDlg::OnSysCommand(UINT nID, LPARAM lParam)
 	{
 		CAboutDlg dlgAbout;
 		dlgAbout.DoModal();
+	}
+	else if (nID == SC_CLOSE)
+	{
+		if (AfxMessageBox(_T("프로그램을 종료하시겠습니까?"), MB_YESNO | MB_ICONQUESTION) == IDYES)
+		{
+			m_pClient->m_CloseSocket();
+			ExitProcess(0);
+			
+		}
+		else 
+		{
+			;
+		}
 	}
 	else
 	{
@@ -248,6 +259,7 @@ void CHSChatDlg::m_ShowForm(int idx)
 		m_pSearchPWForm->ShowWindow(SW_HIDE);
 		m_pWatingForm->ShowWindow(SW_HIDE);
 		m_pChatRoomForm->ShowWindow(SW_HIDE);
+		m_pSigninForm->GetDlgItem(IDC_EDIT_SIGNIN_ID)->SetFocus();
 		break;
 
 	case 1:		// 회원가입 화면
@@ -256,11 +268,8 @@ void CHSChatDlg::m_ShowForm(int idx)
 		m_pSearchIDForm->ShowWindow(SW_HIDE);
 		m_pSearchPWForm->ShowWindow(SW_HIDE);
 		m_pWatingForm->ShowWindow(SW_HIDE);
-		m_pChatRoomForm->ShowWindow(SW_HIDE);
-		CEdit* p_EditName;
-		p_EditName = (CEdit*)m_pSignupForm->GetDlgItem(IDC_EDIT_SIGNUP_NAME);
-		p_EditName->SetSel(-1);
-		p_EditName->SetFocus();
+		m_pChatRoomForm->ShowWindow(SW_HIDE);		
+		m_pSignupForm->GetDlgItem(IDC_EDIT_SIGNUP_NAME)->SetFocus();
 		break;
 
 
@@ -271,6 +280,7 @@ void CHSChatDlg::m_ShowForm(int idx)
 		m_pSearchPWForm->ShowWindow(SW_HIDE);
 		m_pWatingForm->ShowWindow(SW_HIDE);
 		m_pChatRoomForm->ShowWindow(SW_HIDE);
+		m_pSearchIDForm->GetDlgItem(IDC_EDIT_SEARCHID_NAME)->SetFocus();
 		break;
 
 	case 3:		// PW찾기 화면
@@ -280,6 +290,7 @@ void CHSChatDlg::m_ShowForm(int idx)
 		m_pSearchPWForm->ShowWindow(SW_SHOW);
 		m_pWatingForm->ShowWindow(SW_HIDE);
 		m_pChatRoomForm->ShowWindow(SW_HIDE);
+		m_pSearchPWForm->GetDlgItem(IDC_EDIT_SEARCHPW_NAME)->SetFocus();
 		break;
 
 	case 4:		// 대기실 화면
@@ -298,13 +309,14 @@ void CHSChatDlg::m_ShowForm(int idx)
 		m_pSearchPWForm->ShowWindow(SW_HIDE);
 		m_pWatingForm->ShowWindow(SW_HIDE);
 		m_pChatRoomForm->ShowWindow(SW_SHOW);
-		CEdit* p_EditSend = NULL;
+		m_pChatRoomForm->GetDlgItem(IDC_EDIT_CHATROOM_SENDMSG)->SetFocus();
+		/*CEdit* p_EditSend = NULL;
 		if ((p_EditSend = (CEdit*)m_pChatRoomForm->GetDlgItem(IDC_EDIT_CHATROOM_SENDMSG)) == NULL)
 		{
 			AfxMessageBox(_T("ERROR[GetDlgItem()] : Failed to get IDC_EDIT_CHATROOM_SENDMSG"));
 		}
 		p_EditSend->SetSel(-1);
-		p_EditSend->SetFocus();
+		p_EditSend->SetFocus();*/
 		break;
 
 	}
@@ -315,22 +327,24 @@ UINT CHSChatDlg::m_RecvThread(LPVOID _mothod)
 {
 	CHSChatDlg* fir = (CHSChatDlg*)_mothod;	
 	while (1)
-	{		
-		Sleep(1);
+	{				
 		// Connect 시도
 		if (fir->m_pClient->m_connstate == CLIENT_DISCONNECTED) {
 			fir->m_pClient->m_OpenConnection();
-			fir->m_pOpenssl->m_pSSL = SSL_new(fir->m_pOpenssl->m_pCTX);
-			SSL_set_fd(fir->m_pOpenssl->m_pSSL, fir->m_pClient->m_socket);
-			if (SSL_connect(fir->m_pOpenssl->m_pSSL) == -1)
-			{				
-				fir->m_pClient->m_connstate = CLIENT_DISCONNECTED;
-				//AfxMessageBox(_T("SSL_connect() Error"));
-			}
-			else
+			
+			if (fir->m_pClient->m_connstate == CLIENT_CONNECTED)
 			{
-				fir->m_pClient->m_connstate = CLIENT_CONNECTED;
-				::PostMessage(fir->m_hWnd, MESSAGE_SET_STATE, NULL, NULL);
+				fir->m_pOpenssl->m_pSSL = SSL_new(fir->m_pOpenssl->m_pCTX);
+				SSL_set_fd(fir->m_pOpenssl->m_pSSL, fir->m_pClient->m_socket);
+				if (SSL_connect(fir->m_pOpenssl->m_pSSL) == -1)
+				{
+					fir->m_pClient->m_connstate = CLIENT_DISCONNECTED;
+					//AfxMessageBox(_T("SSL_connect() Error"));
+				}
+				else
+				{
+					::PostMessage(fir->m_hWnd, MESSAGE_SET_STATE, NULL, NULL);
+				}
 			}
 		}
 		else 
@@ -348,16 +362,18 @@ UINT CHSChatDlg::m_RecvThread(LPVOID _mothod)
 				fir->m_pClient->m_queue.push(fir->m_pClient->m_data.msg);
 				::PostMessage(fir->m_hWnd, MESSAGE_PROC, NULL, NULL);					
 			}
-			else {
-				fir->m_pClient->m_connstate = CLIENT_DISCONNECTED;
-				AfxMessageBox(_T("서버와 연결이 끊어졌습니다."), MB_ICONERROR);
+			else {								
+				fir->m_pOpenssl->m_pSSL = NULL;
+				fir->m_pClient->m_CloseSocket();
+				fir->m_pClient->m_InitSocket();
+				fir->m_pOpenssl->m_InitCTX();
+				//AfxMessageBox(_T("서버와 연결이 끊어졌습니다."), MB_ICONERROR);				
 				::PostMessage(fir->m_hWnd, MESSAGE_SET_STATE, NULL, NULL);
 				fir->m_ShowForm(0);
 
 			}			
 			fir->m_pClient->m_InitData();
 		}
-		sleep_for(std::chrono::milliseconds(100));
 	}	
 }
 
@@ -379,7 +395,7 @@ LRESULT CHSChatDlg::m_Proc(WPARAM wParam, LPARAM lParam)
 
 		else {
 			string action = recvroot["action"].asString();
-			// 로그인 응답
+			// 로그인 
 			if (action == "signin")
 			{
 				// parse json
@@ -394,6 +410,7 @@ LRESULT CHSChatDlg::m_Proc(WPARAM wParam, LPARAM lParam)
 					//fir->m_pSigninForm->SetDlgItemText(IDC_EDIT_SIGNIN_ID, _T(""));
 					//fir->m_pSigninForm->SetDlgItemText(IDC_EDIT_SIGNIN_PW, _T(""));
 					AfxMessageBox(cstr, MB_ICONINFORMATION);
+					//TODO : 클라이언트의 이름, 아이디를 클래스에 저장해야함
 				}
 				// 실패
 				else if (result == "false")
@@ -401,7 +418,7 @@ LRESULT CHSChatDlg::m_Proc(WPARAM wParam, LPARAM lParam)
 
 				}
 			}
-			// 회원가입 응답
+			// 회원가입 
 			else if (action == "signup")
 			{
 				// parse json
@@ -421,6 +438,49 @@ LRESULT CHSChatDlg::m_Proc(WPARAM wParam, LPARAM lParam)
 
 				}
 			}
+			// ID 찾기 
+			else if (action == "searchid")
+			{
+				// parse json
+				string result = recvroot["result"].asString();
+				string msg = recvroot["msg"].asString();
+				CString cstr;
+				cstr = msg.c_str();
+				// 성공
+				if (result == "true")
+				{
+					string id = recvroot["id"].asString();
+					m_ShowForm(0);
+					AfxMessageBox(cstr, MB_ICONINFORMATION);
+				}
+				// 실패
+				else if (result == "false")
+				{
+
+				}
+			}
+			// PW 찾기 
+			else if (action == "searchpw")
+			{
+				// parse json
+				string result = recvroot["result"].asString();
+				string msg = recvroot["msg"].asString();
+				CString cstr;
+				cstr = msg.c_str();
+				// 성공
+				if (result == "true")
+				{
+					string pw = recvroot["pw"].asString();
+					m_ShowForm(0);
+					AfxMessageBox(cstr, MB_ICONINFORMATION);
+				}
+				// 실패
+				else if (result == "false")
+				{
+
+				}
+			}
+
 
 		}		
 	}
@@ -431,8 +491,11 @@ LRESULT CHSChatDlg::m_Proc(WPARAM wParam, LPARAM lParam)
 
 LRESULT CHSChatDlg::m_SetState(WPARAM wParam, LPARAM lParam)
 {
-	if(m_pClient->m_connstate == CLIENT_DISCONNECTED)
+	if (m_pClient->m_connstate == CLIENT_DISCONNECTED)
+	{
+		AfxMessageBox(_T("서버와 연결이 끊어졌습니다."), MB_ICONERROR);
 		m_pSigninForm->GetDlgItem(IDC_STATIC_SIGNIN_STATE)->SetWindowText(_T("서버에 접속중입니다..."));
+	}
 	else
 		m_pSigninForm->GetDlgItem(IDC_STATIC_SIGNIN_STATE)->SetWindowText(_T("환영합니다. 서버에 접속하셨습니다."));
 

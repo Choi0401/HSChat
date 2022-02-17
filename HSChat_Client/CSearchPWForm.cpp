@@ -2,7 +2,7 @@
 #include "HSChat.h"
 #include "HSChatDlg.h"
 #include "CSearchPWForm.h"
-
+#include "json/json.h"
 
 
 IMPLEMENT_DYNAMIC(CSearchPWForm, CFormView)
@@ -63,41 +63,53 @@ void CSearchPWForm::OnInitialUpdate()
 
 void CSearchPWForm::OnBnClickedButtonSearchPWOK()
 {
-	CEdit* pEdit1;
-	CEdit* pEdit2;
-	CEdit* pEdit3;
+	CString strName, strBirth, strID, strPhone;
+	Json::Value root;
+	Json::StyledWriter writer;
 
+	GetDlgItemText(IDC_EDIT_SEARCHPW_NAME, strName);
+	GetDlgItemText(IDC_EDIT_SEARCHPW_BIRTH, strBirth);
+	GetDlgItemText(IDC_EDIT_SEARCHPW_ID, strID);
+	GetDlgItemText(IDC_EDIT_SEARCHPW_PHONE, strPhone);
 
-	CString name;
-	CString birth;
-	CString ID;
-
-	GetDlgItemText(IDC_EDIT_SEARCHPW_NAME, name);
-	GetDlgItemText(IDC_EDIT_SEARCHPW_BIRTH, birth);
-	GetDlgItemText(IDC_EDIT_SEARCHPW_ID, ID);
-
-
-	if (name.GetLength() == 0)
+	if (strName.GetLength() == 0)
 		AfxMessageBox(_T("이름을 입력하세요!"), MB_ICONSTOP);
-	else if (birth.GetLength() == 0)
+	else if (strBirth.GetLength() == 0)
 		AfxMessageBox(_T("생년월일을 입력하세요!"), MB_ICONSTOP);
-	else if (ID.GetLength() == 0)
+	else if (strPhone.GetLength() == 0)
+		AfxMessageBox(_T("전화번호를 입력하세요!"), MB_ICONSTOP);
+	else if (strID.GetLength() == 0)
 		AfxMessageBox(_T("ID를 입력하세요!"), MB_ICONSTOP);
 	else {
-		AfxMessageBox(_T("P/W : qwer1234!"), MB_ICONINFORMATION);
+		root["action"] = "searchpw";
+		root["name"] = std::string(CT2CA(strName));
+		root["birth"] = std::string(CT2CA(strBirth));
+		root["phone"] = std::string(CT2CA(strPhone));
+		root["id"] = std::string(CT2CA(strID));
 
-		pEdit1 = (CEdit*)GetDlgItem(IDC_EDIT_SEARCHPW_NAME);
-		pEdit2 = (CEdit*)GetDlgItem(IDC_EDIT_SEARCHPW_BIRTH);
-		pEdit3 = (CEdit*)GetDlgItem(IDC_EDIT_SEARCHPW_ID);
+		m_pDlg->m_pClient->m_data.msg = writer.write(root);
+		m_pDlg->m_pClient->m_data.size = m_pDlg->m_pClient->m_data.msg.size();
 
-		pEdit1->SetSel(0, -1);
-		pEdit1->Clear();
-		pEdit2->SetSel(0, -1);
-		pEdit2->Clear();
-		pEdit3->SetSel(0, -1);
-		pEdit3->Clear();
+		int ret_HeadWrite = 0;
+		if (m_pDlg->m_pOpenssl->m_pSSL == NULL || (ret_HeadWrite = SSL_write(m_pDlg->m_pOpenssl->m_pSSL, &m_pDlg->m_pClient->m_data.size, sizeof(int))) <= 0)
+		{
+			AfxMessageBox(_T("서버에 연결할 수 없습니다."));
+		}
+		else
+		{
+			int ret_BodyWrite = 0;
+			if ((ret_BodyWrite = SSL_write(m_pDlg->m_pOpenssl->m_pSSL, &m_pDlg->m_pClient->m_data.msg[0], m_pDlg->m_pClient->m_data.size)) <= 0)
+			{
+				AfxMessageBox(_T("서버에 연결할 수 없습니다."));
+			}
+			SetDlgItemText(IDC_EDIT_SEARCHPW_NAME, _T(""));
+			SetDlgItemText(IDC_EDIT_SEARCHPW_BIRTH, _T(""));
+			SetDlgItemText(IDC_EDIT_SEARCHPW_PHONE, _T(""));
+			SetDlgItemText(IDC_EDIT_SEARCHPW_ID, _T(""));
+		}
 
-		m_pDlg->m_ShowForm(0);
+
+		m_pDlg->m_pClient->m_InitData();
 	}
 }
 

@@ -59,8 +59,7 @@ void CSignupForm::OnInitialUpdate()
 
 
 void CSignupForm::OnBnClickedButtonSignupOK()
-{
-	CEdit* pEditName, *pEditBirth, *pEditPhone, *pEditID, *pEditNickname, *pEditPW, *pEditPWOK;	
+{	
 	CString strName, strBirth, strPhone, strID, strNickname, strPW, strPWOK;
 	Json::Value root;
 	Json::StyledWriter writer;
@@ -88,13 +87,6 @@ void CSignupForm::OnBnClickedButtonSignupOK()
 	else if (strPW != strPWOK)
 		AfxMessageBox(_T("비밀번호를 확인하세요!"), MB_ICONSTOP);
 	else {		
-		pEditName = (CEdit*)GetDlgItem(IDC_EDIT_SIGNUP_NAME);
-		pEditBirth = (CEdit*)GetDlgItem(IDC_EDIT_SIGNUP_BIRTH);
-		pEditPhone = (CEdit*)GetDlgItem(IDC_EDIT_SIGNUP_PHONE);
-		pEditID = (CEdit*)GetDlgItem(IDC_EDIT_SIGNUP_ID);
-		pEditNickname= (CEdit*)GetDlgItem(IDC_EDIT_SIGNUP_NICKNAME);
-		pEditPW = (CEdit*)GetDlgItem(IDC_EDIT_SIGNUP_PW);
-		pEditPWOK = (CEdit*)GetDlgItem(IDC_EDIT_SIGNUP_PWOK);
 		
 		root["action"] = "signup";
 		root["name"] = std::string(CT2CA(strName));
@@ -108,14 +100,14 @@ void CSignupForm::OnBnClickedButtonSignupOK()
 		m_pDlg->m_pClient->m_data.msg = writer.write(root);
 		m_pDlg->m_pClient->m_data.size = m_pDlg->m_pClient->m_data.msg.size();
 		int ret_HeadWrite = 0;
-		if ((ret_HeadWrite = SSL_write(m_pDlg->m_pOpenssl->m_pSSL, &m_pDlg->m_pClient->m_data.size, sizeof(int))) <= 0)
+		if (m_pDlg->m_pClient->m_connstate == CLIENT_DISCONNECTED || (ret_HeadWrite = SSL_write(m_pDlg->m_pOpenssl->m_pSSL, &m_pDlg->m_pClient->m_data.size, sizeof(int))) <= 0)
 		{
 			AfxMessageBox(_T("서버에 연결할 수 없습니다."));
 		}
 		else
 		{
 			int ret_BodyWrite = 0;
-			if ((ret_BodyWrite = SSL_write(m_pDlg->m_pOpenssl->m_pSSL, &m_pDlg->m_pClient->m_data.msg[0], m_pDlg->m_pClient->m_data.size)) <= 0)
+			if (m_pDlg->m_pClient->m_connstate == CLIENT_DISCONNECTED || (ret_BodyWrite = SSL_write(m_pDlg->m_pOpenssl->m_pSSL, &m_pDlg->m_pClient->m_data.msg[0], m_pDlg->m_pClient->m_data.size)) <= 0)
 			{
 				AfxMessageBox(_T("서버에 연결할 수 없습니다."));
 			}

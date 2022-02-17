@@ -33,7 +33,9 @@ public:
 
 
 	CClient();
+	void m_InitSocket();
 	void m_OpenConnection();
+	void m_CloseSocket();
 	void m_ErrorHandling(CString str);
 	void m_InitData();
 };
