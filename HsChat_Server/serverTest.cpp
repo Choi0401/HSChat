@@ -11,6 +11,10 @@
 #include <vector>
 #include <netdb.h>
 #include <errno.h>
+#include <openssl/ssl.h>
+#include <openssl/err.h>
+#include <functional>
+#include <iostream>
 
 #define BUFSIZE 6000
 #define MAXLISTEN 1000
@@ -23,6 +27,7 @@ int cnt_fd_socket;
 int add_socket(int fd);
 int del_socket(int fd);
 int max_fd(fd_set* fd, int* fd_socket);
+void ShowCerts(SSL* ssl);
 
 class Server 
 {
@@ -60,7 +65,57 @@ int main() {
 	vector <Client> c(MAX_FD_SOCKET);
 	
     int i, read_len, rc_gai, errno, ret_check, fd, acc_cnt_sock, flag;
-  
+
+	//openSSL Variable
+	SSL_CTX* ctx;
+	SSL* ssl;
+	X509* client_cert;
+	char* str;
+	char buf[4096] = {0,};
+	const SSL_METHOD* method;
+
+
+	//SSL 관련 초기화 작업을 수행한다.
+	SSL_load_error_strings();
+	SSLeay_add_ssl_algorithms();
+	//method = TLSv1_1_server_method();
+	//method = SSLv23_server_method();		// 서버 메소드.
+	
+	method = SSLv23_server_method();		// 서버 메소드.
+	ctx = SSL_CTX_new(method);                // 지정된 초기 값을 이용하여 SSL Context를 생성한다.
+
+	if (!ctx)
+	{
+		perror("ctx");
+		exit(1);
+	}
+	
+	/* 사용하게 되는 인증서 파일을 설정한다. */
+	if (SSL_CTX_use_certificate_file(ctx, "server.pem", SSL_FILETYPE_PEM) <= 0)
+	{
+
+		perror("ctx_use_Certificate");
+		exit(1);
+	}
+
+	/* 암호화 통신을 위해서 이용하는 개인 키를 설정한다. */
+	if (SSL_CTX_use_PrivateKey_file(ctx, "server.key", SSL_FILETYPE_PEM) <= 0)
+	{
+
+		perror("ctx_use_Privatekey");
+		exit(1);
+	}
+
+	/* 개인 키가 사용 가능한 것인지 확인한다. */
+	if (!SSL_CTX_check_private_key(ctx))
+	{
+		perror("Private key does not match the certificate public keyn");
+		exit(1);
+	}
+	
+	/* peer (클라이언트)의 인증서를 검증하도록 세트 */
+	//SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, NULL);
+
     // socket, bind, listen
     
 	memset(server.buf, 0, sizeof(server.buf));
@@ -178,6 +233,26 @@ int main() {
 				c[cnt_fd_socket].clnt_sock = fd;
 				strcpy(c[cnt_fd_socket].clnt_ip, inet_ntoa(clnt_addr.sin_addr));
 				printf("accept: add socket(%d) (%s)\n", c[cnt_fd_socket].clnt_sock, c[cnt_fd_socket].clnt_ip);
+				
+				/* TCP connection is ready. Do server side SSL. */
+				if ((ssl = SSL_new(ctx)) == NULL) // 설정된 Context를 이용하여 SSL 세션의 초기화 작업을 수행한다.
+				{
+					perror("SSL_new() error!");
+				}
+				
+				SSL_set_fd(ssl, fd);
+				SSL_CTX_set_verify(SSL_get_SSL_CTX(ssl), SSL_VERIFY_PEER, NULL);
+
+				if (SSL_accept(ssl) == -1)    // SSL 세션을 통해 클라이언트의 접속을 대기한다.
+				{
+					perror("SSL_accept");
+				}
+				else 
+				{
+					printf("SSL connection using %s \n", SSL_get_cipher(ssl));
+					//ShowCerts(ssl);
+				}
+
 				++cnt_fd_socket;
 			}	
 	
@@ -201,7 +276,7 @@ int main() {
 		{
 			if(FD_ISSET(c[i].clnt_sock, &server.reads))
 			{
-				read_len = recv(c[i].clnt_sock, server.buf, BUFSIZE, 0);
+				read_len = SSL_read(ssl, server.buf,sizeof(server.buf));
 				if (read_len == -1) 
 				{
 					if(errno == EAGAIN || errno == EINTR) { // 읽을 내용이 없거나 시그널이 발생하여 인터럽트 된 경우
@@ -218,14 +293,18 @@ int main() {
 				else if (read_len == 0)
 				{
 					printf("client(%d): Session closed\n", c[i].clnt_sock);
-					if (i != (cnt_fd_socket-1))
-						c[i].clnt_sock = c[i].clnt_sock;
-					FD_CLR(c[i].clnt_sock, &server.reads);
+					if (i != (cnt_fd_socket-1)) {
+						FD_CLR(c[i].clnt_sock, &server.reads);
 					close(c[i].clnt_sock);
+					}
 				}
 
 				else {
-					printf("recv(client(%d), size(%d), message(%s))\n",c[i].clnt_sock, read_len, server.buf);				
+					printf("recv(client(%d), size(%d), message(%s))\n",c[i].clnt_sock, read_len, server.buf);
+					int write_len = SSL_write(ssl, server.buf, read_len);
+					cout << "Sent " <<  write_len <<  " Bytes : " <<  endl;
+					memset(server.buf, '\0', sizeof(server.buf));
+				
 				}				
 			}	
 		
