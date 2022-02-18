@@ -87,7 +87,8 @@ void CMyInfoForm::OnBnClickedButtonMyInfoOK()
 		AfxMessageBox(_T("비밀번호를 입력하세요!"), MB_ICONSTOP);
 	else if (strPW != strPWOK)
 		AfxMessageBox(_T("비밀번호를 확인하세요!"), MB_ICONSTOP);
-	else {
+	else 
+	{
 		root["action"] = "changemyinfo";
 		root["phone"] = std::string(CT2CA(strPhone));
 		root["nickname"] = std::string(CT2CA(strNickname));
@@ -117,7 +118,6 @@ void CMyInfoForm::OnBnClickedButtonMyInfoDelete()
 
 		root["action"] = "deleteaccount";
 		root["nickname"] = m_pDlg->m_pClient->m_getNickname();
-
 
 		m_pDlg->m_pClient->m_data.msg = writer.write(root);
 		m_pDlg->m_pClient->m_data.size = m_pDlg->m_pClient->m_data.msg.size();

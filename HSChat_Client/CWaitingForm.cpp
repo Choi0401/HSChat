@@ -28,6 +28,7 @@ void CWaitingForm::DoDataExchange(CDataExchange* pDX)
 {
 	CFormView::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_LIST_WATING_ROOM, m_roomlist);
+	DDX_Control(pDX, IDC_LIST_WAITING_FRIENDS, m_friendslist);
 }
 
 
@@ -37,6 +38,7 @@ BEGIN_MESSAGE_MAP(CWaitingForm, CFormView)
 	ON_BN_CLICKED(IDC_BUTTON_WATING_MAKEROOM, &CWaitingForm::OnBnClickedButtonWatingMakeroom)
 	ON_BN_CLICKED(IDC_BUTTON_WATING_MYINFO, &CWaitingForm::OnBnClickedButtonWatingMyinfo)
 	ON_NOTIFY(NM_DBLCLK, IDC_LIST_WATING_ROOM, &CWaitingForm::OnNMDblclkListWatingRoom)
+	ON_BN_CLICKED(IDC_BUTTON_WATING_FRIENDS, &CWaitingForm::OnBnClickedButtonWatingFriends)
 END_MESSAGE_MAP()
 
 
@@ -58,10 +60,16 @@ void CWaitingForm::OnInitialUpdate()
 	CRect rect;
 	m_roomlist.GetClientRect(&rect);
 	m_roomlist.SetExtendedStyle(LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES);
-	m_roomlist.InsertColumn(0, _T("번호"), LVCFMT_CENTER, 50);
-	m_roomlist.InsertColumn(1, _T("이름"), LVCFMT_LEFT, 300);
-	m_roomlist.InsertColumn(2, _T("인원"), LVCFMT_RIGHT, rect.Width() -350);
+	m_roomlist.InsertColumn(0, _T("번호"), LVCFMT_CENTER, 45);
+	m_roomlist.InsertColumn(1, _T("이름"), LVCFMT_LEFT, 330);
+	m_roomlist.InsertColumn(2, _T("인원"), LVCFMT_RIGHT, rect.Width() - 375);
 	m_roomlist.GetHeaderCtrl()->EnableWindow(false);
+
+	m_friendslist.GetClientRect(&rect);
+	m_friendslist.SetExtendedStyle(LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES);
+	m_friendslist.InsertColumn(0, _T("온라인"), LVCFMT_LEFT, rect.Width());
+	m_friendslist.GetHeaderCtrl()->EnableWindow(false);
+
 }
 
 
@@ -147,4 +155,22 @@ void CWaitingForm::OnNMDblclkListWatingRoom(NMHDR* pNMHDR, LRESULT* pResult)
 		m_pDlg->m_pClient->m_SendData();
 	}
 	*pResult = 0;
+}
+
+
+void CWaitingForm::OnBnClickedButtonWatingFriends()
+{
+	if (m_pDlg->m_pFriendslistDlg == NULL) {
+		Json::Value root;
+		Json::StyledWriter writer;
+		m_pDlg->m_pFriendslistDlg = new CFriendsListDlg();		
+		root["action"] = "friendslist";
+		root["nickname"] = m_pDlg->m_pClient->m_getNickname();
+
+		m_pDlg->m_pClient->m_data.msg = writer.write(root);
+		m_pDlg->m_pClient->m_data.size = m_pDlg->m_pClient->m_data.msg.size();
+		m_pDlg->m_pClient->m_SendData();
+		m_pDlg->m_pFriendslistDlg->Create(IDD_DIALOG_FRIENDSLIST);
+
+	}
 }

@@ -189,6 +189,9 @@
   <ItemGroup>
     <ClInclude Include="CChatRoomForm.h" />
     <ClInclude Include="CClient.h" />
+    <ClInclude Include="CFriendAddDlg.h" />
+    <ClInclude Include="CFriendListForm.h" />
+    <ClInclude Include="CFriendsListDlg.h" />
     <ClInclude Include="CMakeRoomDlg.h" />
     <ClInclude Include="CMyInfoForm.h" />
     <ClInclude Include="COpenSSL.h" />
@@ -207,6 +210,9 @@
   <ItemGroup>
     <ClCompile Include="CChatRoomForm.cpp" />
     <ClCompile Include="CClient.cpp" />
+    <ClCompile Include="CFriendAddDlg.cpp" />
+    <ClCompile Include="CFriendListForm.cpp" />
+    <ClCompile Include="CFriendsListDlg.cpp" />
     <ClCompile Include="CMakeRoomDlg.cpp" />
     <ClCompile Include="CMyInfoForm.cpp" />
     <ClCompile Include="COpenSSL.cpp" />

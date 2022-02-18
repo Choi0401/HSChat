@@ -11,6 +11,8 @@
 #include "CChatRoomForm.h"
 #include "CClient.h"
 #include "COpenSSL.h"
+#include "CFriendsListDlg.h"
+
 
 #define MESSAGE_SET_STATE 9999
 #define MESSAGE_PROC 9998
@@ -51,6 +53,8 @@ public:
 	CWaitingForm *m_pWatingForm;
 	CMyInfoForm* m_pMyInfomForm;
 	CChatRoomForm *m_pChatRoomForm;	
+
+	CFriendsListDlg* m_pFriendslistDlg;
 
 	CClient* m_pClient;
 	COpenSSL* m_pOpenssl;

@@ -16,6 +16,9 @@
 #define IDD_FORMVIEW_SEARCHPW           136
 #define IDD_FORMVIEW_SIGNUP             137
 #define IDD_FORMVIEW_MYINFO             138
+#define IDD_DIALOG_FRIENDSLIST          139
+#define IDD_FORMVIEW_FRIENDS_LIST       140
+#define IDD_DIALOG_FRIENDADD            144
 #define IDC_PICTURE_CONTROL             1000
 #define IDC_STATIC_HSCHAT               1001
 #define IDC_STATIC_SIGNIN_STATE         1002
@@ -93,6 +96,7 @@
 #define IDC_EDIT_SIGNUP_ID              1047
 #define IDC_BUTTON_SIGNUP_OK            1048
 #define IDC_BUTTON_SIGNUP_CANCEL        1049
+#define IDC_BUTTON_FRIENDS_ADD          1049
 #define IDC_STATIC_SIGNUP_PHONE         1050
 #define IDC_BUTTON_WATING_MAKEROOM      1050
 #define IDC_EDIT_SIGNUP_PHONE           1051
@@ -113,16 +117,22 @@
 #define IDC_BUTTON_MYINFO_CANCEL        1067
 #define IDC_BUTTON_MYINFO_OK            1068
 #define IDC_BUTTON_MYINFO_DELETE        1069
-#define IDC_DATETIMEPICKER1             1070
 #define IDC_DATETIMEPICKER_BIRTH        1070
+#define IDC_PICTURE_FRIENDSLIST         1071
+#define IDC_LIST_FRIENDLIST_FRIENDS     1073
+#define IDC_BUTTON_FRIENDS_DELETE       1074
+#define IDC_STATIC_FRIENDADD_NICKNAME   1075
+#define IDC_EDIT_FRIENDADD_NICKNAME     1076
+#define IDC_BUTTON_FRIENDADD_CANCEL     1077
+#define IDC_BUTTON_FRIENDADD_OK         1078
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        137
+#define _APS_NEXT_RESOURCE_VALUE        146
 #define _APS_NEXT_COMMAND_VALUE         32771
-#define _APS_NEXT_CONTROL_VALUE         1071
+#define _APS_NEXT_CONTROL_VALUE         1079
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

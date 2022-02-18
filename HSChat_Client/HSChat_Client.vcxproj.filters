@@ -63,6 +63,15 @@
     <ClInclude Include="CMyInfoForm.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="CFriendListForm.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="CFriendsListDlg.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="CFriendAddDlg.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="HSChat.cpp">
@@ -108,6 +117,15 @@
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="CMyInfoForm.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="CFriendListForm.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="CFriendsListDlg.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="CFriendAddDlg.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>

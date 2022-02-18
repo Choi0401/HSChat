@@ -30,4 +30,6 @@ public:
 	afx_msg void OnBnClickedButtonWatingMyinfo();
 	CListCtrl m_roomlist;
 	afx_msg void OnNMDblclkListWatingRoom(NMHDR* pNMHDR, LRESULT* pResult);
+	CListCtrl m_friendslist;
+	afx_msg void OnBnClickedButtonWatingFriends();
 };

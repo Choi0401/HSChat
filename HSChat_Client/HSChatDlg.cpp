@@ -7,11 +7,7 @@
 #include "HSChatDlg.h"
 #include "afxdialogex.h"
 #include "json/json.h"
-#include <chrono>
-#include <thread>
 #include <locale.h>
-
-using std::this_thread::sleep_for;
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -69,6 +65,7 @@ CHSChatDlg::CHSChatDlg(CWnd* pParent /*=nullptr*/)
 	m_pChatRoomForm = NULL;
 	m_pClient = new CClient();
 	m_pOpenssl = new COpenSSL();
+	m_pFriendslistDlg = NULL;
 }
 
 void CHSChatDlg::DoDataExchange(CDataExchange* pDX)
@@ -151,9 +148,9 @@ void CHSChatDlg::OnSysCommand(UINT nID, LPARAM lParam)
 	{
 		if (AfxMessageBox(_T("프로그램을 종료하시겠습니까?"), MB_YESNO | MB_ICONQUESTION) == IDYES)
 		{
-			
+
 			//TODO: 여기 다시한번확인해야함
-			if( m_pClient->m_getNickname().length() != 0)
+			if (m_pClient->m_getNickname().length() != 0)
 				m_pClient->m_LogOut();
 			m_pClient->m_CloseSocket();
 			Sleep(1);
@@ -430,7 +427,7 @@ LRESULT CHSChatDlg::m_Proc(WPARAM wParam, LPARAM lParam)
 				{
 					//TODO: 클라이언트의 이름, 아이디를 클래스에 저장해야함
 					m_pClient->m_setNickname(nickname);
-					m_pClient->m_RequestAllList();					
+					m_pClient->m_RequestAllList();
 					AfxMessageBox(cstr, MB_ICONINFORMATION);
 					m_ShowForm(4);
 
@@ -450,18 +447,19 @@ LRESULT CHSChatDlg::m_Proc(WPARAM wParam, LPARAM lParam)
 				if (result == "true")
 				{
 					m_pWatingForm->m_roomlist.DeleteAllItems();
+					m_pWatingForm->m_friendslist.DeleteAllItems();
 					Json::Value roomlist = recvroot["roomlist"];
-					Json::ValueIterator it;
+					Json::ValueIterator itroom;
 					int roomcnt = recvroot["roomlist"].size();
 					int i = 0;
-					for (it = roomlist.begin(), i = 0; it != roomlist.end(); it++, i++)
+					for (itroom = roomlist.begin(), i = 0; itroom != roomlist.end(); itroom++, i++)
 					{
-						if (it->isObject())
+						if (itroom->isObject())
 						{
-							int roomnum = (*it)["roomnum"].asInt();
-							int usernum = (*it)["usernum"].asInt();
-							int maxusernum = (*it)["maxusernum"].asInt();
-							string roomname = (*it)["roomname"].asString();
+							int roomnum = (*itroom)["roomnum"].asInt();
+							int usernum = (*itroom)["usernum"].asInt();
+							int maxusernum = (*itroom)["maxusernum"].asInt();
+							string roomname = (*itroom)["roomname"].asString();
 							//string roomtype = (*it)["roomnum"].asString();	타입은 필요없을듯?
 
 							CString strRoomnum, strUsernum, strMaxusernum, strRoomname;
@@ -474,6 +472,25 @@ LRESULT CHSChatDlg::m_Proc(WPARAM wParam, LPARAM lParam)
 							m_pWatingForm->m_roomlist.SetItemText(i, 2, strUsernum + _T("/") + strMaxusernum);
 						}
 					}
+					Json::Value friendslist = recvroot["friendslist"];
+					Json::ValueIterator itfriends;
+					int friendscnt = recvroot["friendslist"].size();
+					for (itfriends = friendslist.begin(), i = 0; itfriends != friendslist.end(); itfriends++, i++)
+					{
+						if (itfriends->isObject())
+						{
+							string nickname = (*itfriends)["nickname"].asString();
+							string fstate = (*itfriends)["fstate"].asString();
+
+							CString strNickname;
+							strNickname = nickname.c_str();
+							if (fstate == "online")
+							{
+								m_pWatingForm->m_friendslist.InsertItem(i, strNickname);
+							}
+						}
+					}
+
 				}
 				// 실패
 				else if (result == "false")
@@ -481,6 +498,91 @@ LRESULT CHSChatDlg::m_Proc(WPARAM wParam, LPARAM lParam)
 
 				}
 			}
+			// 친구목록 버튼
+			else if (action == "friendslist")
+			{
+				// parse json
+				string result = recvroot["result"].asString();
+				// 성공
+				if (result == "true")
+				{
+					m_pFriendslistDlg->m_pFriendsListForm->m_friendslist.DeleteAllItems();
+					Json::Value friendslist = recvroot["friendslist"];
+					Json::ValueIterator itfriends;
+					int i = 0;
+					int friendscnt = recvroot["friendslist"].size();
+					for (itfriends = friendslist.begin(), i = 0; itfriends != friendslist.end(); itfriends++, i++)
+					{
+						if (itfriends->isObject())
+						{
+							string nickname = (*itfriends)["nickname"].asString();
+							string fstate = (*itfriends)["fstate"].asString();
+
+							CString strNickname;
+							strNickname = nickname.c_str();
+							m_pFriendslistDlg->m_pFriendsListForm->m_friendslist.InsertItem(i, strNickname);
+						}
+					}
+
+				}
+				// 실패
+				else if (result == "false")
+				{
+
+				}
+			}
+			// 친구추가
+			else if (action == "addfriend")
+			{
+			// parse json
+			string result = recvroot["result"].asString();
+			string msg = recvroot["msg"].asString();
+			CString cstr;
+			cstr = msg.c_str();
+			// 성공
+			if (result == "true")
+			{
+				AfxMessageBox(cstr);
+				//TODO: 함수로만들어야함,, 여기 안돼
+				/*Json::Value root;
+				Json::StyledWriter writer;
+				m_pFriendslistDlg = new CFriendsListDlg();
+				root["action"] = "friendslist";
+				root["nickname"] = m_pClient->m_getNickname();
+
+				m_pClient->m_data.msg = writer.write(root);
+				m_pClient->m_data.size = m_pClient->m_data.msg.size();
+				m_pClient->m_SendData();				*/
+			}
+			// 실패
+			else if (result == "false")
+			{
+
+			}
+			}
+
+			// 친구삭제
+			else if (action == "deletefriends")
+			{
+				// parse json
+				string result = recvroot["result"].asString();
+				string msg = recvroot["msg"].asString();
+				CString cstr;
+				cstr = msg.c_str();
+				// 성공
+				if (result == "true")
+				{
+					int nMark = m_pFriendslistDlg->m_pFriendsListForm->m_friendslist.GetSelectionMark();
+					m_pFriendslistDlg->m_pFriendsListForm->m_friendslist.DeleteItem(nMark);
+					AfxMessageBox(cstr);
+				}
+				// 실패
+				else if (result == "false")
+				{
+
+				}
+			}
+
 			// 회원가입 
 			else if (action == "signup")
 			{
