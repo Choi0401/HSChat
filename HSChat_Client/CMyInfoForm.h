@@ -26,6 +26,7 @@ public:
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
 	afx_msg void OnBnClickedButtonMyInfoOK();
 	afx_msg void OnBnClickedButtonMyInfoCancel();
+	afx_msg void OnBnClickedButtonMyInfoDelete();
 };
 
 

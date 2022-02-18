@@ -108,10 +108,11 @@ BOOL CWaitingForm::PreTranslateMessage(MSG* pMsg)
 
 void CWaitingForm::OnBnClickedButtonWatingMyinfo()
 {
+
 	Json::Value root;
 	Json::StyledWriter writer;
 	
-	root["action"] = "myinfo";
+	root["action"] = "showmyinfo";
 	root["nickname"] = m_pDlg->m_pClient->m_getNickname();
 
 	m_pDlg->m_pClient->m_data.msg = writer.write(root);

@@ -100,5 +100,5 @@ BOOL CChatRoomForm::PreTranslateMessage(MSG* pMsg)
 void CChatRoomForm::OnBnClickedButtonChatroomQuit()
 {
 	// TODO: 서버에 나가는 메시지 전송하고 소켓닫기 
-	m_pDlg->m_ShowForm(0);
+	m_pDlg->m_ShowForm(4);
 }

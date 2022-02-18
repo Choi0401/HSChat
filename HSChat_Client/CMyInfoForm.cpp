@@ -32,6 +32,7 @@ BEGIN_MESSAGE_MAP(CMyInfoForm, CFormView)
 	
 	ON_BN_CLICKED(IDC_BUTTON_MYINFO_OK, &CMyInfoForm::OnBnClickedButtonMyInfoOK)
 	ON_BN_CLICKED(IDC_BUTTON_MYINFO_CANCEL, &CMyInfoForm::OnBnClickedButtonMyInfoCancel)
+	ON_BN_CLICKED(IDC_BUTTON_MYINFO_DELETE, &CMyInfoForm::OnBnClickedButtonMyInfoDelete)
 END_MESSAGE_MAP()
 
 
@@ -67,12 +68,96 @@ BOOL CMyInfoForm::PreTranslateMessage(MSG* pMsg)
 
 void CMyInfoForm::OnBnClickedButtonMyInfoOK()
 {
-	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
+	CString strPhone, strNickname, strPW, strPWOK;
+	Json::Value root;
+	Json::StyledWriter writer;
+
+	GetDlgItemText(IDC_EDIT_MYINFO_PHONE, strPhone);
+	GetDlgItemText(IDC_EDIT_MYINFO_NICKNAME, strNickname);
+	GetDlgItemText(IDC_EDIT_MYINFO_PW, strPW);
+	GetDlgItemText(IDC_EDIT_MYINFO_PWOK, strPWOK);
+
+	if (strPhone.GetLength() == 0)
+		AfxMessageBox(_T("전화번호를 입력하세요!"), MB_ICONSTOP);
+	else if (strNickname.GetLength() == 0)
+		AfxMessageBox(_T("닉네임을 입력하세요!"), MB_ICONSTOP);
+	else if (strPW.GetLength() == 0)
+		AfxMessageBox(_T("비밀번호를 입력하세요!"), MB_ICONSTOP);
+	else if (strPWOK.GetLength() == 0)
+		AfxMessageBox(_T("비밀번호를 입력하세요!"), MB_ICONSTOP);
+	else if (strPW != strPWOK)
+		AfxMessageBox(_T("비밀번호를 확인하세요!"), MB_ICONSTOP);
+	else {
+		root["action"] = "changemyinfo";
+		root["phone"] = std::string(CT2CA(strPhone));
+		root["nickname"] = std::string(CT2CA(strNickname));
+		root["pw"] = std::string(CT2CA(strPW));
+
+		m_pDlg->m_pClient->m_data.msg = writer.write(root);
+		m_pDlg->m_pClient->m_data.size = m_pDlg->m_pClient->m_data.msg.size();
+		int ret_HeadWrite = 0;
+		if (m_pDlg->m_pClient->m_connstate == CLIENT_DISCONNECTED || (ret_HeadWrite = SSL_write(m_pDlg->m_pOpenssl->m_pSSL, &m_pDlg->m_pClient->m_data.size, sizeof(int))) <= 0)
+		{
+			AfxMessageBox(_T("서버에 연결할 수 없습니다."));
+		}
+		else
+		{
+			int ret_BodyWrite = 0;
+			if (m_pDlg->m_pClient->m_connstate == CLIENT_DISCONNECTED || (ret_BodyWrite = SSL_write(m_pDlg->m_pOpenssl->m_pSSL, &m_pDlg->m_pClient->m_data.msg[0], m_pDlg->m_pClient->m_data.size)) <= 0)
+			{
+				AfxMessageBox(_T("서버에 연결할 수 없습니다."));
+			}
+			SetDlgItemText(IDC_EDIT_MYINFO_PHONE, _T(""));
+			SetDlgItemText(IDC_EDIT_MYINFO_NICKNAME, _T(""));
+			SetDlgItemText(IDC_EDIT_MYINFO_PW, _T(""));
+			SetDlgItemText(IDC_EDIT_MYINFO_PWOK, _T(""));
+		}
+		m_pDlg->m_pClient->m_InitData();
+	}
+
 	
 }
+
+void CMyInfoForm::OnBnClickedButtonMyInfoDelete()
+{
+	if (AfxMessageBox(_T("정말로 탈퇴하시겠습니까?"), MB_YESNO | MB_ICONQUESTION) == IDYES)
+	{
+		Json::Value root;
+		Json::StyledWriter writer;
+
+		root["action"] = "deleteaccount";
+		root["nickname"] = m_pDlg->m_pClient->m_getNickname();
+
+
+		m_pDlg->m_pClient->m_data.msg = writer.write(root);
+		m_pDlg->m_pClient->m_data.size = m_pDlg->m_pClient->m_data.msg.size();
+		int ret_HeadWrite = 0;
+		if (m_pDlg->m_pClient->m_connstate == CLIENT_DISCONNECTED || (ret_HeadWrite = SSL_write(m_pDlg->m_pOpenssl->m_pSSL, &m_pDlg->m_pClient->m_data.size, sizeof(int))) <= 0)
+		{
+			AfxMessageBox(_T("서버에 연결할 수 없습니다."));
+		}
+		else
+		{
+			int ret_BodyWrite = 0;
+			if (m_pDlg->m_pClient->m_connstate == CLIENT_DISCONNECTED || (ret_BodyWrite = SSL_write(m_pDlg->m_pOpenssl->m_pSSL, &m_pDlg->m_pClient->m_data.msg[0], m_pDlg->m_pClient->m_data.size)) <= 0)
+			{
+				AfxMessageBox(_T("서버에 연결할 수 없습니다."));
+			}
+		}
+		m_pDlg->m_pClient->m_InitData();
+
+	}
+	else
+	{
+		;
+	}	
+}
+
 
 
 void CMyInfoForm::OnBnClickedButtonMyInfoCancel()
 {
 	m_pDlg->m_ShowForm(4);
 }
+
+

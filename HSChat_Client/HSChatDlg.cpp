@@ -510,7 +510,7 @@ LRESULT CHSChatDlg::m_Proc(WPARAM wParam, LPARAM lParam)
 
 				}
 			}
-			else if (action == "myinfo")
+			else if (action == "showmyinfo")
 			{
 				// parse json
 				string result = recvroot["result"].asString();				
@@ -528,12 +528,52 @@ LRESULT CHSChatDlg::m_Proc(WPARAM wParam, LPARAM lParam)
 					m_pMyInfomForm->SetDlgItemText(IDC_EDIT_MYINFO_ID, cid);
 					m_pMyInfomForm->SetDlgItemText(IDC_EDIT_MYINFO_BIRTH, cbirth);
 					m_ShowForm(5);
+
+					
 				}
 				// 실패
 				else if (result == "false")
 				{
 
 				}
+			}
+			else if (action == "changemyinfo")
+			{
+				// parse json
+				string result = recvroot["result"].asString();				
+				string msg = recvroot["msg"].asString();
+				CString cstr;
+				cstr = msg.c_str();
+				// 성공
+				if (result == "true")
+				{					
+					m_ShowForm(4);
+					AfxMessageBox(cstr, MB_ICONINFORMATION);					
+				}
+				// 실패
+				else if (result == "false")
+				{
+
+				}
+			}
+			else if (action == "deleteaccount")
+			{
+			// parse json
+			string result = recvroot["result"].asString();
+			string msg = recvroot["msg"].asString();
+			CString cstr;
+			cstr = msg.c_str();
+			// 성공
+			if (result == "true")
+			{
+				m_ShowForm(0);
+				AfxMessageBox(cstr, MB_ICONINFORMATION);
+			}
+			// 실패
+			else if (result == "false")
+			{
+
+			}
 			}
 			// 채팅방 만들기 
 			else if (action == "createroom")
