@@ -112,16 +112,17 @@
 #define IDC_EDIT_MYINFO_PWOK            1066
 #define IDC_BUTTON_MYINFO_CANCEL        1067
 #define IDC_BUTTON_MYINFO_OK            1068
-#define IDC_BUTTON_MYINFO_OK2           1069
 #define IDC_BUTTON_MYINFO_DELETE        1069
+#define IDC_DATETIMEPICKER1             1070
+#define IDC_DATETIMEPICKER_BIRTH        1070
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        135
+#define _APS_NEXT_RESOURCE_VALUE        137
 #define _APS_NEXT_COMMAND_VALUE         32771
-#define _APS_NEXT_CONTROL_VALUE         1069
+#define _APS_NEXT_CONTROL_VALUE         1071
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

@@ -24,6 +24,7 @@ public:
 	SOCKADDR_IN m_addr;
 	WSADATA m_wsaData;
 
+	CHSChatDlg* m_pDlg;
 
 	Data m_data;
 	TsQueue <string> m_queue;
@@ -43,7 +44,11 @@ public:
 	void m_InitSocket();
 	void m_OpenConnection();
 	void m_CloseSocket();
-	void m_ErrorHandling(CString str);
 	void m_InitData();
+
+	void m_RequestAllList();
+	void m_LogOut();
+	void m_SendData();
+
 };
 

@@ -1,6 +1,8 @@
 #include "pch.h"
+#include "HSChat.h"
+#include "HSChatDlg.h"
 #include "CClient.h"
-
+#include "json/json.h"
 
 using namespace std;
 
@@ -12,6 +14,7 @@ CClient::CClient()
     m_data.msg.clear();
     memset(&m_addr, 0, sizeof(m_addr));
     m_roomnum = 0;
+    m_pDlg = (CHSChatDlg*)::AfxGetMainWnd();
 }
 
 void CClient::m_setID(string id)
@@ -78,14 +81,50 @@ void CClient::m_InitData()
     m_data.size = 0;
 }
 
-
-
-void CClient::m_ErrorHandling(CString str)
+void CClient::m_SendData()
 {
-    CString errstr;
-    errstr.Format(str + "%d", WSAGetLastError());
-    //AfxMessageBox(errstr);
-    //exit(1);
+    int ret_HeadWrite = 0;
+    if (m_pDlg == NULL) m_pDlg = (CHSChatDlg*)::AfxGetMainWnd();
+    if (m_connstate == CLIENT_DISCONNECTED || (ret_HeadWrite = SSL_write(m_pDlg->m_pOpenssl->m_pSSL, &m_data.size, sizeof(int))) <= 0)
+    {
+        AfxMessageBox(_T("서버에 연결할 수 없습니다."));
+    }
+    else
+    {
+        int ret_BodyWrite = 0;
+        if (m_connstate == CLIENT_DISCONNECTED || (ret_BodyWrite = SSL_write(m_pDlg->m_pOpenssl->m_pSSL, &m_data.msg[0], m_data.size)) <= 0)
+        {
+            AfxMessageBox(_T("서버에 연결할 수 없습니다."));
+        }
+    }
+    m_InitData();
 }
 
+void CClient::m_RequestAllList()
+{
+    Json::Value root;
+    Json::StyledWriter writer;
 
+    root["action"] = "alllist";
+    root["nickname"] = m_getNickname();
+
+    m_data.msg = writer.write(root);
+    m_data.size = m_data.msg.size();
+
+    m_SendData();
+    
+}
+
+void CClient::m_LogOut()
+{
+    Json::Value root;
+    Json::StyledWriter writer;
+
+    root["action"] = "logout";
+    root["nickname"] = m_getNickname();
+
+    m_data.msg = writer.write(root);
+    m_data.size = m_data.msg.size();
+
+    m_SendData();
+}

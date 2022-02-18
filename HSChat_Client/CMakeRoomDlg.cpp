@@ -74,26 +74,15 @@ void CMakeRoomDlg::OnBnClickedButtonMakeroom()
 		root["roomname"] = std::string(CT2CA(strRoomName));
 		root["usernum"] = userNum;
 		if (m_pRB_public->GetCheck())
-			root["private"] = "false";
+			root["roomtype"] = "public";
 		else
-			root["private"] = "true";
+			root["roomtype"] = "private";
 
 		m_pDlg->m_pClient->m_data.msg = writer.write(root);
 		m_pDlg->m_pClient->m_data.size = m_pDlg->m_pClient->m_data.msg.size();
-		int ret_HeadWrite = 0;
-		if (m_pDlg->m_pClient->m_connstate == CLIENT_DISCONNECTED || (ret_HeadWrite = SSL_write(m_pDlg->m_pOpenssl->m_pSSL, &m_pDlg->m_pClient->m_data.size, sizeof(int))) <= 0)
-		{
-			AfxMessageBox(_T("서버에 연결할 수 없습니다."));
-		}
-		else
-		{
-			int ret_BodyWrite = 0;
-			if (m_pDlg->m_pClient->m_connstate == CLIENT_DISCONNECTED || (ret_BodyWrite = SSL_write(m_pDlg->m_pOpenssl->m_pSSL, &m_pDlg->m_pClient->m_data.msg[0], m_pDlg->m_pClient->m_data.size)) <= 0)
-			{
-				AfxMessageBox(_T("서버에 연결할 수 없습니다."));
-			}
-		}
-		m_pDlg->m_pClient->m_InitData();
+		
+		m_pDlg->m_pClient->m_SendData();
+
 		EndDialog(IDOK);
 	}
 

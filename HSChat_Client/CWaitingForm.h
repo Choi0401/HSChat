@@ -28,4 +28,6 @@ public:
 	afx_msg void OnBnClickedButtonWatingMakeroom();
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
 	afx_msg void OnBnClickedButtonWatingMyinfo();
+	CListCtrl m_roomlist;
+	afx_msg void OnNMDblclkListWatingRoom(NMHDR* pNMHDR, LRESULT* pResult);
 };

@@ -9,10 +9,9 @@
 
 IMPLEMENT_DYNAMIC(CWaitingForm, CFormView)
 
-CWaitingForm::CWaitingForm()
-	: CFormView(IDD_FORMVIEW_WAITING)
+CWaitingForm::CWaitingForm() : CFormView(IDD_FORMVIEW_WAITING)
 {
-	m_pDlg = (CHSChatDlg*)::AfxGetMainWnd();
+	m_pDlg = (CHSChatDlg*)::AfxGetMainWnd();	
 }
 
 CWaitingForm::CWaitingForm(UINT nIDTemplate)
@@ -28,6 +27,7 @@ CWaitingForm::~CWaitingForm()
 void CWaitingForm::DoDataExchange(CDataExchange* pDX)
 {
 	CFormView::DoDataExchange(pDX);
+	DDX_Control(pDX, IDC_LIST_WATING_ROOM, m_roomlist);
 }
 
 
@@ -36,6 +36,7 @@ BEGIN_MESSAGE_MAP(CWaitingForm, CFormView)
 	ON_BN_CLICKED(IDC_BUTTON_WATING_EXIT, &CWaitingForm::OnBnClickedButtonWatingExit)
 	ON_BN_CLICKED(IDC_BUTTON_WATING_MAKEROOM, &CWaitingForm::OnBnClickedButtonWatingMakeroom)
 	ON_BN_CLICKED(IDC_BUTTON_WATING_MYINFO, &CWaitingForm::OnBnClickedButtonWatingMyinfo)
+	ON_NOTIFY(NM_DBLCLK, IDC_LIST_WATING_ROOM, &CWaitingForm::OnNMDblclkListWatingRoom)
 END_MESSAGE_MAP()
 
 
@@ -53,21 +54,21 @@ BOOL CWaitingForm::Create(LPCTSTR lpszClassName, LPCTSTR lpszWindowName, DWORD d
 void CWaitingForm::OnInitialUpdate()
 {
 	CFormView::OnInitialUpdate();
-
-	// TODO: 여기에 특수화된 코드를 추가 및/또는 기본 클래스를 호출합니다.
-
-
+	// TODO: 여기에 특수화된 코드를 추가 및/또는 기본 클래스를 호출합니다.		
+	CRect rect;
+	m_roomlist.GetClientRect(&rect);
+	m_roomlist.SetExtendedStyle(LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES);
+	m_roomlist.InsertColumn(0, _T("번호"), LVCFMT_CENTER, 50);
+	m_roomlist.InsertColumn(1, _T("이름"), LVCFMT_LEFT, 300);
+	m_roomlist.InsertColumn(2, _T("인원"), LVCFMT_RIGHT, rect.Width() -350);
+	m_roomlist.GetHeaderCtrl()->EnableWindow(false);
 }
 
 
 
 void CWaitingForm::OnBnClickedButtonWatingLogout()
 {
-	// 서버에 로그아웃하는 메시지 전송 
-
-	// 로그아웃 실패
-
-	// 로그아웃 성공
+	m_pDlg->m_pClient->m_LogOut();
 	m_pDlg->m_ShowForm(0);
 }
 
@@ -118,18 +119,32 @@ void CWaitingForm::OnBnClickedButtonWatingMyinfo()
 	m_pDlg->m_pClient->m_data.msg = writer.write(root);
 	m_pDlg->m_pClient->m_data.size = m_pDlg->m_pClient->m_data.msg.size();
 
-	int ret_HeadWrite = 0;
-	if (m_pDlg->m_pOpenssl->m_pSSL == NULL || (ret_HeadWrite = SSL_write(m_pDlg->m_pOpenssl->m_pSSL, &m_pDlg->m_pClient->m_data.size, sizeof(int))) <= 0)
+	m_pDlg->m_pClient->m_SendData();
+
+}
+
+
+void CWaitingForm::OnNMDblclkListWatingRoom(NMHDR* pNMHDR, LRESULT* pResult)
+{
+	LPNMITEMACTIVATE pNMItemActivate = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
+	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
+	if (pNMItemActivate->iItem != -1)
 	{
-		AfxMessageBox(_T("서버에 연결할 수 없습니다."));
+		CString strroomnum = m_roomlist.GetItemText(pNMItemActivate->iItem, 0);
+		Json::Value root;
+		Json::StyledWriter writer;
+		int roomnum = _ttoi(strroomnum);
+	
+
+
+		root["action"] = "enterroom";
+		root["nickname"] = m_pDlg->m_pClient->m_getNickname();
+		root["roomnum"] = roomnum;
+		
+		m_pDlg->m_pClient->m_data.msg = writer.write(root);
+		m_pDlg->m_pClient->m_data.size = m_pDlg->m_pClient->m_data.msg.size();
+		
+		m_pDlg->m_pClient->m_SendData();
 	}
-	else
-	{
-		int ret_BodyWrite = 0;
-		if ((ret_BodyWrite = SSL_write(m_pDlg->m_pOpenssl->m_pSSL, &m_pDlg->m_pClient->m_data.msg[0], m_pDlg->m_pClient->m_data.size)) <= 0)
-		{
-			AfxMessageBox(_T("서버에 연결할 수 없습니다."));
-		}
-	}
-	m_pDlg->m_pClient->m_InitData();
+	*pResult = 0;
 }

@@ -24,19 +24,19 @@ class CAboutDlg : public CDialogEx
 public:
 	CAboutDlg();
 
-// 대화 상자 데이터입니다.
+	// 대화 상자 데이터입니다.
 #ifdef AFX_DESIGN_TIME
 	enum { IDD = IDD_ABOUTBOX };
 #endif
 
-	protected:
+protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 지원입니다.
-	
+
 // 구현입니다.
 protected:
 	DECLARE_MESSAGE_MAP()
 public:
-//	virtual BOOL PreTranslateMessage(MSG* pMsg);
+	//	virtual BOOL PreTranslateMessage(MSG* pMsg);
 };
 
 CAboutDlg::CAboutDlg() : CDialogEx(IDD_ABOUTBOX)
@@ -64,7 +64,7 @@ CHSChatDlg::CHSChatDlg(CWnd* pParent /*=nullptr*/)
 	m_pSignupForm = NULL;
 	m_pSearchIDForm = NULL;
 	m_pSearchPWForm = NULL;
-	m_pWatingForm = NULL;	
+	m_pWatingForm = NULL;
 	m_pMyInfomForm = NULL;
 	m_pChatRoomForm = NULL;
 	m_pClient = new CClient();
@@ -73,13 +73,13 @@ CHSChatDlg::CHSChatDlg(CWnd* pParent /*=nullptr*/)
 
 void CHSChatDlg::DoDataExchange(CDataExchange* pDX)
 {
-	CDialogEx::DoDataExchange(pDX);	
+	CDialogEx::DoDataExchange(pDX);
 }
 
 BEGIN_MESSAGE_MAP(CHSChatDlg, CDialogEx)
 	ON_WM_SYSCOMMAND()
 	ON_WM_PAINT()
-	ON_WM_QUERYDRAGICON()	
+	ON_WM_QUERYDRAGICON()
 	ON_WM_SIZE()
 	ON_MESSAGE(MESSAGE_SET_STATE, &CHSChatDlg::m_SetState)
 	ON_MESSAGE(MESSAGE_PROC, &CHSChatDlg::m_Proc)
@@ -151,13 +151,16 @@ void CHSChatDlg::OnSysCommand(UINT nID, LPARAM lParam)
 	{
 		if (AfxMessageBox(_T("프로그램을 종료하시겠습니까?"), MB_YESNO | MB_ICONQUESTION) == IDYES)
 		{
-
-			//TODO: 종료하기전에 서버에 종료 메시지 보내줘야함
-			m_pClient->m_CloseSocket();
-			ExitProcess(0);
 			
+			//TODO: 여기 다시한번확인해야함
+			if( m_pClient->m_getNickname().length() != 0)
+				m_pClient->m_LogOut();
+			m_pClient->m_CloseSocket();
+			Sleep(1);
+			ExitProcess(0);
+
 		}
-		else 
+		else
 		{
 			;
 		}
@@ -249,7 +252,7 @@ void CHSChatDlg::m_AllocForm()
 	m_pChatRoomForm->OnInitialUpdate();
 	m_pChatRoomForm->ShowWindow(SW_HIDE);
 
-	
+
 
 
 
@@ -279,7 +282,7 @@ void CHSChatDlg::m_ShowForm(int idx)
 		m_pSearchPWForm->ShowWindow(SW_HIDE);
 		m_pWatingForm->ShowWindow(SW_HIDE);
 		m_pMyInfomForm->ShowWindow(SW_HIDE);
-		m_pChatRoomForm->ShowWindow(SW_HIDE);		
+		m_pChatRoomForm->ShowWindow(SW_HIDE);
 		m_pSignupForm->GetDlgItem(IDC_EDIT_SIGNUP_NAME)->SetFocus();
 		break;
 
@@ -337,13 +340,6 @@ void CHSChatDlg::m_ShowForm(int idx)
 		m_pMyInfomForm->ShowWindow(SW_HIDE);
 		m_pChatRoomForm->ShowWindow(SW_SHOW);
 		m_pChatRoomForm->GetDlgItem(IDC_EDIT_CHATROOM_SENDMSG)->SetFocus();
-		/*CEdit* p_EditSend = NULL;
-		if ((p_EditSend = (CEdit*)m_pChatRoomForm->GetDlgItem(IDC_EDIT_CHATROOM_SENDMSG)) == NULL)
-		{
-			AfxMessageBox(_T("ERROR[GetDlgItem()] : Failed to get IDC_EDIT_CHATROOM_SENDMSG"));
-		}
-		p_EditSend->SetSel(-1);
-		p_EditSend->SetFocus();*/
 		break;
 
 	}
@@ -352,13 +348,13 @@ void CHSChatDlg::m_ShowForm(int idx)
 
 UINT CHSChatDlg::m_RecvThread(LPVOID _mothod)
 {
-	CHSChatDlg* fir = (CHSChatDlg*)_mothod;	
+	CHSChatDlg* fir = (CHSChatDlg*)_mothod;
 	while (1)
-	{				
+	{
 		// Connect 시도
 		if (fir->m_pClient->m_connstate == CLIENT_DISCONNECTED) {
 			fir->m_pClient->m_OpenConnection();
-			
+
 			if (fir->m_pClient->m_connstate == CLIENT_CONNECTED)
 			{
 				fir->m_pOpenssl->m_pSSL = SSL_new(fir->m_pOpenssl->m_pCTX);
@@ -374,22 +370,20 @@ UINT CHSChatDlg::m_RecvThread(LPVOID _mothod)
 				}
 			}
 		}
-		else 
-		{									
+		else
+		{
 			// Success Connect 			
-			int ret_HeadRead = 0;			
+			int ret_HeadRead = 0;
 			ret_HeadRead = SSL_read(fir->m_pOpenssl->m_pSSL, &fir->m_pClient->m_data.size, sizeof(int));
-						
+
 			if (ret_HeadRead > 0)
 			{
 				fir->m_pClient->m_data.msg.resize(fir->m_pClient->m_data.size);
-				int ret_BodyRead = SSL_read(fir->m_pOpenssl->m_pSSL,&fir->m_pClient->m_data.msg[0], fir->m_pClient->m_data.size);
-
-				//TODO : 큐가 최대일 때 처리, Locking
+				int ret_BodyRead = SSL_read(fir->m_pOpenssl->m_pSSL, &fir->m_pClient->m_data.msg[0], fir->m_pClient->m_data.size);
 				fir->m_pClient->m_queue.push(fir->m_pClient->m_data.msg);
-				::PostMessage(fir->m_hWnd, MESSAGE_PROC, NULL, NULL);					
+				::PostMessage(fir->m_hWnd, MESSAGE_PROC, NULL, NULL);
 			}
-			else {								
+			else {
 				fir->m_pOpenssl->m_pSSL = NULL;
 				fir->m_pClient->m_CloseSocket();
 				fir->m_pClient->m_InitSocket();
@@ -398,10 +392,10 @@ UINT CHSChatDlg::m_RecvThread(LPVOID _mothod)
 				::PostMessage(fir->m_hWnd, MESSAGE_SET_STATE, NULL, NULL);
 				fir->m_ShowForm(0);
 
-			}			
+			}
 			fir->m_pClient->m_InitData();
 		}
-	}	
+	}
 }
 
 LRESULT CHSChatDlg::m_Proc(WPARAM wParam, LPARAM lParam)
@@ -434,13 +428,52 @@ LRESULT CHSChatDlg::m_Proc(WPARAM wParam, LPARAM lParam)
 				// 성공
 				if (result == "true")
 				{
-					m_ShowForm(4);
-					//fir->m_pSigninForm->SetDlgItemText(IDC_EDIT_SIGNIN_ID, _T(""));
-					//fir->m_pSigninForm->SetDlgItemText(IDC_EDIT_SIGNIN_PW, _T(""));
-					AfxMessageBox(cstr, MB_ICONINFORMATION);
 					//TODO: 클라이언트의 이름, 아이디를 클래스에 저장해야함
 					m_pClient->m_setNickname(nickname);
-					//TODO: 서버에 방, 친구 목록 요청해야함
+					m_pClient->m_RequestAllList();					
+					AfxMessageBox(cstr, MB_ICONINFORMATION);
+					m_ShowForm(4);
+
+				}
+				// 실패
+				else if (result == "false")
+				{
+
+				}
+			}
+			// 채팅방 및 친구목록 
+			else if (action == "alllist")
+			{
+				// parse json
+				string result = recvroot["result"].asString();
+				// 성공
+				if (result == "true")
+				{
+					m_pWatingForm->m_roomlist.DeleteAllItems();
+					Json::Value roomlist = recvroot["roomlist"];
+					Json::ValueIterator it;
+					int roomcnt = recvroot["roomlist"].size();
+					int i = 0;
+					for (it = roomlist.begin(), i = 0; it != roomlist.end(); it++, i++)
+					{
+						if (it->isObject())
+						{
+							int roomnum = (*it)["roomnum"].asInt();
+							int usernum = (*it)["usernum"].asInt();
+							int maxusernum = (*it)["maxusernum"].asInt();
+							string roomname = (*it)["roomname"].asString();
+							//string roomtype = (*it)["roomnum"].asString();	타입은 필요없을듯?
+
+							CString strRoomnum, strUsernum, strMaxusernum, strRoomname;
+							strRoomnum.Format(_T("%d"), roomnum);
+							strUsernum.Format(_T("%d"), usernum);
+							strMaxusernum.Format(_T("%d"), maxusernum);
+							strRoomname = roomname.c_str();
+							m_pWatingForm->m_roomlist.InsertItem(i, strRoomnum);
+							m_pWatingForm->m_roomlist.SetItemText(i, 1, strRoomname);
+							m_pWatingForm->m_roomlist.SetItemText(i, 2, strUsernum + _T("/") + strMaxusernum);
+						}
+					}
 				}
 				// 실패
 				else if (result == "false")
@@ -513,7 +546,7 @@ LRESULT CHSChatDlg::m_Proc(WPARAM wParam, LPARAM lParam)
 			else if (action == "showmyinfo")
 			{
 				// parse json
-				string result = recvroot["result"].asString();				
+				string result = recvroot["result"].asString();
 				// 성공
 				if (result == "true")
 				{
@@ -529,7 +562,7 @@ LRESULT CHSChatDlg::m_Proc(WPARAM wParam, LPARAM lParam)
 					m_pMyInfomForm->SetDlgItemText(IDC_EDIT_MYINFO_BIRTH, cbirth);
 					m_ShowForm(5);
 
-					
+
 				}
 				// 실패
 				else if (result == "false")
@@ -540,15 +573,15 @@ LRESULT CHSChatDlg::m_Proc(WPARAM wParam, LPARAM lParam)
 			else if (action == "changemyinfo")
 			{
 				// parse json
-				string result = recvroot["result"].asString();				
+				string result = recvroot["result"].asString();
 				string msg = recvroot["msg"].asString();
 				CString cstr;
 				cstr = msg.c_str();
 				// 성공
 				if (result == "true")
-				{					
+				{
 					m_ShowForm(4);
-					AfxMessageBox(cstr, MB_ICONINFORMATION);					
+					AfxMessageBox(cstr, MB_ICONINFORMATION);
 				}
 				// 실패
 				else if (result == "false")
@@ -558,22 +591,22 @@ LRESULT CHSChatDlg::m_Proc(WPARAM wParam, LPARAM lParam)
 			}
 			else if (action == "deleteaccount")
 			{
-			// parse json
-			string result = recvroot["result"].asString();
-			string msg = recvroot["msg"].asString();
-			CString cstr;
-			cstr = msg.c_str();
-			// 성공
-			if (result == "true")
-			{
-				m_ShowForm(0);
-				AfxMessageBox(cstr, MB_ICONINFORMATION);
-			}
-			// 실패
-			else if (result == "false")
-			{
+				// parse json
+				string result = recvroot["result"].asString();
+				string msg = recvroot["msg"].asString();
+				CString cstr;
+				cstr = msg.c_str();
+				// 성공
+				if (result == "true")
+				{
+					m_ShowForm(0);
+					AfxMessageBox(cstr, MB_ICONINFORMATION);
+				}
+				// 실패
+				else if (result == "false")
+				{
 
-			}
+				}
 			}
 			// 채팅방 만들기 
 			else if (action == "createroom")
@@ -600,9 +633,34 @@ LRESULT CHSChatDlg::m_Proc(WPARAM wParam, LPARAM lParam)
 
 				}
 			}
+			// 채팅방 입장 
+			else if (action == "enterroom")
+			{
+				// parse json
+				string result = recvroot["result"].asString();
+				string msg = recvroot["msg"].asString();
+				CString cstr;
+				cstr = msg.c_str();
+				// 성공
+				if (result == "true")
+				{
+					int roomnum = recvroot["roomnum"].asInt();
+					m_pClient->m_roomnum = roomnum;
+					CString str;
+					str.Format(_T("[%d번]채팅방"), roomnum);
+					m_pChatRoomForm->GetDlgItem(IDC_STATIC_CHATROOM)->SetWindowText(str);
+					//TODO : 채팅방에 오신것을 환영합니다 출력해야함
+					m_ShowForm(6);
+				}
+				// 실패
+				else if (result == "false")
+				{
+
+				}
+			}
 
 
-		}		
+		}
 	}
 
 	return 0;
