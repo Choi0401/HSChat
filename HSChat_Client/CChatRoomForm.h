@@ -35,6 +35,9 @@ public:
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
 	afx_msg void OnBnClickedButtonChatroomQuit();
 
+	CEdit m_chat;
+	CEdit m_sendmsg;
+	CListCtrl m_roomuserlist;
 };
 
 

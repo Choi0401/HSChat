@@ -23,7 +23,6 @@ public:
 
 	CHSChatDlg* m_pDlg;
 
-
 	CListCtrl m_friendslist;
 	afx_msg void OnBnClickedButtonFriendsAdd();
 	afx_msg void OnBnClickedButtonFriendsDelete();

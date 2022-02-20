@@ -534,31 +534,30 @@ LRESULT CHSChatDlg::m_Proc(WPARAM wParam, LPARAM lParam)
 			// 친구추가
 			else if (action == "addfriend")
 			{
-			// parse json
-			string result = recvroot["result"].asString();
-			string msg = recvroot["msg"].asString();
-			CString cstr;
-			cstr = msg.c_str();
-			// 성공
-			if (result == "true")
-			{
-				AfxMessageBox(cstr);
-				//TODO: 함수로만들어야함,, 여기 안돼
-				/*Json::Value root;
-				Json::StyledWriter writer;
-				m_pFriendslistDlg = new CFriendsListDlg();
-				root["action"] = "friendslist";
-				root["nickname"] = m_pClient->m_getNickname();
+				// parse json
+				string result = recvroot["result"].asString();
+				string msg = recvroot["msg"].asString();
+				CString cstr;
+				cstr = msg.c_str();
+				// 성공
+				if (result == "true")
+				{
+					AfxMessageBox(cstr);
+					Json::Value root;
+					Json::StyledWriter writer;
+					root["action"] = "friendslist";
+					root["nickname"] = m_pClient->m_getNickname();
 
-				m_pClient->m_data.msg = writer.write(root);
-				m_pClient->m_data.size = m_pClient->m_data.msg.size();
-				m_pClient->m_SendData();				*/
-			}
-			// 실패
-			else if (result == "false")
-			{
+					m_pClient->m_data.msg = writer.write(root);
+					m_pClient->m_data.size = m_pClient->m_data.msg.size();
+					m_pClient->m_SendData();
 
-			}
+				}
+				// 실패
+				else if (result == "false")
+				{
+
+				}
 			}
 
 			// 친구삭제
@@ -747,11 +746,38 @@ LRESULT CHSChatDlg::m_Proc(WPARAM wParam, LPARAM lParam)
 				if (result == "true")
 				{
 					int roomnum = recvroot["roomnum"].asInt();
+					string master = recvroot["master"].asString();
 					m_pClient->m_roomnum = roomnum;
 					CString str;
 					str.Format(_T("[%d번]채팅방"), roomnum);
 					m_pChatRoomForm->GetDlgItem(IDC_STATIC_CHATROOM)->SetWindowText(str);
-					//TODO : 채팅방에 오신것을 환영합니다 출력해야함
+					m_pChatRoomForm->GetDlgItem(IDC_EDIT_CHATROOM_RECVMSG)->SetWindowText(_T("                         --- 채팅에 참여했습니다 ---\r\n\r\n"));
+					
+					m_pChatRoomForm->m_roomuserlist.DeleteAllItems();
+					Json::Value userlist = recvroot["userlist"];
+					Json::ValueIterator ituser;
+					int i = 0;
+					int usercnt = recvroot["userlist"].size();
+					for (ituser = userlist.begin(), i = 0; ituser != userlist.end(); ituser++, i++)
+					{
+						if (ituser->isObject())
+						{
+							CString strNickname;
+							string nickname = (*ituser)["nickname"].asString();
+							if (master == nickname)
+							{
+								nickname += "(방장)";
+								strNickname = nickname.c_str();
+								m_pChatRoomForm->m_roomuserlist.InsertItem(0, strNickname);
+							}
+							else
+							{
+								strNickname = nickname.c_str();
+								m_pChatRoomForm->m_roomuserlist.InsertItem(i, strNickname);
+							}																					
+						}
+					}
+
 					m_ShowForm(6);
 				}
 				// 실패
@@ -760,8 +786,26 @@ LRESULT CHSChatDlg::m_Proc(WPARAM wParam, LPARAM lParam)
 
 				}
 			}
+			// 채팅 출력
+			else if (action == "recvmsg")
+			{
+				// parse json
+				string nickname = recvroot["nickname"].asString();
+				string time = recvroot["time"].asString();
+				string msg = recvroot["msg"].asString();
 
+				string tmpstr = "[" + time + "]" + nickname + " : " + msg + " \r\n";
 
+				// 채팅창 길이
+				int chatlength = m_pChatRoomForm->m_chat.GetWindowTextLength();
+				// 마지막 줄 선택
+				m_pChatRoomForm->m_chat.SetSel(chatlength, chatlength);
+				// 선택된 행의 텍스트를 교체
+				CString strmsg;
+				strmsg = tmpstr.c_str();
+				m_pChatRoomForm->m_chat.ReplaceSel(strmsg);
+		
+			}
 		}
 	}
 
