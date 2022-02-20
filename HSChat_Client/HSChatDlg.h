@@ -67,4 +67,6 @@ public:
 	LRESULT m_Proc(WPARAM wParam, LPARAM lParam);
 
 
+	afx_msg void OnMenuWhisper();
+	afx_msg void OnMenuAssign();
 };

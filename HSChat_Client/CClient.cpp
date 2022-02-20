@@ -14,6 +14,7 @@ CClient::CClient()
     m_data.msg.clear();
     memset(&m_addr, 0, sizeof(m_addr));
     m_roomnum = 0;
+    m_ismaster = false;
     m_pDlg = (CHSChatDlg*)::AfxGetMainWnd();
 }
 

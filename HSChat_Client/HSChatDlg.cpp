@@ -80,6 +80,8 @@ BEGIN_MESSAGE_MAP(CHSChatDlg, CDialogEx)
 	ON_WM_SIZE()
 	ON_MESSAGE(MESSAGE_SET_STATE, &CHSChatDlg::m_SetState)
 	ON_MESSAGE(MESSAGE_PROC, &CHSChatDlg::m_Proc)
+	ON_COMMAND(ID_MENU_WHISPER, &CHSChatDlg::OnMenuWhisper)
+	ON_COMMAND(ID_MENU_ASSIGN, &CHSChatDlg::OnMenuAssign)
 END_MESSAGE_MAP()
 
 
@@ -720,6 +722,8 @@ LRESULT CHSChatDlg::m_Proc(WPARAM wParam, LPARAM lParam)
 				// 성공
 				if (result == "true")
 				{
+					//TODO : 리스트 지워야함
+					m_pClient->m_ismaster = true;
 					int roomnum = recvroot["roomnum"].asInt();
 					m_pClient->m_roomnum = roomnum;
 					CString str;
@@ -748,11 +752,12 @@ LRESULT CHSChatDlg::m_Proc(WPARAM wParam, LPARAM lParam)
 					int roomnum = recvroot["roomnum"].asInt();
 					string master = recvroot["master"].asString();
 					m_pClient->m_roomnum = roomnum;
+					m_pClient->m_ismaster = false;
 					CString str;
 					str.Format(_T("[%d번]채팅방"), roomnum);
 					m_pChatRoomForm->GetDlgItem(IDC_STATIC_CHATROOM)->SetWindowText(str);
 					m_pChatRoomForm->GetDlgItem(IDC_EDIT_CHATROOM_RECVMSG)->SetWindowText(_T("                         --- 채팅에 참여했습니다 ---\r\n\r\n"));
-					
+
 					m_pChatRoomForm->m_roomuserlist.DeleteAllItems();
 					Json::Value userlist = recvroot["userlist"];
 					Json::ValueIterator ituser;
@@ -774,7 +779,7 @@ LRESULT CHSChatDlg::m_Proc(WPARAM wParam, LPARAM lParam)
 							{
 								strNickname = nickname.c_str();
 								m_pChatRoomForm->m_roomuserlist.InsertItem(i, strNickname);
-							}																					
+							}
 						}
 					}
 
@@ -804,7 +809,29 @@ LRESULT CHSChatDlg::m_Proc(WPARAM wParam, LPARAM lParam)
 				CString strmsg;
 				strmsg = tmpstr.c_str();
 				m_pChatRoomForm->m_chat.ReplaceSel(strmsg);
-		
+
+			}
+			// 채팅 출력
+			else if (action == "assignmaster")
+			{
+				// parse json
+				string result = recvroot["true"].asString();
+				string msg = recvroot["msg"].asString();
+
+				CString strmsg;
+				strmsg = msg.c_str();
+				if (result == "true")
+					m_pClient->m_ismaster = false;
+
+				//TODO : 유저리스트 재정렬 and 방장 바뀐것 출력
+				AfxMessageBox(strmsg);
+				string tmp = "[공지]" + m_pClient->m_getNickname() + "님이 " + msg + "\r\n";
+				CString str;
+				str = tmp.c_str();
+				int chatlength = m_pChatRoomForm->m_chat.GetWindowTextLength();
+				m_pChatRoomForm->m_chat.SetSel(chatlength, chatlength);
+				m_pChatRoomForm->m_chat.ReplaceSel(str);
+
 			}
 		}
 	}
@@ -833,4 +860,27 @@ void CHSChatDlg::OnSize(UINT nType, int cx, int cy)
 
 	// TODO: 창 크기 변화할 때 호출
 
+}
+
+void CHSChatDlg::OnMenuWhisper()
+{
+	// TODO: 여기에 명령 처리기 코드를 추가합니다.
+
+}
+
+
+void CHSChatDlg::OnMenuAssign()
+{
+	Json::Value root;
+	Json::StyledWriter writer;
+
+	root["action"] = "assignmaster";
+	root["nickname"] = std::string(CT2CA(m_pChatRoomForm->m_selUser));
+	root["roomnum"] = m_pClient->m_roomnum;
+
+	m_pClient->m_data.msg = writer.write(root);
+	m_pClient->m_data.size = m_pClient->m_data.msg.size();
+
+	m_pClient->m_SendData();
+	
 }

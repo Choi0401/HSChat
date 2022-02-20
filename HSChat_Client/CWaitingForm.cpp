@@ -143,8 +143,6 @@ void CWaitingForm::OnNMDblclkListWatingRoom(NMHDR* pNMHDR, LRESULT* pResult)
 		Json::StyledWriter writer;
 		int roomnum = _ttoi(strroomnum);
 	
-
-
 		root["action"] = "enterroom";
 		root["nickname"] = m_pDlg->m_pClient->m_getNickname();
 		root["roomnum"] = roomnum;

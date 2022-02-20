@@ -14,6 +14,8 @@ IMPLEMENT_DYNCREATE(CChatRoomForm, CFormView)
 CChatRoomForm::CChatRoomForm()
 	: CFormView(IDD_FORMVIEW_CHATROOM)
 {	
+	m_menu.LoadMenu(IDR_MENU);
+	m_submenu = m_menu.GetSubMenu(0);
 }
 
 CChatRoomForm::~CChatRoomForm()
@@ -32,6 +34,7 @@ void CChatRoomForm::DoDataExchange(CDataExchange* pDX)
 BEGIN_MESSAGE_MAP(CChatRoomForm, CFormView)
 	ON_BN_CLICKED(IDC_BUTTON_CHATROOM_SEND, &CChatRoomForm::OnBnClickedButtonChatroomSend)
 	ON_BN_CLICKED(IDC_BUTTON_CHATROOM_QUIT, &CChatRoomForm::OnBnClickedButtonChatroomQuit)
+	ON_NOTIFY(NM_RCLICK, IDC_LIST_CHATROOM_USERLIST, &CChatRoomForm::OnNMRClickListChatroomUserlist)
 END_MESSAGE_MAP()
 
 
@@ -124,4 +127,42 @@ void CChatRoomForm::OnBnClickedButtonChatroomQuit()
 {
 	m_pDlg->m_pClient->m_RequestAllList();
 	m_pDlg->m_ShowForm(4);
+}
+
+
+void CChatRoomForm::OnNMRClickListChatroomUserlist(NMHDR* pNMHDR, LRESULT* pResult)
+{
+	LPNMITEMACTIVATE pNMItemActivate = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
+	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.	
+	//m_menu.LoadMenu(IDR_MENU);
+	//m_submenu = m_menu.GetSubMenu(0);
+	CPoint CurrentPosition; 
+	GetCursorPos(&CurrentPosition); 
+	INT nIndex = -1; 
+	m_roomuserlist.ScreenToClient(&CurrentPosition);
+	nIndex = m_roomuserlist.HitTest(CurrentPosition);
+	if (nIndex == -1) 
+	{ 
+		// 아이템 영역이 아닌 곳에서 마우스 오른쪽 버튼을 선택한 경우 
+
+	} else 
+	{ 
+		// 아이템 영역에서 마우스 오른쪽 버튼을 선택한 경우 
+		GetCursorPos(&CurrentPosition); 
+		if (m_pDlg->m_pClient->m_ismaster) {
+			m_submenu->EnableMenuItem(1, MF_BYPOSITION | MF_ENABLED);
+			m_submenu->EnableMenuItem(2, MF_BYPOSITION | MF_ENABLED);
+		}
+		else
+		{			
+			m_submenu->EnableMenuItem(1, MF_BYPOSITION | MF_DISABLED | MF_GRAYED);
+			m_submenu->EnableMenuItem(2, MF_BYPOSITION | MF_DISABLED | MF_GRAYED);
+		}
+		m_submenu->TrackPopupMenu(TPM_LEFTALIGN,
+			CurrentPosition.x,
+			CurrentPosition.y,
+			AfxGetMainWnd());
+		m_selUser = m_roomuserlist.GetItemText(pNMItemActivate->iItem, 0);
+	}
+	*pResult = 0;
 }

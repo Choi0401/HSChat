@@ -31,13 +31,16 @@ public:
 	void OnInitialUpdate();
 	CHSChatDlg* m_pDlg;
 
-	afx_msg void OnBnClickedButtonChatroomSend();
-	virtual BOOL PreTranslateMessage(MSG* pMsg);
+	afx_msg void OnBnClickedButtonChatroomSend();	
 	afx_msg void OnBnClickedButtonChatroomQuit();
+	virtual BOOL PreTranslateMessage(MSG* pMsg);
 
 	CEdit m_chat;
 	CEdit m_sendmsg;
 	CListCtrl m_roomuserlist;
+	CMenu m_menu, *m_submenu;
+	CString m_selUser;
+	afx_msg void OnNMRClickListChatroomUserlist(NMHDR* pNMHDR, LRESULT* pResult);
 };
 
 

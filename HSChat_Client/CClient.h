@@ -30,7 +30,7 @@ public:
 	TsQueue <string> m_queue;
 	
 	int m_roomnum;
-
+	bool m_ismaster;
 
 	//string m_recvmsg;	
 	int m_connstate;
