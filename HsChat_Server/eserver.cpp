@@ -212,12 +212,13 @@ int main(int argc, char *argv[])
 			    // ssl struct
 	            SSL *ssl;
 	            int index;
+				int clnt_sock;
 	            // BIO struct
 	            BIO *sbio = NULL;
 	            for(i=0;i<num_clients;i++) {
 	                if (fd_arr[i] == fd) {
 	                    ssl = ssl_arr[i];
-						c[i].clnt_sock = fd;
+						clnt_sock = c[i].clnt_sock;
 	                    index = i;
 	                    break;
 	                }
@@ -260,82 +261,109 @@ int main(int argc, char *argv[])
 								string birth = recvroot["birth"].asString();
 								string phone = recvroot["phone"].asString();
 
+								// 1. 아이디 중복 검사
 								DML = DML_Select(4,"*","user_info","user_id",id.c_str());
-								cout << DML << endl;
-								PGresult* res = PQexec(pCon, DML.c_str()); //DML SEND;
-						
-								DML = DML_Select(4,"*","user_info","user_nickname",nickname.c_str());
-							
-								cout << DML << endl;
-								if (PQresultStatus(res) == PGRES_TUPLES_OK) //이미 계정이 존재하는 경우
+								//cout << DML << endl;
+								PGresult* resID = PQexec(pCon, DML.c_str()); //DML SEND;
+								// 2. 닉네임 중복 검사
+								DML = DML_Select(4,"*","user_info","user_nickname", nickname.c_str());
+								PGresult* resNickname = PQexec(pCon, DML.c_str()); //DML SEND;
+
+								//계정이 존재하지 않는 경우
+								if (PQntuples(resID) == 0 && PQntuples(resNickname) == 0)  
 								{
+									DML = DML_Insert("user_info", name.c_str(), birth.c_str(), phone.c_str(), id.c_str(), nickname.c_str(), pw.c_str());
+									PGresult* res = PQexec(pCon, DML.c_str()); //DML SEND
+
 									sendroot["action"] = "signup";
-									sendroot["result"] = "false";
-									sendroot["msg"] = "이미 가입되어 있는 회원입니다";
-									
+									sendroot["result"] = "true";
+									sendroot["msg"] = nickname + "님 환영합니다";
+
 									/* Json Data Send */
 									data.msg.clear();
 									data.msg = writer.write(sendroot);
 									data.size = data.msg.size();
+														
+								}	
+								//이미 계정이 존재하는 경우
+								else if(PQntuples(resID) > 0 || PQntuples(resNickname) > 0)
+								{								
+									cout << PQntuples(res) << endl;
+									sendroot["action"] = "signup";
+									sendroot["result"] = "false";
+									if (PQntuples(resID) > 0)
+										sendroot["msg"] = "이미 가입되어 있는 회원입니다";
+									else if (PQntuples(resNickname) > 0)
+										sendroot["msg"] = "이미 가입되어 있는 닉네임입니다";
+																			
+									/* Json Data Send */
+									data.msg.clear();
+									data.msg = writer.write(sendroot);
+									data.size = data.msg.size();
+						
+								}	
 
-									if (ret_HeadWrite = SSL_write(ssl, &data.size, sizeof(int)) <= 0)
+								if (ret_HeadWrite = SSL_write(ssl, &data.size, sizeof(int)) <= 0)
 										cout << "ret_HeadWrite_signup_error\n" <<endl;	
 
-									else // HeadWrite Successful
-									{
-										if (ret_BodyWrite = SSL_write(ssl, &data.msg[0], data.size) <= 0)
-											cout << "ret_BodyWrite_signup_error\n" << endl;																										  else 
-											cout << "Send Success: " <<"("<< c[fd].clnt_sock <<")"  << endl;			
-									}								
-								}	
-								
-								else //계정이 존재하지 않는 경우
+								else // HeadWrite Successful
 								{
-									cout<<"1111"<<endl;	
-									DML = DML_Insert("user_info", name.c_str(), birth.c_str(), phone.c_str(), id.c_str(), nickname.c_str(), pw.c_str());
-									PGresult* res = PQexec(pCon, DML.c_str()); //DML SEND
-
-
-								}	
-
-
-
-								
-
-								//DB check(select 사용하여 DB에 id가 존재하는지 체크)
-
-
-								//if (id 비교) -> 이미 DB에 있는 경우
-								//"이미 가입되어 있는 회원입니다" 출력
-								//else -> DB에 없는 경우
-								//DB에 insert
-								//"회원가입이 완료되었습니다" 출력
-								
-								
-								
-								
-							
+									if (ret_BodyWrite = SSL_write(ssl, &data.msg[0], data.size) <= 0)
+										cout << "ret_BodyWrite_signup_error\n" << endl;																										  else 
+									cout << "Send Success: " <<"("<< clnt_sock <<")"  << endl;			
+								}								
 							}	
 
-/*
 							else if (action == "signin") 
 							{
 								string id = recvroot["id"].asString();
 								string pw = recvroot["pw"].asString();
-								
-								// id, pw DB check
-								
-							}	
-						
-							else if (action == "alllist")
-							{if (getsockname(serv_sock, (struct sockaddr *)&serv_addr, &socklen) < 0)
-                        printf("getsockname: %s\n", strerror(errno));
-                printf("New server port number is %d\n", ntohs(serv_addr.sin_port));
+																
+								// 아이디, 비밀번호 체크
+								DML = DML_Select(6,"user_nickname","user_info","user_id",id.c_str(), "user_pw", pw.c_str());
+								//cout << DML << endl;
+								PGresult* rescheck = PQexec(pCon, DML.c_str()); //DML SEND;
+
+								if (PQntuples(rescheck) == 0)  
+								{
+
+								}
+								else if(PQntuples(rescheck) == 1)
+								{
+									string nickname;
+									nickname = PQgetvalue(rescheck, 0, 1);
+									cout << "nickname = " << nickname << endl;
+
+									sendroot["action"] = "signin";
+									sendroot["result"] = "true";
+									sendroot["nickname"] = nickname;
+									sendroot["msg"] = nickname + "님 환영합니다";
+
+									data.msg.clear();
+									data.msg = writer.write(sendroot);
+									data.size = data.msg.size();
+
+								}
+
+								if (ret_HeadWrite = SSL_write(ssl, &data.size, sizeof(int)) <= 0)
+										cout << "ret_HeadWrite_signup_error\n" <<endl;	
+
+								else // HeadWrite Successful
+								{
+									if (ret_BodyWrite = SSL_write(ssl, &data.msg[0], data.size) <= 0)
+										cout << "ret_BodyWrite_signup_error\n" << endl;																										  else 
+									cout << "Send Success: " <<"("<< clnt_sock <<")"  << endl;			
+								}	
+
+
+
 
 								
-							
 							}	
-						*/
+
+							
+							
+						
 						
 						}	
 
@@ -376,8 +404,7 @@ int createsocket(const char *portnum, int qlen)
 
 		int option;
 		option = 1;
-
-		setsockopt(serv_sock, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option) );
+		
 
     /* Map port number (char string) to port number (int) */
         if ((serv_addr.sin_port=htons((unsigned short)atoi(portnum))) == 0)
@@ -387,6 +414,8 @@ int createsocket(const char *portnum, int qlen)
         serv_sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
         if (serv_sock < 0)
             printf("can't create socket: %s\n", strerror(errno));
+
+		setsockopt(serv_sock, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option) );
 
     /* Bind the socket */
         if (bind(serv_sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
