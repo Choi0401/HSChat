@@ -413,6 +413,134 @@ int main(int argc, char *argv[])
 
 							}
 
+							else if(action == "searchid") 
+							{
+								string name = recvroot["name"].asString();
+								string birth = recvroot["birth"].asString();
+								string phone = recvroot["phone"].asString();
+
+								DML = DML_Select(8,"user_id","user_info","user_name",name.c_str(), "user_birth",birth.c_str(), "user_phone",phone.c_str());
+								PGresult* resSearchID = PQexec(pCon, DML.c_str()); //DML SEND;
+								if(PQntuples(resSearchID) > 0) // id를 찾은 경우
+								{
+									string id = PQgetvalue(resSearchID, 0,0);
+									sendroot["action"] = "searchid";
+									sendroot["result"] = "true";
+									sendroot["msg"] = "아이디는" + id +  " 입니다";
+									
+									/* Json Data Send */
+									data.msg.clear();
+									data.msg = writer.write(sendroot);
+									data.size = data.msg.size();
+														
+								}
+
+								else if(PQntuples(resSearchID) == 0)// id를 찾지 못한 경우
+								{
+									sendroot["action"] = "searchid";
+									sendroot["result"] = "false";
+									sendroot["msg"] = "입력하신 정보가 일치하지 않습니다";
+			
+									/* Json Data Send */
+									data.msg.clear();
+									data.msg = writer.write(sendroot);
+									data.size = data.msg.size();
+								}	
+
+								if (ret_HeadWrite = SSL_write(ssl, &data.size, sizeof(int)) <= 0)
+									cout << "ret_HeadWrite_searchid_error\n" <<endl;	
+
+								else // HeadWrite Successful
+								{
+									if (ret_BodyWrite = SSL_write(ssl, &data.msg[0], data.size) <= 0)
+										cout << "ret_BodyWrite_searchid_error\n" << endl;															 
+									cout << "Send Success: " <<"("<< c[index].clnt_sock <<")"  << endl;			
+								}								
+															
+							}/* end searchid */	
+
+							else if (action == "searchpw")
+							{
+								string name = recvroot["name"].asString();
+								string birth = recvroot["birth"].asString();
+								string phone = recvroot["phone"].asString();
+								string id = recvroot["id"].asString();
+
+								DML = DML_Select(10,"user_pw","user_info","user_name",name.c_str(),
+										"user_birth",birth.c_str(), "user_phone",phone.c_str(), "user_id", id.c_str());
+								PGresult* resSearchPW = PQexec(pCon, DML.c_str()); //DML SEND;
+
+								if(PQntuples(resSearchPW) > 0) // pw를 찾은 경우
+								{
+									string pw = PQgetvalue(resSearchPW, 0, 0);
+									sendroot["action"] = "searchpw";
+									sendroot["result"] = "true";
+									sendroot["msg"] = "비밀번호는" + pw +  " 입니다";
+
+									/* Json Data Send */
+									data.msg.clear();
+									data.msg = writer.write(sendroot);
+									data.size = data.msg.size();
+								}
+
+								else if (PQntuples(resSearchPW) == 0)// id를 찾지 못한 경우
+								{
+									sendroot["action"] = "searchpw";
+									sendroot["result"] = "false";
+									sendroot["msg"] = "입력하신 정보가 일치하지 않습니다";
+
+									/* Json Data Send */
+									data.msg.clear();
+									data.msg = writer.write(sendroot);
+									data.size = data.msg.size();
+								}
+
+								if (ret_HeadWrite = SSL_write(ssl, &data.size, sizeof(int)) <= 0)
+									cout << "ret_HeadWrite_searchpw_error\n" <<endl;
+
+								else // HeadWrite Successful
+								{
+									if (ret_BodyWrite = SSL_write(ssl, &data.msg[0], data.size) <= 0)
+										cout << "ret_BodyWrite_searchpw_error\n" << endl;
+									cout << "Send Success: " <<"("<< c[index].clnt_sock <<")"  << endl;
+								}
+
+							}/* end searchpw */
+
+						/*	else if (action == "showmyinfo")
+							{
+								string nickname = recvroot["nickname"].asString();
+								DML = "Select " + "user_name" + "," + "user_id" + "," + "user_birth" + " from "
+									+ "user_info" + " where " + "user_nickname" + " = " + "'" + nickname.c_str() + "'" +";";
+								//다중 Select문 수정 필요
+								PGresult* resShowMyInfo = PQexec(pCon, DML.c_str()); //DML SEND;
+
+								if(PQntuples(resSearchShowMyInfo) > 0) // 일치하는 닉네임을 찾은 경우(내정보 출력)
+								{
+									string pw = PQgetvalue(resSearchPW, 0, 0);
+									sendroot["action"] = "showmyinfo";
+									sendroot["result"] = "true";
+									sendroot["name"] = name;
+									sendroot["id"] = id;
+									sendroot["birth"] = birth;
+
+								
+									data.msg.clear();
+									data.msg = writer.write(sendroot);
+									data.size = data.msg.size();
+								}
+
+								if (ret_HeadWrite = SSL_write(ssl, &data.size, sizeof(int)) <= 0)
+									cout << "ret_HeadWrite_showmyinfo_error\n" <<endl;
+
+								else // HeadWrite Successful
+								{
+									if (ret_BodyWrite = SSL_write(ssl, &data.msg[0], data.size) <= 0)
+										cout << "ret_BodyWrite_showmyinfo_error\n" << endl;
+									cout << "Send Success: " <<"("<< c[index].clnt_sock <<")"  << endl;
+								} */
+
+						//	} /* end showmyinfo */
 							
 
 							
