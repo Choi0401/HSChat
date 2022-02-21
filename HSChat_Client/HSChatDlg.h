@@ -69,4 +69,5 @@ public:
 
 	afx_msg void OnMenuWhisper();
 	afx_msg void OnMenuAssign();
+
 };

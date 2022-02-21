@@ -68,7 +68,7 @@ void CSearchPWForm::OnBnClickedButtonSearchPWOK()
 	Json::StyledWriter writer;
 
 	GetDlgItemText(IDC_EDIT_SEARCHPW_NAME, strName);
-	GetDlgItemText(IDC_EDIT_SEARCHPW_BIRTH, strBirth);
+	GetDlgItemText(IDC_SEARCHPW_BIRTH, strBirth);
 	GetDlgItemText(IDC_EDIT_SEARCHPW_ID, strID);
 	GetDlgItemText(IDC_EDIT_SEARCHPW_PHONE, strPhone);
 

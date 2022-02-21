@@ -26,5 +26,19 @@ public:
 	CListCtrl m_friendslist;
 	afx_msg void OnBnClickedButtonFriendsAdd();
 	afx_msg void OnBnClickedButtonFriendsDelete();
+
+	BOOL m_bAscending;
+	struct SORTPARAM
+	{
+		int iSortColumn;
+		bool bSortDirect;
+		CListCtrl* pList;
+		int flag = -1;		// 클릭한 header에 따라서 정렬할 값이 다르기 때문에 구분해주기위한 변수
+	};
+
+	afx_msg void OnHdnItemclickList(NMHDR* pNMHDR, LRESULT* pResult);
+	static int CALLBACK CompareItem(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort);
+
+
 };
 

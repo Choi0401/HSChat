@@ -39,6 +39,8 @@ BEGIN_MESSAGE_MAP(CWaitingForm, CFormView)
 	ON_BN_CLICKED(IDC_BUTTON_WATING_MYINFO, &CWaitingForm::OnBnClickedButtonWatingMyinfo)
 	ON_NOTIFY(NM_DBLCLK, IDC_LIST_WATING_ROOM, &CWaitingForm::OnNMDblclkListWatingRoom)
 	ON_BN_CLICKED(IDC_BUTTON_WATING_FRIENDS, &CWaitingForm::OnBnClickedButtonWatingFriends)
+	ON_NOTIFY(HDN_ITEMCLICK, 0, &CWaitingForm::OnHdnItemclickList)
+
 END_MESSAGE_MAP()
 
 
@@ -63,12 +65,12 @@ void CWaitingForm::OnInitialUpdate()
 	m_roomlist.InsertColumn(0, _T("번호"), LVCFMT_CENTER, 45);
 	m_roomlist.InsertColumn(1, _T("이름"), LVCFMT_LEFT, 330);
 	m_roomlist.InsertColumn(2, _T("인원"), LVCFMT_RIGHT, rect.Width() - 375);
-	m_roomlist.GetHeaderCtrl()->EnableWindow(false);
+	//m_roomlist.GetHeaderCtrl()->EnableWindow(false);
 
 	m_friendslist.GetClientRect(&rect);
 	m_friendslist.SetExtendedStyle(LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES);
 	m_friendslist.InsertColumn(0, _T("온라인"), LVCFMT_LEFT, rect.Width());
-	m_friendslist.GetHeaderCtrl()->EnableWindow(false);
+	//m_friendslist.GetHeaderCtrl()->EnableWindow(false);
 
 }
 
@@ -171,4 +173,117 @@ void CWaitingForm::OnBnClickedButtonWatingFriends()
 		m_pDlg->m_pFriendslistDlg->Create(IDD_DIALOG_FRIENDSLIST);
 
 	}
+}
+
+// 리스트컨트롤 컬럼 클릭시 데이터 정렬
+void CWaitingForm::OnHdnItemclickList(NMHDR* pNMHDR, LRESULT* pResult)
+{
+	LPNMLISTVIEW pNMLV = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
+
+
+	if (pNMLV->hdr.hwndFrom == m_roomlist.GetDlgItem(0)->GetSafeHwnd())
+	{
+		// 클릭한 컬럼의 인덱스
+		int nColumn = pNMLV->iItem;
+
+		// 현 리스트 컨트롤에 있는 데이터 총 자료 개수만큼 저장
+		for (int i = 0; i < (m_roomlist.GetItemCount()); i++) {
+			m_roomlist.SetItemData(i, i);
+		}
+
+		// 정렬 방식 저장
+		m_bAscending = !m_bAscending;
+
+		// 정렬 관련 구조체 변수 생성 및 데이터 초기화
+		SORTPARAM sortparams;
+		sortparams.pList = &m_roomlist;
+		sortparams.iSortColumn = nColumn;
+		sortparams.bSortDirect = m_bAscending;
+
+		// |    0	 |     1    | 
+		// | Roomnum | Roomname | 
+
+		// Roomnum 정렬
+		if (nColumn == 0)
+			sortparams.flag = 0;
+
+		// Roomname은 알파벳 정렬
+		if (nColumn == 1)
+			sortparams.flag = 1;
+
+		// 정렬 함수 호출
+		m_roomlist.SortItems(&CompareItem, (LPARAM)&sortparams);
+	}
+	else if(pNMLV->hdr.hwndFrom == m_friendslist.GetDlgItem(0)->GetSafeHwnd())
+	{			
+		// 클릭한 컬럼의 인덱스
+		int nColumn = pNMLV->iItem;
+
+		// 현 리스트 컨트롤에 있는 데이터 총 자료 개수만큼 저장
+		for (int i = 0; i < (m_friendslist.GetItemCount()); i++) {
+			m_friendslist.SetItemData(i, i);
+		}
+
+		// 정렬 방식 저장
+		m_bAscending = !m_bAscending;
+
+		// 정렬 관련 구조체 변수 생성 및 데이터 초기화
+		SORTPARAM sortparams;
+		sortparams.pList = &m_friendslist;
+		sortparams.iSortColumn = nColumn;
+		sortparams.bSortDirect = m_bAscending;
+
+		// |    0	 |
+		// | friends |  
+
+		// friends 정렬
+		if (nColumn == 0)
+			sortparams.flag = 1;
+		// 정렬 함수 호출
+		m_friendslist.SortItems(&CompareItem, (LPARAM)&sortparams);
+	}
+	*pResult = 0;
+}
+
+int CWaitingForm::CompareItem(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort)
+{
+	CListCtrl* pList = ((SORTPARAM*)lParamSort)->pList;
+	int iSortColumn = ((SORTPARAM*)lParamSort)->iSortColumn;
+	bool bSortDirect = ((SORTPARAM*)lParamSort)->bSortDirect;
+	int flag = ((SORTPARAM*)lParamSort)->flag;
+
+	LVFINDINFO info1, info2;
+	info1.flags = LVFI_PARAM;
+	info1.lParam = lParam1;
+
+	info2.flags = LVFI_PARAM;
+	info2.lParam = lParam2;
+
+	int irow1 = pList->FindItem(&info1, -1);
+	int irow2 = pList->FindItem(&info2, -1);
+
+	CString strItem1 = pList->GetItemText(irow1, iSortColumn);
+	CString strItem2 = pList->GetItemText(irow2, iSortColumn);
+
+	//if(pList->m_hWnd == m_roomlist.m_hWnd)
+	// 채팅방 번호 정렬
+	if (flag == 0)
+	{
+		int iItem1 = _tstoi(strItem1);
+		int iItem2 = _tstoi(strItem2);
+
+		if (bSortDirect) {
+			return iItem1 == iItem2 ? 0 : iItem1 > iItem2;
+		}
+		else {
+			return iItem1 == iItem2 ? 0 : iItem1 < iItem2;
+		}
+	}
+	// 채팅방 이름 정렬
+	else if (flag == 1)
+	{
+		return	bSortDirect ? strcmp(LPSTR(LPCTSTR(strItem1)), LPSTR(LPCTSTR(strItem2))) : -strcmp(LPSTR(LPCTSTR(strItem1)), LPSTR(LPCTSTR(strItem2)));
+	}		
+
+
 }

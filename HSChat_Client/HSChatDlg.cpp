@@ -135,7 +135,6 @@ BOOL CHSChatDlg::OnInitDialog()
 
 
 	m_AllocForm();
-
 	return TRUE;  // 포커스를 컨트롤에 설정하지 않으면 TRUE를 반환합니다.
 }
 
@@ -437,7 +436,8 @@ LRESULT CHSChatDlg::m_Proc(WPARAM wParam, LPARAM lParam)
 				// 실패
 				else if (result == "false")
 				{
-
+					AfxMessageBox(cstr, MB_ICONERROR);
+					m_pSigninForm->GetDlgItem(IDC_EDIT_SIGNIN_ID)->SetFocus();
 				}
 			}
 			// 채팅방 및 친구목록 
@@ -596,12 +596,18 @@ LRESULT CHSChatDlg::m_Proc(WPARAM wParam, LPARAM lParam)
 				if (result == "true")
 				{
 					m_ShowForm(0);
+					SetDlgItemText(IDC_EDIT_SIGNUP_NAME, _T(""));
+					SetDlgItemText(IDC_EDIT_SIGNUP_PHONE, _T(""));
+					SetDlgItemText(IDC_EDIT_SIGNUP_ID, _T(""));
+					SetDlgItemText(IDC_EDIT_SIGNUP_NICKNAME, _T(""));
+					SetDlgItemText(IDC_EDIT_SIGNUP_PW, _T(""));
+					SetDlgItemText(IDC_EDIT_SIGNUP_PWOK, _T(""));
 					AfxMessageBox(cstr, MB_ICONINFORMATION);
 				}
 				// 실패
 				else if (result == "false")
 				{
-
+					AfxMessageBox(cstr, MB_ICONERROR);
 				}
 			}
 			// ID 찾기 
@@ -622,7 +628,7 @@ LRESULT CHSChatDlg::m_Proc(WPARAM wParam, LPARAM lParam)
 				// 실패
 				else if (result == "false")
 				{
-
+					AfxMessageBox(cstr, MB_ICONERROR);
 				}
 			}
 			// PW 찾기 
@@ -643,7 +649,7 @@ LRESULT CHSChatDlg::m_Proc(WPARAM wParam, LPARAM lParam)
 				// 실패
 				else if (result == "false")
 				{
-
+					AfxMessageBox(cstr, MB_ICONERROR);
 				}
 			}
 			else if (action == "showmyinfo")

@@ -52,18 +52,18 @@ BOOL CMakeRoomDlg::OnInitDialog()
 void CMakeRoomDlg::OnBnClickedButtonMakeroom()
 {
 	CString strRoomName;
-	int userNum = 0;
+	int maxnum = 0;
 	Json::Value root;
 	Json::StyledWriter writer;
 
 	GetDlgItemText(IDC_EDIT_MAKEROOM_NAME, strRoomName);
-	userNum = GetDlgItemInt(IDC_EDIT_MAKEROOM_NUM);
+	maxnum = GetDlgItemInt(IDC_EDIT_MAKEROOM_NUM);
 
-	if (strRoomName.GetLength() == 0 || userNum == 0)
+	if (strRoomName.GetLength() == 0 || maxnum == 0)
 	{
 		if(strRoomName.GetLength() == 0)
 			AfxMessageBox(_T("방 이름을 입력해주세요."));
-		else if(userNum == 0)
+		else if(maxnum == 0)
 			AfxMessageBox(_T("방 인원을 입력해주세요."));
 	}
 	else
@@ -72,7 +72,7 @@ void CMakeRoomDlg::OnBnClickedButtonMakeroom()
 		root["action"] = "createroom";
 		root["master"] = m_pDlg->m_pClient->m_getNickname();
 		root["roomname"] = std::string(CT2CA(strRoomName));
-		root["usernum"] = userNum;
+		root["maxnum"] = maxnum;
 		if (m_pRB_public->GetCheck())
 			root["roomtype"] = "public";
 		else

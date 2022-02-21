@@ -37,6 +37,7 @@ BEGIN_MESSAGE_MAP(CChatRoomForm, CFormView)
 	ON_BN_CLICKED(IDC_BUTTON_CHATROOM_SEND, &CChatRoomForm::OnBnClickedButtonChatroomSend)
 	ON_BN_CLICKED(IDC_BUTTON_CHATROOM_QUIT, &CChatRoomForm::OnBnClickedButtonChatroomQuit)
 	ON_NOTIFY(NM_RCLICK, IDC_LIST_CHATROOM_USERLIST, &CChatRoomForm::OnNMRClickListChatroomUserlist)
+	ON_NOTIFY(HDN_ITEMCLICK, 0, &CChatRoomForm::OnHdnItemclickList)
 END_MESSAGE_MAP()
 
 
@@ -79,7 +80,13 @@ void CChatRoomForm::OnInitialUpdate()
 	m_roomuserlist.GetClientRect(&rect);
 	m_roomuserlist.SetExtendedStyle(LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES);
 	m_roomuserlist.InsertColumn(0, _T("참여자"), LVCFMT_LEFT, rect.Width());
-	m_roomuserlist.GetHeaderCtrl()->EnableWindow(false);
+	//m_roomuserlist.GetHeaderCtrl()->EnableWindow(false);
+
+	HWND lvHeader;
+	lvHeader = ::FindWindowEx(m_roomuserlist.GetSafeHwnd(),
+		NULL, _T("SysHeader32"), _T(""));
+	::EnableWindow(lvHeader, 0);
+
 
 	m_cbchat.InsertString(0, _T("전체채팅"));
 	//m_cbchat.InsertString(1, _T("귓속말"));
@@ -177,4 +184,81 @@ void CChatRoomForm::OnNMRClickListChatroomUserlist(NMHDR* pNMHDR, LRESULT* pResu
 		m_selUser = m_roomuserlist.GetItemText(pNMItemActivate->iItem, 0);
 	}
 	*pResult = 0;
+}
+
+
+void CChatRoomForm::OnHdnItemclickList(NMHDR* pNMHDR, LRESULT* pResult)
+{
+	LPNMLISTVIEW pNMLV = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
+
+
+	if (pNMLV->hdr.hwndFrom == m_roomuserlist.GetDlgItem(0)->GetSafeHwnd())
+	{
+		int nColumn = pNMLV->iItem;
+		for (int i = 0; i < (m_roomuserlist.GetItemCount()); i++) {
+			m_roomuserlist.SetItemData(i, i);
+		}
+
+		m_bAscending = !m_bAscending;
+
+		SORTPARAM sortparams;
+		sortparams.pList = &m_roomuserlist;
+		sortparams.iSortColumn = nColumn;
+		sortparams.bSortDirect = m_bAscending;
+
+		if (nColumn == 0)
+			sortparams.flag = 0;
+		if (nColumn == 1)
+			sortparams.flag = 1;
+
+		m_roomuserlist.SortItems(&CompareItem, (LPARAM)&sortparams);
+	}
+	else if (pNMLV->hdr.hwndFrom == m_roomuserlist.GetDlgItem(0)->GetSafeHwnd())
+	{
+		int nColumn = pNMLV->iItem;
+
+		for (int i = 0; i < (m_roomuserlist.GetItemCount()); i++) {
+			m_roomuserlist.SetItemData(i, i);
+		}
+
+		m_bAscending = !m_bAscending;
+
+		SORTPARAM sortparams;
+		sortparams.pList = &m_roomuserlist;
+		sortparams.iSortColumn = nColumn;
+		sortparams.bSortDirect = m_bAscending;
+
+		if (nColumn == 0)
+			sortparams.flag = 0;
+		m_roomuserlist.SortItems(&CompareItem, (LPARAM)&sortparams);
+	}
+	*pResult = 0;
+}
+
+int CChatRoomForm::CompareItem(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort)
+{
+	CListCtrl* pList = ((SORTPARAM*)lParamSort)->pList;
+	int iSortColumn = ((SORTPARAM*)lParamSort)->iSortColumn;
+	bool bSortDirect = ((SORTPARAM*)lParamSort)->bSortDirect;
+	int flag = ((SORTPARAM*)lParamSort)->flag;
+
+	LVFINDINFO info1, info2;
+	info1.flags = LVFI_PARAM;
+	info1.lParam = lParam1;
+
+	info2.flags = LVFI_PARAM;
+	info2.lParam = lParam2;
+
+	int irow1 = pList->FindItem(&info1, -1);
+	int irow2 = pList->FindItem(&info2, -1);
+
+	CString strItem1 = pList->GetItemText(irow1, iSortColumn);
+	CString strItem2 = pList->GetItemText(irow2, iSortColumn);
+
+	if (flag == 0)
+	{
+		return	bSortDirect ? strcmp(LPSTR(LPCTSTR(strItem1)), LPSTR(LPCTSTR(strItem2))) : -strcmp(LPSTR(LPCTSTR(strItem1)), LPSTR(LPCTSTR(strItem2)));
+	}
+
+
 }

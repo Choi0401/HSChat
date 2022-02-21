@@ -67,7 +67,7 @@ void CSearchIDForm::OnBnClickedButtonSearchIDOK()
 	Json::StyledWriter writer;
 
 	GetDlgItemText(IDC_EDIT_SEARCHID_NAME, strName);
-	GetDlgItemText(IDC_EDIT_SEARCHID_BIRTH, strBirth);
+	GetDlgItemText(IDC_SEARCHID_BIRTH, strBirth);
 	GetDlgItemText(IDC_EDIT_SEARCHID_PHONE, strPhone);
 
 	if (strName.GetLength() == 0)
