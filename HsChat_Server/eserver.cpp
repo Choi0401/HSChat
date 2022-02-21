@@ -321,29 +321,30 @@ int main(int argc, char *argv[])
 																
 								// 아이디, 비밀번호 체크
 								DML = DML_Select(6,"user_nickname","user_info","user_id",id.c_str(), "user_pw", pw.c_str());
-								//cout << DML << endl;
 								PGresult* rescheck = PQexec(pCon, DML.c_str()); //DML SEND;
-
+																
 								if (PQntuples(rescheck) == 0)  
 								{
+									sendroot["action"] = "signin";
+									sendroot["result"] = "false";
+									sendroot["msg"] = "아이디와 비밀번호를 확인해주세요";
 
 								}
 								else if(PQntuples(rescheck) == 1)
 								{
 									string nickname;
-									nickname = PQgetvalue(rescheck, 0, 1);
-									cout << "nickname = " << nickname << endl;
+									nickname = PQgetvalue(rescheck, 0, 0);
 
 									sendroot["action"] = "signin";
 									sendroot["result"] = "true";
 									sendroot["nickname"] = nickname;
 									sendroot["msg"] = nickname + "님 환영합니다";
-
-									data.msg.clear();
-									data.msg = writer.write(sendroot);
-									data.size = data.msg.size();
-
+							
 								}
+								
+								data.msg.clear();
+								data.msg = writer.write(sendroot);
+								data.size = data.msg.size();
 
 								if (ret_HeadWrite = SSL_write(ssl, &data.size, sizeof(int)) <= 0)
 										cout << "ret_HeadWrite_signup_error\n" <<endl;	
