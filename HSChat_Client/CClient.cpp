@@ -51,9 +51,8 @@ void CClient::m_InitSocket()
     memset(&m_addr, 0, sizeof(m_addr));
     m_addr.sin_family = AF_INET;
     //m_addr.sin_addr.s_addr = inet_addr("192.168.1.115");
-    //m_addr.sin_port = htons(8282);
     m_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
-    m_addr.sin_port = htons(7777);
+    m_addr.sin_port = htons(8282);
 
 }
 

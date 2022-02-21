@@ -128,8 +128,9 @@
 #define IDC_BUTTON_FRIENDADD_CANCEL     1077
 #define IDC_BUTTON_FRIENDADD_OK         1078
 #define IDC_CHATRROM_MENUBUTTON         1088
-#define IDC_COMBO1                      1089
 #define IDC_CHATROOM_COMBO              1089
+#define IDC_SEARCHID_BIRTH              1091
+#define IDC_SEARCHPW_BIRTH              1092
 #define ID_DD_DD                        32771
 #define ID_DD_DD32772                   32772
 #define ID_32773                        32773
@@ -147,7 +148,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        151
 #define _APS_NEXT_COMMAND_VALUE         32792
-#define _APS_NEXT_CONTROL_VALUE         1090
+#define _APS_NEXT_CONTROL_VALUE         1093
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

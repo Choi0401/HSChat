@@ -101,12 +101,6 @@ void CSignupForm::OnBnClickedButtonSignupOK()
 		
 		m_pDlg->m_pClient->m_SendData();
 
-		SetDlgItemText(IDC_EDIT_SIGNUP_NAME, _T(""));
-		SetDlgItemText(IDC_EDIT_SIGNUP_PHONE, _T(""));
-		SetDlgItemText(IDC_EDIT_SIGNUP_ID, _T(""));
-		SetDlgItemText(IDC_EDIT_SIGNUP_NICKNAME, _T(""));
-		SetDlgItemText(IDC_EDIT_SIGNUP_PW, _T(""));
-		SetDlgItemText(IDC_EDIT_SIGNUP_PWOK, _T(""));
 	}	
 }
 
