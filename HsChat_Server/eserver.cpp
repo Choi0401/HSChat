@@ -18,18 +18,26 @@
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 #include <vector>
+#include <iostream>
+#include "json/json.h"
+#include <string>
+#include <libpq-fe.h>
 
+using namespace std;
 
 #define	MAXLISTEN		  32	/* maximum connection queue length	*/
 #define	BUFSIZE		4096
 #define MAXCLI      100
 
-using namespace std;
+typedef struct data
+{
+	int size;
+	string msg;
+}Data;
 
 extern int	errno;
 
 int		createsocket(const char *portnum, int qlen);
-int		ssl_read(SSL *ssl);
 
 class Server 
 {
@@ -40,7 +48,7 @@ public:
 	~Server() { close(serv_sock); }
     int option, retcheck; // initialization
     char buf[BUFSIZE]; 
-	const char* port = "7777";
+	const char* port = "8282";
     struct sockaddr_in serv_addr;
     socklen_t addr_len;	
 };
@@ -49,10 +57,20 @@ class Client
 {
 public:
 	int clnt_sock;
-	char clnt_ip[32];
-	char clnt_name[64];
-
+	string clnt_ip;
+	string clnt_name;
+	string id;
+	string nickname;
+	string birth;
 };
+
+//DML//
+string DML_Insert(string args, ...);
+string DML_Delete(int args, ...);
+string DML_Select(int args, ...);
+string DML_Update(int args, ...);
+
+
 
 /*------------------------------------------------------------------------
  * main - Concurrent TCP server for ssl_read service
@@ -60,7 +78,7 @@ public:
  */
 int main(int argc, char *argv[])
 {
-	const char	*portnum = "7777";	/* Standard server port number	*/
+	const char	*portnum = "8282";	/* Standard server port number	*/
 	struct sockaddr_in clnt_addr;	/* the from address of a client	*/
 	int	serv_sock,r;			/* master server socket		*/
 	fd_set	fd_reads;			/* read file descriptor set	*/
@@ -69,6 +87,24 @@ int main(int argc, char *argv[])
 	int	fd, nfds,i;
 
 	vector<Client> c(MAXCLI);
+/*-----------------------------------------------------------------------------*/
+	/*------JSON Variable------*/
+	Json::Value recvroot, sendroot;
+	Json::StyledWriter writer;
+	Json::Reader reader;
+	int ret_HeadWrite;
+	int ret_BodyWrite;
+/*-----------------------------------------------------------------------------*/
+	/*------DB Variable------ */
+	PGconn *pCon = NULL;
+	string DML;
+	PGresult* res; 
+	int nFields;
+	string msg;
+/*-----------------------------------------------------------------------------*/	
+
+	// 메시지의 바디 크기를 구하기 위한 구조체
+	Data data;
 	
 	// array of ssl structures
 	SSL *ssl_arr[MAXCLI];
@@ -95,6 +131,19 @@ int main(int argc, char *argv[])
 
 	FD_ZERO(&fd_cpy_reads);
 	FD_SET(serv_sock, &fd_cpy_reads);
+
+
+	pCon = PQsetdbLogin("192.168.1.125","8282", NULL, NULL, "postgres", "postgres", NULL);
+	PQsetClientEncoding(pCon, "EUCKR");
+
+	if(PQstatus(pCon) == CONNECTION_BAD)
+	{
+	cout << "Connection Fail"<<endl;
+	return -1;	
+	}	
+	else
+		cout << "Connection Succeed" << endl;
+
 
 	while (1) {
 		memcpy(&fd_reads, &fd_cpy_reads, sizeof(fd_reads));
@@ -150,8 +199,9 @@ int main(int argc, char *argv[])
 			ssl_arr[num_clients]=ssl;
 			fd_arr[num_clients]=ssock;
 			c[num_clients].clnt_sock = fd_arr[num_clients];
-			strcpy(c[num_clients].clnt_ip, inet_ntoa(clnt_addr.sin_addr));
-			printf("client connected(%d) (%s)\n", c[num_clients].clnt_sock, c[num_clients].clnt_ip);
+			//strcpy(c[num_clients].clnt_ip, inet_ntoa(clnt_addr.sin_addr));
+			c[num_clients].clnt_ip = inet_ntoa(clnt_addr.sin_addr);
+			cout <<"client connected " << c[num_clients].clnt_sock <<" " << c[num_clients].clnt_ip << endl; 
 			num_clients++;
 			if(num_clients == MAXCLI) {
 			    printf("Cant handle more than 100 clients");
@@ -162,18 +212,21 @@ int main(int argc, char *argv[])
 			    // ssl struct
 	            SSL *ssl;
 	            int index;
+				int clnt_sock;
 	            // BIO struct
 	            BIO *sbio = NULL;
 	            for(i=0;i<num_clients;i++) {
 	                if (fd_arr[i] == fd) {
 	                    ssl = ssl_arr[i];
+						clnt_sock = c[i].clnt_sock;
 	                    index = i;
 	                    break;
 	                }
 	            }
 			    sbio = BIO_new_socket(fd, BIO_NOCLOSE);
                 SSL_set_bio(ssl, sbio, sbio);
-				if (ssl_read(ssl) == 0) {
+				int read_len = SSL_read(ssl, &data.size, sizeof(int)); 
+				if (read_len == 0) {
 				    fd_arr[index] = -1;
 				    //SSL_shutdown(ssl);
 				    //SSL_free(ssl);
@@ -182,30 +235,153 @@ int main(int argc, char *argv[])
 					FD_CLR(fd, &fd_cpy_reads);
 				}
 
+				else if (read_len > 0)
+				{
+					printf("Receive Body Size: %d\n", data.size);
+					data.msg.resize(data.size);
+					int ret_body_size = SSL_read(ssl, &data.msg[0], data.size);
+					if (ret_body_size > 0)
+					{
+						cout << "Receive Message: "<< data.msg <<endl;
+						bool parseSuccessful = reader.parse(data.msg, recvroot);
+						if (parseSuccessful == false)
+						{
+							//std::cout << "Failed to parse configuration\n" << reader.getFormatedErrorMessages();
+							return -1;						
+						}
+
+						else {
+							string action = recvroot["action"].asString();
+							if (action == "signup")
+							{
+								string id = recvroot["id"].asString();
+								string pw = recvroot["pw"].asString();
+								string nickname = recvroot["nickname"].asString();
+								string name = recvroot["name"].asString();
+								string birth = recvroot["birth"].asString();
+								string phone = recvroot["phone"].asString();
+
+								// 1. 아이디 중복 검사
+								DML = DML_Select(4,"*","user_info","user_id",id.c_str());
+								//cout << DML << endl;
+								PGresult* resID = PQexec(pCon, DML.c_str()); //DML SEND;
+								// 2. 닉네임 중복 검사
+								DML = DML_Select(4,"*","user_info","user_nickname", nickname.c_str());
+								PGresult* resNickname = PQexec(pCon, DML.c_str()); //DML SEND;
+
+								//계정이 존재하지 않는 경우
+								if (PQntuples(resID) == 0 && PQntuples(resNickname) == 0)  
+								{
+									DML = DML_Insert("user_info", name.c_str(), birth.c_str(), phone.c_str(), id.c_str(), nickname.c_str(), pw.c_str());
+									PGresult* res = PQexec(pCon, DML.c_str()); //DML SEND
+
+									sendroot["action"] = "signup";
+									sendroot["result"] = "true";
+									sendroot["msg"] = nickname + "님 환영합니다";
+
+									/* Json Data Send */
+									data.msg.clear();
+									data.msg = writer.write(sendroot);
+									data.size = data.msg.size();
+														
+								}	
+								//이미 계정이 존재하는 경우
+								else if(PQntuples(resID) > 0 || PQntuples(resNickname) > 0)
+								{								
+									cout << PQntuples(res) << endl;
+									sendroot["action"] = "signup";
+									sendroot["result"] = "false";
+									if (PQntuples(resID) > 0)
+										sendroot["msg"] = "이미 가입되어 있는 회원입니다";
+									else if (PQntuples(resNickname) > 0)
+										sendroot["msg"] = "이미 가입되어 있는 닉네임입니다";
+																			
+									/* Json Data Send */
+									data.msg.clear();
+									data.msg = writer.write(sendroot);
+									data.size = data.msg.size();
+						
+								}	
+
+								if (ret_HeadWrite = SSL_write(ssl, &data.size, sizeof(int)) <= 0)
+										cout << "ret_HeadWrite_signup_error\n" <<endl;	
+
+								else // HeadWrite Successful
+								{
+									if (ret_BodyWrite = SSL_write(ssl, &data.msg[0], data.size) <= 0)
+										cout << "ret_BodyWrite_signup_error\n" << endl;																										  else 
+									cout << "Send Success: " <<"("<< clnt_sock <<")"  << endl;			
+								}								
+							}	
+
+							else if (action == "signin") 
+							{
+								string id = recvroot["id"].asString();
+								string pw = recvroot["pw"].asString();
+																
+								// 아이디, 비밀번호 체크
+								DML = DML_Select(6,"user_nickname","user_info","user_id",id.c_str(), "user_pw", pw.c_str());
+								PGresult* rescheck = PQexec(pCon, DML.c_str()); //DML SEND;
+																
+								if (PQntuples(rescheck) == 0)  
+								{
+									sendroot["action"] = "signin";
+									sendroot["result"] = "false";
+									sendroot["msg"] = "아이디와 비밀번호를 확인해주세요";
+
+								}
+								else if(PQntuples(rescheck) == 1)
+								{
+									string nickname;
+									nickname = PQgetvalue(rescheck, 0, 0);
+
+									sendroot["action"] = "signin";
+									sendroot["result"] = "true";
+									sendroot["nickname"] = nickname;
+									sendroot["msg"] = nickname + "님 환영합니다";
+							
+								}
+								
+								data.msg.clear();
+								data.msg = writer.write(sendroot);
+								data.size = data.msg.size();
+
+								if (ret_HeadWrite = SSL_write(ssl, &data.size, sizeof(int)) <= 0)
+										cout << "ret_HeadWrite_signup_error\n" <<endl;	
+
+								else // HeadWrite Successful
+								{
+									if (ret_BodyWrite = SSL_write(ssl, &data.msg[0], data.size) <= 0)
+										cout << "ret_BodyWrite_signup_error\n" << endl;																										  else 
+									cout << "Send Success: " <<"("<< clnt_sock <<")"  << endl;			
+								}	
+
+
+
+
+								
+							}	
+
+							
+							
+						
+						
+						}	
+
+
+					
+					
+					
+					}	
+				
+				
+				
+				}	
+
 		}
 	}
 }
 
-/*------------------------------------------------------------------------
- * ssl_read - echo one buffer of data, returning byte count
- *------------------------------------------------------------------------
- */
-int ssl_read(SSL *ssl)
-{
-	int	read_len;
-	char buf[BUFSIZE];
-
-	memset(buf, 0x00, sizeof(buf));
-	read_len = SSL_read(ssl, buf, sizeof(buf));
-
-	if (read_len > 0)
-		printf("receive message: %s\n", buf);
-		
-/*	
-	if (cc && SSL_write(ssl, buf, cc) < 0)
-		printf("ssl_read write: %s\n", strerror(errno)); */
-	return read_len;
-}
 
 
 
@@ -227,6 +403,10 @@ int createsocket(const char *portnum, int qlen)
         serv_addr.sin_family = AF_INET;
         serv_addr.sin_addr.s_addr = INADDR_ANY;
 
+		int option;
+		option = 1;
+		
+
     /* Map port number (char string) to port number (int) */
         if ((serv_addr.sin_port=htons((unsigned short)atoi(portnum))) == 0)
                 printf("can't get \"%s\" port number\n", portnum);
@@ -236,24 +416,231 @@ int createsocket(const char *portnum, int qlen)
         if (serv_sock < 0)
             printf("can't create socket: %s\n", strerror(errno));
 
+		setsockopt(serv_sock, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option) );
+
     /* Bind the socket */
         if (bind(serv_sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
             fprintf(stderr, "can't bind to %s port: %s; Trying other port\n",
                 portnum, strerror(errno));
             serv_addr.sin_port=htons(0); /* request a port number to be allocated
                                    by bind */
-            if (bind(serv_sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
-                printf("can't bind: %s\n", strerror(errno));
+		}
             else {
-                socklen_t socklen = sizeof(serv_addr);
-
-                if (getsockname(serv_sock, (struct sockaddr *)&serv_addr, &socklen) < 0)
-                        printf("getsockname: %s\n", strerror(errno));
-                printf("New server port number is %d\n", ntohs(serv_addr.sin_port));
-            }
-        }
+                socklen_t socklen = sizeof(serv_addr);                
+			}
+        
 
         if (listen(serv_sock, qlen) < 0)
             printf("can't listen on %s port: %s\n", portnum, strerror(errno));
         return serv_sock;
 }
+
+
+
+
+
+
+
+////////////////////////////////////////////////////////////////////////
+/////////////////////////////////DML////////////////////////////////////
+////////////////////////////////////////////////////////////////////////
+
+string DML_Insert(string table, ...){
+    string DML = "insert into " + table + " values (";
+    va_list args;
+	va_start(args, table);
+    
+	char *gData;
+
+    if(table == "user_info")
+    {
+        DML += "nextval('sq_user_num'),'";//user_num : sequence
+        for(int i = 0; i < 6; i++)
+        {
+            gData = va_arg(args,char*);
+            if(i != 5){
+                DML += gData;
+			   	DML+="','";
+			}
+			else
+                DML += gData;
+        }
+        DML += "',0,0);";
+    }
+    else if(table == "friends_info")
+    {
+        DML += "'";
+        for(int i = 0; i < 2; i++)
+        {
+            gData = va_arg(args, char *);
+            if(i != 1){
+                DML += gData;
+			   DML	+= "','";
+			}		   
+            else
+                DML += gData;
+        }
+        DML += "');";
+    }
+    else if(table == "room_info")
+    {
+        DML += "nextval('room_num'),";//room_num : sequence
+        for(int i = 0; i < 5; i++)
+        {
+            gData = va_arg(args, char*);
+            if(i != 3||i != 4){
+                DML += gData;
+			   DML	+= ",";
+			}
+            else{
+                DML += "'";
+			   DML	+= gData;
+			  DML += "'";
+			}
+        }
+        DML += ");";
+    }
+    va_end(args);
+
+	return DML;
+}
+
+string DML_Select(int args, ...)
+{
+    string DML = "select ";
+    
+
+    va_list ap; 
+    va_start(ap, args);
+
+	char *gData;
+
+	for(int i = 0; i < args; i++)
+	{
+		gData = va_arg(ap, char *);
+		if(i == 0)
+			DML += gData;
+		else if(i == 1){
+			DML += " from ";
+			DML += gData;
+			DML += " where ";
+		}
+		else
+		{
+			if(i % 2 == 0)
+			{
+				DML += gData;
+				DML += " = '";
+			}
+			else if(i == args-1)
+			{
+				DML += gData;
+				DML += "';";
+			}
+			else
+			{
+				DML += gData;
+				DML += "' and ";
+			}
+		}
+	}
+
+    
+    
+    va_end(ap);
+    return DML;
+}
+
+
+string DML_Delete(int args, ...)
+{
+	string DML = "delete from ";
+
+	va_list ap;
+	va_start(ap, args);
+
+	char *gData;
+
+	for(int i = 0; i < args; i++)
+	{
+		gData = va_arg(ap, char *);
+		if(i == 0)
+		{
+			DML += gData;
+			DML += " where ";
+		}
+		else
+		{
+			if(i%2 != 0)
+			{
+				DML += gData;
+				DML += " = '";
+			}
+			else if(i == args - 1)
+			{
+				DML += gData;
+				DML += "';";
+			}
+			else
+			{
+				DML += gData;
+				DML += "' and ";
+			}
+		}
+	}
+	va_end(ap);
+	return DML;
+}
+
+string DML_Update(int args, ...)
+{
+	string DML = "update from ";
+
+	va_list ap;
+	va_start(ap, args);
+
+	char *gData;
+
+	for(int i = 0; i < args; i++)
+	{
+		gData = va_arg(ap, char *);
+		if(i == 0)
+		{
+			DML += gData;
+			DML += " set ";
+		}
+		else if(i == 1)
+		{
+			DML += gData;
+			DML += " = '";
+		}
+		else if(i == 2)
+		{
+			DML += gData;
+			DML += "' where ";
+		}
+		else
+		{
+			if(i % 2 == 1)
+			{
+				DML += gData;
+				DML += " = '";
+			}
+			else if(i == args-1)
+			{
+				DML += gData;
+				DML += "';";
+			}
+		}
+	}
+	va_end(ap);
+	return DML;
+}
+
+
+
+
+
+
+
+
