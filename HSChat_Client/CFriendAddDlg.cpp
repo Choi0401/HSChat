@@ -83,3 +83,15 @@ void CFriendAddDlg::OnBnClickedButtonFriendaddCancel()
 {
 	EndDialog(IDCANCEL);
 }
+
+
+BOOL CFriendAddDlg::PreTranslateMessage(MSG* pMsg)
+{
+	if (pMsg->message == WM_KEYDOWN && (pMsg->wParam == VK_RETURN))
+	{
+		OnBnClickedButtonFriendAddOK();
+		return TRUE;
+	}
+
+	return CDialogEx::PreTranslateMessage(pMsg);
+}

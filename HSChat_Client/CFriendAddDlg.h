@@ -27,4 +27,5 @@ public:
 	virtual BOOL OnInitDialog();
 	afx_msg void OnBnClickedButtonFriendAddOK();
 	afx_msg void OnBnClickedButtonFriendaddCancel();
+	virtual BOOL PreTranslateMessage(MSG* pMsg);
 };

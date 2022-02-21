@@ -864,8 +864,27 @@ void CHSChatDlg::OnSize(UINT nType, int cx, int cy)
 
 void CHSChatDlg::OnMenuWhisper()
 {
-	// TODO: 여기에 명령 처리기 코드를 추가합니다.
+	// TODO: 여기에 명령 처리기 코드를 추가합니다.	
+	//int m_pChatRoomForm->m_cbchat.GetCount();
+	int flag = -1;
 
+	for (int i = 0; i <= m_pChatRoomForm->m_cntcb; i++)
+	{
+		CString tmpstr;
+		m_pChatRoomForm->m_cbchat.GetLBText(i, tmpstr);
+		if (tmpstr == m_pChatRoomForm->m_selUser)
+		{
+			m_pChatRoomForm->m_cbchat.SetCurSel(i);
+			flag = 0;
+			break;
+		}
+	}
+	if (flag == -1)
+	{		
+		m_pChatRoomForm->m_cbchat.InsertString(m_pChatRoomForm->m_cntcb, m_pChatRoomForm->m_selUser);
+		m_pChatRoomForm->m_cbchat.SetCurSel(m_pChatRoomForm->m_cntcb);
+		m_pChatRoomForm->m_cntcb++;
+	}
 }
 
 

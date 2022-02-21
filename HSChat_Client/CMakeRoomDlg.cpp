@@ -83,7 +83,10 @@ void CMakeRoomDlg::OnBnClickedButtonMakeroom()
 		
 		m_pDlg->m_pClient->m_SendData();
 
+		m_pDlg->m_pChatRoomForm->SetDlgItemText(IDC_EDIT_CHATROOM_RECVMSG, _T(""));
+
 		EndDialog(IDOK);
+		
 	}
 
 }

@@ -38,9 +38,11 @@ public:
 	CEdit m_chat;
 	CEdit m_sendmsg;
 	CListCtrl m_roomuserlist;
-	CMenu m_menu, *m_submenu;
+	CMenu m_menuuser, * m_submenuuser,m_menuchat;
 	CString m_selUser;
+	int m_cntcb;
 	afx_msg void OnNMRClickListChatroomUserlist(NMHDR* pNMHDR, LRESULT* pResult);
+	CComboBox m_cbchat;
 };
 
 

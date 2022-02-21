@@ -14,8 +14,9 @@ IMPLEMENT_DYNCREATE(CChatRoomForm, CFormView)
 CChatRoomForm::CChatRoomForm()
 	: CFormView(IDD_FORMVIEW_CHATROOM)
 {	
-	m_menu.LoadMenu(IDR_MENU);
-	m_submenu = m_menu.GetSubMenu(0);
+	m_menuuser.LoadMenu(IDR_MENU_USER);
+	m_submenuuser = m_menuuser.GetSubMenu(0);	
+	m_cntcb = 0;
 }
 
 CChatRoomForm::~CChatRoomForm()
@@ -29,6 +30,7 @@ void CChatRoomForm::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_EDIT_CHATROOM_RECVMSG, m_chat);
 	DDX_Control(pDX, IDC_EDIT_CHATROOM_SENDMSG, m_sendmsg);
 	DDX_Control(pDX, IDC_LIST_CHATROOM_USERLIST, m_roomuserlist);
+	DDX_Control(pDX, IDC_CHATROOM_COMBO, m_cbchat);
 }
 
 BEGIN_MESSAGE_MAP(CChatRoomForm, CFormView)
@@ -79,6 +81,10 @@ void CChatRoomForm::OnInitialUpdate()
 	m_roomuserlist.InsertColumn(0, _T("참여자"), LVCFMT_LEFT, rect.Width());
 	m_roomuserlist.GetHeaderCtrl()->EnableWindow(false);
 
+	m_cbchat.InsertString(0, _T("전체채팅"));
+	//m_cbchat.InsertString(1, _T("귓속말"));
+	m_cbchat.SetCurSel(0);
+
 }
 
 void CChatRoomForm::OnBnClickedButtonChatroomSend()
@@ -92,10 +98,16 @@ void CChatRoomForm::OnBnClickedButtonChatroomSend()
 	//TODO : 메시지 서버에 전송
 	if (strMsg.GetLength() > 0) 
 	{
+		CString selstr;
+		m_cbchat.GetLBText(m_cbchat.GetCurSel(), selstr);
 		root["action"] = "sendmsg";
 		root["nickname"] = m_pDlg->m_pClient->m_getNickname();
 		root["roomnum"] = m_pDlg->m_pClient->m_roomnum;
 		root["msg"] = std::string(CT2CA(strMsg));
+		if (selstr == "전체채팅")
+			root["receiver"] = "all";
+		else
+			root["receiver"] = std::string(CT2CA(selstr));
 
 		m_pDlg->m_pClient->m_data.msg = writer.write(root);
 		m_pDlg->m_pClient->m_data.size = m_pDlg->m_pClient->m_data.msg.size();
@@ -150,15 +162,15 @@ void CChatRoomForm::OnNMRClickListChatroomUserlist(NMHDR* pNMHDR, LRESULT* pResu
 		// 아이템 영역에서 마우스 오른쪽 버튼을 선택한 경우 
 		GetCursorPos(&CurrentPosition); 
 		if (m_pDlg->m_pClient->m_ismaster) {
-			m_submenu->EnableMenuItem(1, MF_BYPOSITION | MF_ENABLED);
-			m_submenu->EnableMenuItem(2, MF_BYPOSITION | MF_ENABLED);
+			m_submenuuser->EnableMenuItem(1, MF_BYPOSITION | MF_ENABLED);
+			m_submenuuser->EnableMenuItem(2, MF_BYPOSITION | MF_ENABLED);
 		}
 		else
 		{			
-			m_submenu->EnableMenuItem(1, MF_BYPOSITION | MF_DISABLED | MF_GRAYED);
-			m_submenu->EnableMenuItem(2, MF_BYPOSITION | MF_DISABLED | MF_GRAYED);
+			m_submenuuser->EnableMenuItem(1, MF_BYPOSITION | MF_DISABLED | MF_GRAYED);
+			m_submenuuser->EnableMenuItem(2, MF_BYPOSITION | MF_DISABLED | MF_GRAYED);
 		}
-		m_submenu->TrackPopupMenu(TPM_LEFTALIGN,
+		m_submenuuser->TrackPopupMenu(TPM_LEFTALIGN,
 			CurrentPosition.x,
 			CurrentPosition.y,
 			AfxGetMainWnd());

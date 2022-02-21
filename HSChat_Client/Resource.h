@@ -3,6 +3,7 @@
 // HSChat_Client.rc에서 사용되고 있습니다.
 //
 #define IDR_MENU                        4
+#define IDR_MENU_USER                   4
 #define IDM_ABOUTBOX                    0x0010
 #define IDD_ABOUTBOX                    100
 #define IDS_ABOUTBOX                    101
@@ -126,6 +127,9 @@
 #define IDC_EDIT_FRIENDADD_NICKNAME     1076
 #define IDC_BUTTON_FRIENDADD_CANCEL     1077
 #define IDC_BUTTON_FRIENDADD_OK         1078
+#define IDC_CHATRROM_MENUBUTTON         1088
+#define IDC_COMBO1                      1089
+#define IDC_CHATROOM_COMBO              1089
 #define ID_DD_DD                        32771
 #define ID_DD_DD32772                   32772
 #define ID_32773                        32773
@@ -135,14 +139,15 @@
 #define ID_MENU_                        32777
 #define ID_MENU_ASSIGN                  32778
 #define ID__MENU_BAN                    32779
+#define ID_MENU_TOWHISPER               32787
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        148
-#define _APS_NEXT_COMMAND_VALUE         32780
-#define _APS_NEXT_CONTROL_VALUE         1079
+#define _APS_NEXT_RESOURCE_VALUE        151
+#define _APS_NEXT_COMMAND_VALUE         32792
+#define _APS_NEXT_CONTROL_VALUE         1090
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif
