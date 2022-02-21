@@ -28,6 +28,7 @@ using namespace std;
 #define	MAXLISTEN		  32	/* maximum connection queue length	*/
 #define	BUFSIZE		4096
 #define MAXCLI      100
+#define MAXROOM		512
 
 typedef struct data
 {
@@ -62,6 +63,18 @@ public:
 	string id;
 	string nickname;
 	string birth;
+};
+
+class CRoom
+{
+public:	
+	int m_roomnum;
+	int m_usernum;
+	int m_maxnum;
+	string m_name;		
+	string m_type;
+	string m_master;	
+	vector <Client> m_client;
 };
 
 //DML//
@@ -143,6 +156,20 @@ int main(int argc, char *argv[])
 	}	
 	else
 		cout << "Connection Succeed" << endl;
+
+
+
+	
+	int cntroom = 0;				// 채팅방 개수
+	vector <CRoom> room(MAXROOM);
+	for(int i = 0; i < MAXROOM; i++) {
+		room[i].m_master = "";
+		room[i].m_name = "";
+		room[i].m_type = "";
+		room[i].m_maxnum = 0;
+		room[i].m_roomnum = 0;
+		room[i].m_usernum = 0;
+	}
 
 
 	while (1) {
@@ -341,7 +368,7 @@ int main(int argc, char *argv[])
 									sendroot["msg"] = nickname + "님 환영합니다";
 							
 								}
-								
+
 								data.msg.clear();
 								data.msg = writer.write(sendroot);
 								data.size = data.msg.size();
@@ -356,11 +383,37 @@ int main(int argc, char *argv[])
 									cout << "Send Success: " <<"("<< clnt_sock <<")"  << endl;			
 								}	
 
-
-
-
-								
 							}	
+
+							else if (action == "createroom") 
+							{
+								// parse json
+								string master = recvroot["master"].asString();
+								string roomname = recvroot["roomname"].asString();
+								int maxnum = recvroot["maxnum"].asInt();
+								string roomtype = recvroot["roomtype"].asString();
+
+								room[cntroom].m_roomnum = cntroom++;
+								room[cntroom].m_maxnum = maxnum;
+								room[cntroom].m_master = master;
+								room[cntroom].m_name = roomname;
+								room[cntroom].m_type = roomtype;
+
+								room[cntroom].m_usernum = 1;
+								room[cntroom].m_client.push_back(c[index]);
+
+								DML = DML_Insert("room_info", room[cntroom].m_master.c_str(), room[cntroom].m_usernum, room[cntroom].m_maxnum, room[cntroom].m_name.c_str(), room[cntroom].m_type.c_str());
+								cout << DML << endl;
+
+								//PGresult* res = PQexec(pCon, DML.c_str()); //DML SEND
+
+
+																
+								
+
+							}
+
+							
 
 							
 							
@@ -636,11 +689,3 @@ string DML_Update(int args, ...)
 	va_end(ap);
 	return DML;
 }
-
-
-
-
-
-
-
-
