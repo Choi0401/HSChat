@@ -66,6 +66,13 @@ void CMakeRoomDlg::OnBnClickedButtonMakeroom()
 		else if(maxnum == 0)
 			AfxMessageBox(_T("방 인원을 입력해주세요."));
 	}
+	if (strRoomName.GetLength() > 30 || maxnum > 50)
+	{
+		if (strRoomName.GetLength() > 30)
+			AfxMessageBox(_T("방 이름을 30자 이하로 적어주세요"));
+		else if (maxnum > 50)
+			AfxMessageBox(_T("방 최대인원은 50명입니다"));
+	}
 	else
 	{
 		//TODO : 방 만드는 메시지 서버에 전송
