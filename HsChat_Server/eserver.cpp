@@ -22,6 +22,7 @@
 #include "json/json.h"
 #include <string>
 #include <libpq-fe.h>
+#include <locale.h>
 
 using namespace std;
 
@@ -39,6 +40,19 @@ typedef struct data
 extern int	errno;
 
 int		createsocket(const char *portnum, int qlen);
+std::string base64_decode(std::string const& encoded_string);
+
+static const std::string base64_chars =
+             "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+             "abcdefghijklmnopqrstuvwxyz"
+             "0123456789+/";
+
+
+static inline bool is_base64(unsigned char c)
+{
+  return (isalnum(c) || (c == '+') || (c == '/'));
+}
+
 
 class Server 
 {
@@ -86,7 +100,7 @@ string DML_Delete(int args, ...);
 string DML_Select(int args, ...);
 string DML_Update(int args, ...);
 
-
+string base64_decode(const string &in);
 
 /*------------------------------------------------------------------------
  * main - Concurrent TCP server for ssl_read service
@@ -94,6 +108,7 @@ string DML_Update(int args, ...);
  */
 int main(int argc, char *argv[])
 {
+	setlocale(LC_ALL, "ko_KR.EUC-KR");
 	const char	*portnum = "8282";	/* Standard server port number	*/
 	struct sockaddr_in clnt_addr;	/* the from address of a client	*/
 	int	serv_sock,r;			/* master server socket		*/
@@ -271,9 +286,12 @@ int main(int argc, char *argv[])
 				{
 					printf("Receive Body Size: %d\n", data.size);
 					data.msg.resize(data.size);
-					int ret_body_size = SSL_read(ssl, &data.msg[0], data.size);
+					int ret_body_size = SSL_read(ssl, &data.msg[0], data.size);					
 					if (ret_body_size > 0)
-					{
+					{						
+						//string test = base64_decode(data.msg);
+						//cout << test << endl;
+
 						cout << "Receive Message: "<< data.msg <<endl;
 						bool parseSuccessful = reader.parse(data.msg, recvroot);
 						if (parseSuccessful == false)
@@ -477,6 +495,53 @@ int main(int argc, char *argv[])
 								} 
 
 
+							}
+
+							else if (action == "alllist") 
+							{
+								/*										room_info TABLE
+								*   room_num | room_master_user_num | room_num_user | room_max_user | room_name | room_type
+								*   ----------+----------------------+---------------+---------------+-----------+---------
+								*/
+								string nickname = recvroot["nickname"].asString();
+								DML = "select * from room_info;";
+								PGresult* resSelect = PQexec(pCon, DML.c_str()); 
+								int cnttuples = PQntuples(resSelect);
+								cout << "cnt = " << cnttuples << endl;
+
+								if(cnttuples > 0){
+									Json::Value roomlist;
+									Json::Value roomarr[cnttuples];
+
+									for(int i = 0; i < cnttuples; i++)//Get tables data
+									{
+										roomarr[i]["roomnum"] = stoi(PQgetvalue(resSelect, i, 0));
+										roomarr[i]["usernum"] = stoi(PQgetvalue(resSelect, i, 2));
+										roomarr[i]["maxusernum"] = stoi(PQgetvalue(resSelect, i, 3));
+										roomarr[i]["roomname"] = PQgetvalue(resSelect, i, 4);
+										roomarr[i]["roomtype"] = PQgetvalue(resSelect, i, 5);
+										roomlist.append(roomarr[i]);
+									}
+									sendroot["action"] = "alllist";
+									sendroot["result"] = "true";
+									sendroot["roomlist"] = roomlist;
+
+									data.msg.clear();
+									data.msg = writer.write(sendroot);
+									data.size = data.msg.size();
+
+									if (ret_HeadWrite = SSL_write(ssl, &data.size, sizeof(int)) <= 0)
+										cout << "ret_HeadWrite_searchpw_error\n" <<endl;
+
+									else // HeadWrite Successful
+									{
+										if (ret_BodyWrite = SSL_write(ssl, &data.msg[0], data.size) <= 0)
+											cout << "ret_BodyWrite_searchpw_error\n" << endl;
+										cout << "Send Success: " <<"("<< c[index].clnt_sock <<")"  << endl;
+									}
+
+								}
+						
 							}
 
 							else if(action == "searchid") 
@@ -895,4 +960,47 @@ string DML_Update(int args, ...)
 	}
 	va_end(ap);
 	return DML;
+}
+
+std::string base64_decode(std::string const& encoded_string)
+{
+  int in_len = encoded_string.size();
+  int i = 0, j = 0, in_ = 0;
+  unsigned char char_array_4[4], char_array_3[3];
+  std::string ret;
+
+  while (in_len-- && ( encoded_string[in_] != '=') && is_base64(encoded_string[in_]))
+    {
+    char_array_4[i++] = encoded_string[in_]; in_++;
+    if (i ==4) {
+      for (i = 0; i <4; i++)
+        char_array_4[i] = base64_chars.find(char_array_4[i]);
+
+      char_array_3[0] = (char_array_4[0] << 2) + ((char_array_4[1] & 0x30) >> 4);
+      char_array_3[1] = ((char_array_4[1] & 0xf) << 4) + ((char_array_4[2] & 0x3c) >> 2);
+      char_array_3[2] = ((char_array_4[2] & 0x3) << 6) + char_array_4[3];
+
+      for (i = 0; (i < 3); i++)
+        ret += char_array_3[i];
+      i = 0;
+    }
+  }
+
+  if (i)
+    {
+    for (j = i; j <4; j++)
+      char_array_4[j] = 0;
+
+    for (j = 0; j <4; j++)
+      char_array_4[j] = base64_chars.find(char_array_4[j]);
+
+    char_array_3[0] = (char_array_4[0] << 2) + ((char_array_4[1] & 0x30) >> 4);
+    char_array_3[1] = ((char_array_4[1] & 0xf) << 4) + ((char_array_4[2] & 0x3c) >> 2);
+    char_array_3[2] = ((char_array_4[2] & 0x3) << 6) + char_array_4[3];
+
+    for (j = 0; (j < i - 1); j++)
+            ret += char_array_3[j];
+  }
+
+  return ret;
 }
