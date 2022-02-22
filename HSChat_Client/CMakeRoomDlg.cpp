@@ -86,7 +86,7 @@ void CMakeRoomDlg::OnBnClickedButtonMakeroom()
 			root["roomtype"] = "private";
 
 		m_pDlg->m_pClient->m_data.msg = writer.write(root);
-		m_pDlg->m_pClient->m_data.size = m_pDlg->m_pClient->m_data.msg.size();
+		m_pDlg->m_pClient->m_data.size = static_cast<int>(m_pDlg->m_pClient->m_data.msg.size());
 		
 		m_pDlg->m_pClient->m_SendData();
 

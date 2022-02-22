@@ -17,12 +17,6 @@ CSigninForm::CSigninForm()
 	m_pDlg = (CHSChatDlg*)::AfxGetMainWnd();	
 }
 
-CSigninForm::CSigninForm(UINT nIDTemplate)
-	: CFormView(nIDTemplate)
-{
-
-}
-
 CSigninForm::~CSigninForm()
 {
 }
@@ -95,11 +89,10 @@ void CSigninForm::OnBnClickedButtonSigninSignin()
 	{
 		root["action"] = "signin";
 		root["id"] = std::string(CT2CA(strID));
-		root["id"] = std::string(CT2CA(strID));
 		root["pw"] = std::string(CT2CA(strPW));
 
 		m_pDlg->m_pClient->m_data.msg = writer.write(root);
-		m_pDlg->m_pClient->m_data.size = m_pDlg->m_pClient->m_data.msg.size();
+		m_pDlg->m_pClient->m_data.size = static_cast<int>(m_pDlg->m_pClient->m_data.msg.size());
 		
 		m_pDlg->m_pClient->m_SendData();
 		

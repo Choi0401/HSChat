@@ -83,6 +83,14 @@ void CClient::m_InitData()
 
 void CClient::m_SendData()
 {
+    //string encodingmsg;
+    ////encodingmsg = m_pDlg->base64_encode((unsigned char*)m_data.msg.c_str(), m_data.size);
+    //encodingmsg = m_pDlg->base64_encode((unsigned char*)"헤위", 6);
+    //CString asdf;
+    //asdf = encodingmsg.c_str();
+    //AfxMessageBox(asdf);
+    //m_data.size = encodingmsg.size();
+
     int ret_HeadWrite = 0;
     if (m_pDlg == NULL) m_pDlg = (CHSChatDlg*)::AfxGetMainWnd();
     if (m_connstate == CLIENT_DISCONNECTED || (ret_HeadWrite = SSL_write(m_pDlg->m_pOpenssl->m_pSSL, &m_data.size, sizeof(int))) <= 0)
@@ -92,6 +100,7 @@ void CClient::m_SendData()
     else
     {
         int ret_BodyWrite = 0;
+
         if (m_connstate == CLIENT_DISCONNECTED || (ret_BodyWrite = SSL_write(m_pDlg->m_pOpenssl->m_pSSL, &m_data.msg[0], m_data.size)) <= 0)
         {
             AfxMessageBox(_T("서버에 연결할 수 없습니다."));
@@ -109,7 +118,7 @@ void CClient::m_RequestAllList()
     root["nickname"] = m_getNickname();
 
     m_data.msg = writer.write(root);
-    m_data.size = m_data.msg.size();
+    m_data.size = static_cast<int>(m_data.msg.size());
 
     m_SendData();
     
@@ -124,7 +133,8 @@ void CClient::m_LogOut()
     root["nickname"] = m_getNickname();
 
     m_data.msg = writer.write(root);
-    m_data.size = m_data.msg.size();
+    m_data.size = static_cast<int>(m_data.msg.size());
 
     m_SendData();
 }
+

@@ -6,7 +6,6 @@ class CWaitingForm : public CFormView
 
 public:
 	CWaitingForm();
-	CWaitingForm(UINT nIDTemplate);
 	virtual ~CWaitingForm();
 
 	// 대화 상자 데이터입니다.
