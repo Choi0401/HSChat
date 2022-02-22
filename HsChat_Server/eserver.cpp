@@ -23,6 +23,7 @@
 #include <string>
 #include <libpq-fe.h>
 #include <locale.h>
+#include <time.h>
 
 using namespace std;
 
@@ -73,11 +74,13 @@ class Client
 public:
 	int clnt_sock;
 	int current_room_num;
+	bool ismaster;
 	string clnt_ip;
 	string clnt_name;
 	string id;
 	string nickname;
 	string birth;
+	SSL *clientssl;
 
 };
 
@@ -151,6 +154,8 @@ int main(int argc, char *argv[])
 	{
 		c[i].clnt_sock = -1;
 		c[i].current_room_num = 0;		// 대기실
+		c[i].ismaster = false;
+		c[i].clientssl = NULL;
 		memset(&c[i].clnt_ip, 0x00, sizeof(c[i].clnt_ip));
 		memset(&c[i].clnt_name, 0x00, sizeof(c[i].clnt_name));	
 	}
@@ -244,6 +249,9 @@ int main(int argc, char *argv[])
 					strerror(errno));
 			FD_SET(ssock, &fd_cpy_reads);
 			ssl_arr[num_clients]=ssl;
+
+			c[num_clients].clientssl = ssl;
+
 			fd_arr[num_clients]=ssock;
 			c[num_clients].clnt_sock = fd_arr[num_clients];
 			//strcpy(c[num_clients].clnt_ip, inet_ntoa(clnt_addr.sin_addr));
@@ -264,7 +272,7 @@ int main(int argc, char *argv[])
 	            BIO *sbio = NULL;
 	            for(i=0;i<num_clients;i++) {
 	                if (fd_arr[i] == fd) {
-	                    ssl = ssl_arr[i];
+	                    ssl = ssl_arr[i];						
 						clnt_sock = c[i].clnt_sock;
 	                    index = i;
 	                    break;
@@ -309,7 +317,7 @@ int main(int argc, char *argv[])
 								string nickname = recvroot["nickname"].asString();
 								string name = recvroot["name"].asString();
 								string birth = recvroot["birth"].asString();
-								string phone = recvroot["phone"].asString();
+								string phone = recvroot["phone"].asString();								
 
 								// 1. 아이디 중복 검사
 								DML = DML_Select(4,"*","user_info","user_id",id.c_str());
@@ -322,6 +330,7 @@ int main(int argc, char *argv[])
 								//계정이 존재하지 않는 경우
 								if (PQntuples(resID) == 0 && PQntuples(resNickname) == 0)  
 								{
+									//DML = "insert into user_info values(nextval('sq_user_num')," + name + "," + birth + "," + phone + "," + id + "," + nickname + "," + pw + ");";
 									DML = DML_Insert("user_info", name.c_str(), birth.c_str(), phone.c_str(), id.c_str(), nickname.c_str(), pw.c_str());
 									PGresult* res = PQexec(pCon, DML.c_str()); //DML SEND
 
@@ -351,16 +360,6 @@ int main(int argc, char *argv[])
 									data.msg = writer.write(sendroot);
 									data.size = data.msg.size();
 						
-								}	
-
-								if (ret_HeadWrite = SSL_write(ssl, &data.size, sizeof(int)) <= 0)
-										cout << "ret_HeadWrite_signup_error\n" <<endl;	
-
-								else // HeadWrite Successful
-								{
-									if (ret_BodyWrite = SSL_write(ssl, &data.msg[0], data.size) <= 0)
-										cout << "ret_BodyWrite_signup_error\n" << endl;																										  else 
-									cout << "Send Success: " <<"("<< clnt_sock <<")"  << endl;			
 								}								
 							}	
 
@@ -378,33 +377,22 @@ int main(int argc, char *argv[])
 									sendroot["action"] = "signin";
 									sendroot["result"] = "false";
 									sendroot["msg"] = "아이디와 비밀번호를 확인해주세요";
-
 								}
 								else if(PQntuples(rescheck) == 1)
 								{
 									string nickname;
 									nickname = PQgetvalue(rescheck, 0, 0);
+									c[index].nickname = nickname;
 
 									sendroot["action"] = "signin";
 									sendroot["result"] = "true";
 									sendroot["nickname"] = nickname;
-									sendroot["msg"] = nickname + "님 환영합니다";
-							
+									sendroot["msg"] = nickname + "님 환영합니다";						
 								}
 
 								data.msg.clear();
 								data.msg = writer.write(sendroot);
 								data.size = data.msg.size();
-
-								if (ret_HeadWrite = SSL_write(ssl, &data.size, sizeof(int)) <= 0)
-										cout << "ret_HeadWrite_signup_error\n" <<endl;	
-
-								else // HeadWrite Successful
-								{
-									if (ret_BodyWrite = SSL_write(ssl, &data.msg[0], data.size) <= 0)
-										cout << "ret_BodyWrite_signup_error\n" << endl;																										  else 
-									cout << "Send Success: " <<"("<< clnt_sock <<")"  << endl;			
-								}	
 
 							}	
 
@@ -448,6 +436,7 @@ int main(int argc, char *argv[])
 										PGresult* resSelect = PQexec(pCon, DML.c_str());
 										if(PQntuples(resSelect) == 1){
 											room[cntroom].m_roomnum = atoi(PQgetvalue(resSelect, 0, 0));
+											c[index].current_room_num = room[cntroom].m_roomnum;
 											cout << "채팅방 번호 : " << room[cntroom].m_roomnum << endl;							
 											room[cntroom].m_master = master;
 											cout << "채팅방 방장 : " << room[cntroom].m_master << endl;
@@ -459,8 +448,14 @@ int main(int argc, char *argv[])
 											cout << "채팅방 현재 인원 : " << room[cntroom].m_usernum << endl;
 											room[cntroom].m_maxnum = maxnum;
 											cout << "채팅방 총 인원 : " << room[cntroom].m_maxnum << endl;
-											room[cntroom].m_client.push_back(c[index]);
+											room[cntroom].m_client.push_back(c[index]);											
 											cout << "채팅방 방장 IP: " << room[cntroom].m_client[room[cntroom].m_usernum - 1].clnt_ip << endl;	
+											room[cntroom].m_client[room[cntroom].m_usernum - 1].ismaster = true;		
+
+											// cout << room[cntroom].m_client[room[cntroom].m_usernum - 1].nickname << endl;
+
+											DML = "update user_info set current_room_num = " + to_string(room[cntroom].m_roomnum) + " where user_num = " + to_string(room[cntroom].m_masternum) + ";";
+											PGresult* resUpdate = PQexec(pCon, DML.c_str());											
 
 											sendroot["result"] = "true";
 											sendroot["roomnum"] = room[cntroom].m_roomnum;
@@ -469,15 +464,6 @@ int main(int argc, char *argv[])
 											data.msg = writer.write(sendroot);
 											data.size = data.msg.size();										
 
-											if (ret_HeadWrite = SSL_write(ssl, &data.size, sizeof(int)) <= 0)
-												cout << "ret_HeadWrite_searchpw_error\n" <<endl;
-
-											else // HeadWrite Successful
-											{
-												if (ret_BodyWrite = SSL_write(ssl, &data.msg[0], data.size) <= 0)
-													cout << "ret_BodyWrite_searchpw_error\n" << endl;
-												cout << "Send Success: " <<"("<< c[index].clnt_sock <<")"  << endl;
-											}
 											//TODO : 채팅방 만든거 대기실 유저에게 뿌려줘야함
 										}										
 										else {
@@ -507,7 +493,6 @@ int main(int argc, char *argv[])
 								DML = "select * from room_info;";
 								PGresult* resSelect = PQexec(pCon, DML.c_str()); 
 								int cnttuples = PQntuples(resSelect);
-								cout << "cnt = " << cnttuples << endl;
 
 								if(cnttuples > 0){
 									Json::Value roomlist;
@@ -530,18 +515,231 @@ int main(int argc, char *argv[])
 									data.msg = writer.write(sendroot);
 									data.size = data.msg.size();
 
-									if (ret_HeadWrite = SSL_write(ssl, &data.size, sizeof(int)) <= 0)
-										cout << "ret_HeadWrite_searchpw_error\n" <<endl;
-
-									else // HeadWrite Successful
-									{
-										if (ret_BodyWrite = SSL_write(ssl, &data.msg[0], data.size) <= 0)
-											cout << "ret_BodyWrite_searchpw_error\n" << endl;
-										cout << "Send Success: " <<"("<< c[index].clnt_sock <<")"  << endl;
-									}
-
 								}
 						
+							}
+							else if (action == "quitroom") 
+							{
+								string nickname = recvroot["nickname"].asString();
+								// Get user_num
+								DML = DML_Select(4,"user_num","user_info","user_nickname", nickname.c_str());		
+								PGresult* resSelect = PQexec(pCon, DML.c_str());		
+								if(PQntuples(resSelect) == 1){
+									int user_num = atoi(PQgetvalue(resSelect, 0, 0));
+									// Get room info
+									DML = "select * from room_info;";
+									PGresult* resSelect = PQexec(pCon, DML.c_str()); 
+
+									int cnttuples = PQntuples(resSelect);
+
+									if(cnttuples > 0){
+										int roomnum, currentusernum, masterusernum;
+										for(int i = 0; i < cnttuples; i++)//Get tables data
+										{
+											roomnum= stoi(PQgetvalue(resSelect, i, 0));
+											masterusernum = stoi(PQgetvalue(resSelect, i, 1));											
+											currentusernum = stoi(PQgetvalue(resSelect, i, 2));
+										}
+										
+										// 방에 혼자 남은 경우
+										if(currentusernum == 1) {								
+											for(int i = 0; i < room.size(); i++){
+												if(room[i].m_roomnum == roomnum) {
+													room.erase(room.begin() + i);
+													break;
+												}
+											}			
+											// 사용자 채팅방 번호 업데이트
+											DML = "update user_info set current_room_num = " + to_string(0) + " where user_num = " + to_string(user_num) + ";";
+											PGresult* resUpdate= PQexec(pCon, DML.c_str()); 
+											
+											// 채팅방 DB에서 삭제
+											DML = "delete from room_info where room_num = " + to_string(roomnum) + ";";
+											PGresult* resDelete= PQexec(pCon, DML.c_str()); 
+
+											c[index].current_room_num = 0;
+											continue;
+
+										}
+										else if(currentusernum > 1) {
+											// 나간사람이 방장인 경우 방장 위임
+											if(masterusernum == user_num) {
+
+											}
+											else {
+												// 사용자 채팅방 번호 업데이트
+												DML = "update user_info set current_room_num = " + to_string(0) + " where user_num = " + to_string(user_num) + ";";
+												PGresult* resUpdateuser= PQexec(pCon, DML.c_str()); 												
+												for(int i = 0; i < room.size(); i++){
+													if(room[i].m_roomnum == roomnum) {
+														room[i].m_usernum--;
+														DML = "update room_info set room_num_user = " + to_string(room[i].m_usernum) + " where room_num = " + to_string(roomnum) + ";";
+														PGresult* resUpdateuser= PQexec(pCon, DML.c_str());
+														cout << "Client cnt = " << room[i].m_client.size() << endl;
+														for(int j = 0; j < room[i].m_client.size(); j++) {
+															if(room[i].m_client[j].nickname == nickname)
+																room[i].m_client.erase(room[i].m_client.begin() + j);																
+														}	
+														cout << "Client cnt = " << room[i].m_client.size() << endl;
+														break;
+													}
+												}
+											}																											
+											c[index].current_room_num = 0;
+											continue;
+										}
+									}									
+								}
+
+								data.msg.clear();
+								data.msg = writer.write(sendroot);
+								data.size = data.msg.size();
+													
+							}
+
+							else if (action == "enterroom") 
+							{
+								string nickname = recvroot["nickname"].asString();
+								int roomnum = recvroot["roomnum"].asInt();				
+
+								if(roomnum == 0)
+									cout << "roomnum = " << roomnum << endl;
+
+								int roomindex = 0;
+								for(int i = 0; i < room.size(); i++) {
+									if(roomnum == room[i].m_roomnum) {
+										roomindex = i;
+										break;
+									}
+								}
+
+								// 채팅방 현재 인원 수 업데이트
+								DML = "update room_info set room_num_user = " + to_string(++room[roomindex].m_usernum) + " where room_num = " + to_string(roomnum) + ";";
+								PGresult* resUpdateNum = PQexec(pCon, DML.c_str()); //DML SEND;
+								room[roomindex].m_client.push_back(c[index]);
+
+								// 클라이언트 현재 채팅방 번호 업데이트
+								DML = "update user_info set current_room_num = " + to_string(roomnum) + " where user_nickname = " + "'" + nickname + "'" + ";";
+								PGresult* resUpdateroomnum = PQexec(pCon, DML.c_str()); //DML SEND;
+
+								//cout << "num = " << room[roomindex].m_usernum << endl;
+								int cntuser = room[roomindex].m_client.size();
+								//cout << "cntuser = " << cntuser << endl;
+								//cout << "master = " << room[roomindex].m_master << endl;
+
+								Json::Value userlist;
+								Json::Value user[cntuser];
+								sendroot["action"] = "enterroom";
+								sendroot["result"] = "true";
+								sendroot["roomnum"] = roomnum;
+								sendroot["master"] = room[roomindex].m_master;
+								sendroot["msg"] = "채팅방에 오신 것을 환영합니다.";
+								for(int i = 0; i < cntuser; i++) {
+									user[i]["nickname"] = room[roomindex].m_client[i].nickname;
+									cout << "nickname = " << room[roomindex].m_client[i].nickname << endl;
+									userlist.append(user[i]);
+								}
+								sendroot["userlist"] = userlist;
+
+								data.msg.clear();
+								data.msg = writer.write(sendroot);
+								data.size = data.msg.size();
+								if (ret_HeadWrite = SSL_write(ssl, &data.size, sizeof(int)) <= 0)
+										cout << "ret_HeadWrite_error\n" <<endl;	
+
+								else // HeadWrite Successful
+								{
+									if (ret_BodyWrite = SSL_write(ssl, &data.msg[0], data.size) <= 0)
+										cout << "ret_BodyWrite_error\n" << endl;
+									else 
+										cout << "Send Success: " <<"("<< clnt_sock <<")"  << endl;			
+								}
+
+								/* 같은 채팅방 유저에게 알려줌 */
+								sendroot.clear();
+								sendroot["action"] = "updateuserlist";								
+								sendroot["nickname"] = nickname;					
+								//string sendmsg = "[공지]" + nickname + "님이 채팅방에 입장하였습니다.\n";			
+								string sendmsg = "님이 채팅방에 입장하였습니다.\n";			
+								sendroot["msg"] = sendmsg;
+
+								data.msg.clear();
+								data.msg = writer.write(sendroot);
+								data.size = data.msg.size();
+
+
+								int cnt_client = room[roomindex].m_client.size();
+								for(int i = 0; i < cnt_client; i++) {
+									if(room[roomindex].m_client[i].nickname != nickname) {
+										if (ret_HeadWrite = SSL_write(room[roomindex].m_client[i].clientssl, &data.size, sizeof(int)) <= 0)
+										cout << "ret_HeadWrite_error\n" <<endl;	
+
+										else // HeadWrite Successful
+										{
+											if (ret_BodyWrite = SSL_write(room[roomindex].m_client[i].clientssl, &data.msg[0], data.size) <= 0)
+												cout << "ret_BodyWrite_error\n" << endl;
+											else 
+												cout << "Send Success: " <<"("<< clnt_sock <<")"  << endl;			
+										}
+									}
+									//cout << "test : " << room[roomindex].m_client[i].clientssl << endl;
+								}
+								continue;
+					
+							}
+
+							else if (action == "sendmsg") 
+							{
+								string nickname = recvroot["nickname"].asString();
+								int roomnum = recvroot["roomnum"].asInt();		
+								string msg = recvroot["msg"].asString();
+
+
+
+								int roomindex = 0;
+								for(int i = 0; i < room.size(); i++) {
+									if(roomnum == room[i].m_roomnum) {
+										roomindex = i;
+										break;
+									}
+								}
+
+								time_t timer;
+								struct tm* t;
+								timer = time(NULL); // 1970년 1월 1일 0시 0분 0초부터 시작하여 현재까지의 초
+								t = localtime(&timer); // 포맷팅을 위해 구조체에 넣기
+								string time;
+								time = to_string(t->tm_hour) + ":" + to_string(t->tm_min);
+
+								sendroot["action"] = "recvmsg";
+								sendroot["msg"] = msg;
+								sendroot["sender"] = nickname;
+								sendroot["time"] = time;
+
+								data.msg.clear();
+								data.msg = writer.write(sendroot);
+								data.size = data.msg.size();
+
+								int cnt_client = room[roomindex].m_client.size();
+								for(int i = 0; i < cnt_client; i++) {
+									if (ret_HeadWrite = SSL_write(room[roomindex].m_client[i].clientssl, &data.size, sizeof(int)) <= 0)
+										cout << "ret_HeadWrite_error\n" <<endl;	
+									else // HeadWrite Successful
+									{
+										if (ret_BodyWrite = SSL_write(room[roomindex].m_client[i].clientssl, &data.msg[0], data.size) <= 0)
+											cout << "ret_BodyWrite_error\n" << endl;
+										else 
+											cout << "Send Success: " <<"("<< clnt_sock <<")"  << endl;			
+									}
+									//cout << "test : " << room[roomindex].m_client[i].clientssl << endl;
+								}
+								continue;
+					
+
+
+
+								
+					
 							}
 
 							else if(action == "searchid") 
@@ -576,17 +774,7 @@ int main(int argc, char *argv[])
 									data.msg.clear();
 									data.msg = writer.write(sendroot);
 									data.size = data.msg.size();
-								}	
-
-								if (ret_HeadWrite = SSL_write(ssl, &data.size, sizeof(int)) <= 0)
-									cout << "ret_HeadWrite_searchid_error\n" <<endl;	
-
-								else // HeadWrite Successful
-								{
-									if (ret_BodyWrite = SSL_write(ssl, &data.msg[0], data.size) <= 0)
-										cout << "ret_BodyWrite_searchid_error\n" << endl;															 
-									cout << "Send Success: " <<"("<< c[index].clnt_sock <<")"  << endl;			
-								}								
+								}						
 															
 							}/* end searchid */	
 
@@ -626,16 +814,6 @@ int main(int argc, char *argv[])
 									data.size = data.msg.size();
 								}
 
-								if (ret_HeadWrite = SSL_write(ssl, &data.size, sizeof(int)) <= 0)
-									cout << "ret_HeadWrite_searchpw_error\n" <<endl;
-
-								else // HeadWrite Successful
-								{
-									if (ret_BodyWrite = SSL_write(ssl, &data.msg[0], data.size) <= 0)
-										cout << "ret_BodyWrite_searchpw_error\n" << endl;
-									cout << "Send Success: " <<"("<< c[index].clnt_sock <<")"  << endl;
-								}
-
 							}/* end searchpw */
 
 						/*	else if (action == "showmyinfo")
@@ -672,7 +850,16 @@ int main(int argc, char *argv[])
 								} */
 
 						//	} /* end showmyinfo */
-							
+							if (ret_HeadWrite = SSL_write(ssl, &data.size, sizeof(int)) <= 0)
+										cout << "ret_HeadWrite_error\n" <<endl;	
+
+								else // HeadWrite Successful
+								{
+									if (ret_BodyWrite = SSL_write(ssl, &data.msg[0], data.size) <= 0)
+										cout << "ret_BodyWrite_error\n" << endl;
+									else 
+										cout << "Send Success: " <<"("<< clnt_sock <<")"  << endl;			
+								}			
 
 							
 							
