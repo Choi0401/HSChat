@@ -741,7 +741,7 @@ LRESULT CHSChatDlg::m_Proc(WPARAM wParam, LPARAM lParam)
 				// 실패
 				else if (result == "false")
 				{
-
+					AfxMessageBox(cstr, MB_ICONERROR);
 				}
 			}
 			// 채팅방 입장 
