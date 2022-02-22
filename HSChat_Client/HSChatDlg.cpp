@@ -1,6 +1,6 @@
 ﻿#pragma once
 // HSChatDlg.cpp: 구현 파일
-//
+//.
 #include "pch.h"
 #include "framework.h"
 #include "HSChat.h"
@@ -117,7 +117,7 @@ BOOL CHSChatDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// 작은 아이콘을 설정합니다.
 
 	// TODO: 여기에 추가 초기화 작업을 추가합니다.
-	setlocale(LC_ALL, "");
+	setlocale(LC_ALL, "ko_KR.EUC-KR");
 
 	CWinThread* pRecvthread = NULL;
 	m_pClient->m_InitSocket();
@@ -444,6 +444,7 @@ LRESULT CHSChatDlg::m_Proc(WPARAM wParam, LPARAM lParam)
 			else if (action == "alllist")
 			{
 				// parse json
+
 				string result = recvroot["result"].asString();
 				// 성공
 				if (result == "true")
@@ -551,7 +552,7 @@ LRESULT CHSChatDlg::m_Proc(WPARAM wParam, LPARAM lParam)
 					root["nickname"] = m_pClient->m_getNickname();
 
 					m_pClient->m_data.msg = writer.write(root);
-					m_pClient->m_data.size = m_pClient->m_data.msg.size();
+					m_pClient->m_data.size = static_cast<int>(m_pClient->m_data.msg.size());
 					m_pClient->m_SendData();
 
 				}
@@ -837,7 +838,6 @@ LRESULT CHSChatDlg::m_Proc(WPARAM wParam, LPARAM lParam)
 				int chatlength = m_pChatRoomForm->m_chat.GetWindowTextLength();
 				m_pChatRoomForm->m_chat.SetSel(chatlength, chatlength);
 				m_pChatRoomForm->m_chat.ReplaceSel(str);
-
 			}
 		}
 	}
@@ -886,7 +886,7 @@ void CHSChatDlg::OnMenuWhisper()
 		}
 	}
 	if (flag == -1)
-	{		
+	{
 		m_pChatRoomForm->m_cbchat.InsertString(m_pChatRoomForm->m_cntcb, m_pChatRoomForm->m_selUser);
 		m_pChatRoomForm->m_cbchat.SetCurSel(m_pChatRoomForm->m_cntcb);
 		m_pChatRoomForm->m_cntcb++;
@@ -904,8 +904,51 @@ void CHSChatDlg::OnMenuAssign()
 	root["roomnum"] = m_pClient->m_roomnum;
 
 	m_pClient->m_data.msg = writer.write(root);
-	m_pClient->m_data.size = m_pClient->m_data.msg.size();
+	m_pClient->m_data.size = static_cast<int>(m_pClient->m_data.msg.size());
 
 	m_pClient->m_SendData();
-	
+
+}
+
+std::string CHSChatDlg::base64_encode(unsigned char const* bytes_to_encode, unsigned int in_len)
+{
+	std::string ret;
+	int i = 0, j = 0;
+	unsigned char char_array_3[3], char_array_4[4];
+
+	while (in_len--)
+	{
+		char_array_3[i++] = *(bytes_to_encode++);
+		if (i == 3)
+		{
+			char_array_4[0] = (char_array_3[0] & 0xfc) >> 2;
+			char_array_4[1] = ((char_array_3[0] & 0x03) << 4) + ((char_array_3[1] & 0xf0) >> 4);
+			char_array_4[2] = ((char_array_3[1] & 0x0f) << 2) + ((char_array_3[2] & 0xc0) >> 6);
+			char_array_4[3] = char_array_3[2] & 0x3f;
+
+			for (i = 0; (i < 4); i++)
+				ret += base64_chars[char_array_4[i]];
+			i = 0;
+		}
+	}
+	if (i)
+	{
+		for (j = i; j < 3; j++)
+			char_array_3[j] = '\0';
+
+		char_array_4[0] = (char_array_3[0] & 0xfc) >> 2;
+		char_array_4[1] = ((char_array_3[0] & 0x03) << 4) + ((char_array_3[1] & 0xf0) >> 4);
+		char_array_4[2] = ((char_array_3[1] & 0x0f) << 2) + ((char_array_3[2] & 0xc0) >> 6);
+		char_array_4[3] = char_array_3[2] & 0x3f;
+
+		for (j = 0; (j < i + 1); j++)
+			ret += base64_chars[char_array_4[j]];
+
+		while ((i++ < 3))
+			ret += '=';
+
+	}
+
+	return ret;
+
 }

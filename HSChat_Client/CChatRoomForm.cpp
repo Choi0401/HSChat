@@ -14,9 +14,11 @@ IMPLEMENT_DYNCREATE(CChatRoomForm, CFormView)
 CChatRoomForm::CChatRoomForm()
 	: CFormView(IDD_FORMVIEW_CHATROOM)
 {	
+	m_pDlg = NULL;
 	m_menuuser.LoadMenu(IDR_MENU_USER);
 	m_submenuuser = m_menuuser.GetSubMenu(0);	
 	m_cntcb = 0;
+	m_bAscending = false;
 }
 
 CChatRoomForm::~CChatRoomForm()
@@ -117,7 +119,7 @@ void CChatRoomForm::OnBnClickedButtonChatroomSend()
 			root["receiver"] = std::string(CT2CA(selstr));
 
 		m_pDlg->m_pClient->m_data.msg = writer.write(root);
-		m_pDlg->m_pClient->m_data.size = m_pDlg->m_pClient->m_data.msg.size();
+		m_pDlg->m_pClient->m_data.size = static_cast<int>(m_pDlg->m_pClient->m_data.msg.size());
 
 		m_pDlg->m_pClient->m_SendData();
 
@@ -144,8 +146,29 @@ BOOL CChatRoomForm::PreTranslateMessage(MSG* pMsg)
 
 void CChatRoomForm::OnBnClickedButtonChatroomQuit()
 {
-	m_pDlg->m_pClient->m_RequestAllList();
-	m_pDlg->m_ShowForm(4);
+	Json::Value root;
+	Json::StyledWriter writer;
+
+	if (m_pDlg->m_pClient->m_ismaster)
+	{
+		//AfxMessageBox(_T("먼저 방장을 위임해주세요"));
+	}
+	else
+	{		
+		m_pDlg->m_pClient->m_roomnum = 0;
+		root["action"] = "quitroom";
+		root["nickname"] = m_pDlg->m_pClient->m_getNickname();
+
+		m_pDlg->m_pClient->m_data.msg = writer.write(root);
+		m_pDlg->m_pClient->m_data.size = static_cast<int>(m_pDlg->m_pClient->m_data.msg.size());
+
+		m_pDlg->m_pClient->m_SendData();
+
+
+		m_pDlg->m_pClient->m_RequestAllList();
+		m_pDlg->m_ShowForm(4);
+	}
+
 }
 
 
@@ -260,5 +283,6 @@ int CChatRoomForm::CompareItem(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort
 		return	bSortDirect ? strcmp(LPSTR(LPCTSTR(strItem1)), LPSTR(LPCTSTR(strItem2))) : -strcmp(LPSTR(LPCTSTR(strItem1)), LPSTR(LPCTSTR(strItem2)));
 	}
 
+	return 0;
 
 }

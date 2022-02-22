@@ -95,7 +95,7 @@ void CMyInfoForm::OnBnClickedButtonMyInfoOK()
 		root["pw"] = std::string(CT2CA(strPW));
 
 		m_pDlg->m_pClient->m_data.msg = writer.write(root);
-		m_pDlg->m_pClient->m_data.size = m_pDlg->m_pClient->m_data.msg.size();
+		m_pDlg->m_pClient->m_data.size = static_cast<int>(m_pDlg->m_pClient->m_data.msg.size());
 
 		m_pDlg->m_pClient->m_SendData();
 
@@ -120,7 +120,7 @@ void CMyInfoForm::OnBnClickedButtonMyInfoDelete()
 		root["nickname"] = m_pDlg->m_pClient->m_getNickname();
 
 		m_pDlg->m_pClient->m_data.msg = writer.write(root);
-		m_pDlg->m_pClient->m_data.size = m_pDlg->m_pClient->m_data.msg.size();
+		m_pDlg->m_pClient->m_data.size = static_cast<int>(m_pDlg->m_pClient->m_data.msg.size());
 
 		m_pDlg->m_pClient->m_SendData();
 	}

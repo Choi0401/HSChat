@@ -11,14 +11,10 @@ IMPLEMENT_DYNAMIC(CWaitingForm, CFormView)
 
 CWaitingForm::CWaitingForm() : CFormView(IDD_FORMVIEW_WAITING)
 {
+	m_bAscending = false;
 	m_pDlg = (CHSChatDlg*)::AfxGetMainWnd();	
 }
 
-CWaitingForm::CWaitingForm(UINT nIDTemplate)
-	: CFormView(nIDTemplate)
-{
-
-}
 
 CWaitingForm::~CWaitingForm()
 {
@@ -127,7 +123,7 @@ void CWaitingForm::OnBnClickedButtonWatingMyinfo()
 	root["nickname"] = m_pDlg->m_pClient->m_getNickname();
 
 	m_pDlg->m_pClient->m_data.msg = writer.write(root);
-	m_pDlg->m_pClient->m_data.size = m_pDlg->m_pClient->m_data.msg.size();
+	m_pDlg->m_pClient->m_data.size = static_cast<int>(m_pDlg->m_pClient->m_data.msg.size());
 
 	m_pDlg->m_pClient->m_SendData();
 
@@ -150,7 +146,7 @@ void CWaitingForm::OnNMDblclkListWatingRoom(NMHDR* pNMHDR, LRESULT* pResult)
 		root["roomnum"] = roomnum;
 		
 		m_pDlg->m_pClient->m_data.msg = writer.write(root);
-		m_pDlg->m_pClient->m_data.size = m_pDlg->m_pClient->m_data.msg.size();
+		m_pDlg->m_pClient->m_data.size = static_cast<int>(m_pDlg->m_pClient->m_data.msg.size());
 		
 		m_pDlg->m_pClient->m_SendData();
 	}
@@ -168,7 +164,7 @@ void CWaitingForm::OnBnClickedButtonWatingFriends()
 		root["nickname"] = m_pDlg->m_pClient->m_getNickname();
 
 		m_pDlg->m_pClient->m_data.msg = writer.write(root);
-		m_pDlg->m_pClient->m_data.size = m_pDlg->m_pClient->m_data.msg.size();
+		m_pDlg->m_pClient->m_data.size = static_cast<int>(m_pDlg->m_pClient->m_data.msg.size());
 		m_pDlg->m_pClient->m_SendData();
 		m_pDlg->m_pFriendslistDlg->Create(IDD_DIALOG_FRIENDSLIST);
 
@@ -285,5 +281,6 @@ int CWaitingForm::CompareItem(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort)
 		return	bSortDirect ? strcmp(LPSTR(LPCTSTR(strItem1)), LPSTR(LPCTSTR(strItem2))) : -strcmp(LPSTR(LPCTSTR(strItem1)), LPSTR(LPCTSTR(strItem2)));
 	}		
 
+	return 0;
 
 }
