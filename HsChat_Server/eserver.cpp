@@ -816,23 +816,44 @@ int main(int argc, char *argv[])
 
 							}/* end searchpw */
 
-						/*	else if (action == "showmyinfo")
+							else if (action == "showmyinfo")
 							{
+								char* gdata;
 								string nickname = recvroot["nickname"].asString();
-								DML = "Select " + "user_name" + "," + "user_id" + "," + "user_birth" + " from "
-									+ "user_info" + " where " + "user_nickname" + " = " + "'" + nickname.c_str() + "'" +";";
+								DML = "select user_name, user_id, user_birth from user_info where user_nickname = ";
+							   	gdata = "'";
+								DML += gdata;
+								DML += nickname.c_str();
+								gdata = "'";
+								DML += gdata;
+								gdata = ";";
+								DML += gdata;
+
+								cout << DML << endl;
+
 								//다중 Select문 수정 필요
 								PGresult* resShowMyInfo = PQexec(pCon, DML.c_str()); //DML SEND;
 
-								if(PQntuples(resSearchShowMyInfo) > 0) // 일치하는 닉네임을 찾은 경우(내정보 출력)
+								string name, id, birth;
+
+								for (int i =0; i < PQnfields(resShowMyInfo); i++)
 								{
-									string pw = PQgetvalue(resSearchPW, 0, 0);
+										name = PQgetvalue(resShowMyInfo, 0, i);
+										i++;
+										id = PQgetvalue(resShowMyInfo, 0, i);
+										i++;
+										birth = PQgetvalue(resShowMyInfo, 0, i);
+								}	
+
+								if(PQntuples(resShowMyInfo) > 0) // 일치하는 닉네임을 찾은 경우(내정보 출력)
+								{
+																		
 									sendroot["action"] = "showmyinfo";
 									sendroot["result"] = "true";
 									sendroot["name"] = name;
 									sendroot["id"] = id;
 									sendroot["birth"] = birth;
-
+									sendroot["nickname"] = nickname;
 								
 									data.msg.clear();
 									data.msg = writer.write(sendroot);
@@ -847,23 +868,11 @@ int main(int argc, char *argv[])
 									if (ret_BodyWrite = SSL_write(ssl, &data.msg[0], data.size) <= 0)
 										cout << "ret_BodyWrite_showmyinfo_error\n" << endl;
 									cout << "Send Success: " <<"("<< c[index].clnt_sock <<")"  << endl;
-								} */
+								} 
 
-						//	} /* end showmyinfo */
-							if (ret_HeadWrite = SSL_write(ssl, &data.size, sizeof(int)) <= 0)
-										cout << "ret_HeadWrite_error\n" <<endl;	
+							} /* end showmyinfo */			
 
-								else // HeadWrite Successful
-								{
-									if (ret_BodyWrite = SSL_write(ssl, &data.msg[0], data.size) <= 0)
-										cout << "ret_BodyWrite_error\n" << endl;
-									else 
-										cout << "Send Success: " <<"("<< clnt_sock <<")"  << endl;			
-								}			
-
-							
-							
-						
+										
 						
 						}	
 
