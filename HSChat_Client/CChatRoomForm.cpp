@@ -149,25 +149,18 @@ void CChatRoomForm::OnBnClickedButtonChatroomQuit()
 	Json::Value root;
 	Json::StyledWriter writer;
 
-	if (m_pDlg->m_pClient->m_ismaster)
-	{
-		//AfxMessageBox(_T("먼저 방장을 위임해주세요"));
-	}
-	else
-	{		
-		m_pDlg->m_pClient->m_roomnum = 0;
-		root["action"] = "quitroom";
-		root["nickname"] = m_pDlg->m_pClient->m_getNickname();
+	m_pDlg->m_pClient->m_roomnum = 0;
+	m_pDlg->m_pClient->m_ismaster = false;
 
-		m_pDlg->m_pClient->m_data.msg = writer.write(root);
-		m_pDlg->m_pClient->m_data.size = static_cast<int>(m_pDlg->m_pClient->m_data.msg.size());
+	root["action"] = "quitroom";
+	root["nickname"] = m_pDlg->m_pClient->m_getNickname();
 
-		m_pDlg->m_pClient->m_SendData();
+	m_pDlg->m_pClient->m_data.msg = writer.write(root);
+	m_pDlg->m_pClient->m_data.size = static_cast<int>(m_pDlg->m_pClient->m_data.msg.size());
+	m_pDlg->m_pClient->m_SendData();
 
-
-		m_pDlg->m_pClient->m_RequestAllList();
-		m_pDlg->m_ShowForm(4);
-	}
+	m_pDlg->m_pClient->m_RequestAllList();
+	m_pDlg->m_ShowForm(4);	
 
 }
 

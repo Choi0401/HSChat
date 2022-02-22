@@ -736,6 +736,12 @@ LRESULT CHSChatDlg::m_Proc(WPARAM wParam, LPARAM lParam)
 					CString str;
 					str.Format(_T("[%d번]채팅방"), roomnum);
 					m_pChatRoomForm->GetDlgItem(IDC_STATIC_CHATROOM)->SetWindowText(str);
+					m_pChatRoomForm->m_roomuserlist.DeleteAllItems();
+					string nickname = m_pClient->m_getNickname() + "(방장)";
+					CString strNickname;
+					strNickname = nickname.c_str();
+					m_pChatRoomForm->m_roomuserlist.InsertItem(0, strNickname);
+
 					m_ShowForm(6);
 					//AfxMessageBox(cstr, MB_ICONINFORMATION);
 				}
@@ -798,15 +804,33 @@ LRESULT CHSChatDlg::m_Proc(WPARAM wParam, LPARAM lParam)
 
 				}
 			}
+			// 다른 유저 채팅방 입장 
+			else if (action == "updateuserlist")
+			{
+				// parse json
+				string nickname = recvroot["nickname"].asString();
+				string msg = recvroot["msg"].asString();
+				CString cstrmsg, cstrnickname;
+				cstrmsg = msg.c_str();
+				cstrnickname = nickname.c_str();
+				int chatlength = m_pChatRoomForm->m_chat.GetWindowTextLength();
+				m_pChatRoomForm->m_chat.SetSel(chatlength, chatlength);
+				m_pChatRoomForm->m_chat.ReplaceSel(cstrmsg);
+
+				int cntlist = m_pChatRoomForm->m_roomuserlist.GetItemCount();
+				m_pChatRoomForm->m_roomuserlist.InsertItem(cntlist, cstrnickname);
+
+			}
 			// 채팅 출력
 			else if (action == "recvmsg")
 			{
 				// parse json
-				string nickname = recvroot["nickname"].asString();
+				string sender = recvroot["sender"].asString();
 				string time = recvroot["time"].asString();
 				string msg = recvroot["msg"].asString();
 
-				string tmpstr = "[" + time + "]" + nickname + " : " + msg + " \r\n";
+
+				string tmpstr = "[" + time + "]" + sender + " : " + msg + " \r\n";
 
 				// 채팅창 길이
 				int chatlength = m_pChatRoomForm->m_chat.GetWindowTextLength();
