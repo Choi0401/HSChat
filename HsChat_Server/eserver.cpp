@@ -58,11 +58,13 @@ class Client
 {
 public:
 	int clnt_sock;
+	int current_room_num;
 	string clnt_ip;
 	string clnt_name;
 	string id;
 	string nickname;
 	string birth;
+
 };
 
 class CRoom
@@ -71,6 +73,7 @@ public:
 	int m_roomnum;
 	int m_usernum;
 	int m_maxnum;
+	int m_masternum;
 	string m_name;		
 	string m_type;
 	string m_master;	
@@ -132,6 +135,7 @@ int main(int argc, char *argv[])
 	for (i=0; i<MAXCLI; i++) 
 	{
 		c[i].clnt_sock = -1;
+		c[i].current_room_num = 0;		// 대기실
 		memset(&c[i].clnt_ip, 0x00, sizeof(c[i].clnt_ip));
 		memset(&c[i].clnt_name, 0x00, sizeof(c[i].clnt_name));	
 	}
@@ -169,6 +173,7 @@ int main(int argc, char *argv[])
 		room[i].m_maxnum = 0;
 		room[i].m_roomnum = 0;
 		room[i].m_usernum = 0;
+		room[i].m_masternum = 0;		
 	}
 
 
@@ -393,23 +398,84 @@ int main(int argc, char *argv[])
 								int maxnum = recvroot["maxnum"].asInt();
 								string roomtype = recvroot["roomtype"].asString();
 
-								room[cntroom].m_roomnum = cntroom++;
-								room[cntroom].m_maxnum = maxnum;
-								room[cntroom].m_master = master;
-								room[cntroom].m_name = roomname;
-								room[cntroom].m_type = roomtype;
+								//room[cntroom].m_roomnum = cntroom;
+							
+								/*										room_info TABLE
+								*   room_num | room_master_user_num | room_num_user | room_max_user | room_name | room_type
+								*   ----------+----------------------+---------------+---------------+-----------+---------
+								*/
 
-								room[cntroom].m_usernum = 1;
-								room[cntroom].m_client.push_back(c[index]);
+								// user_num Select
+								DML = DML_Select(4,"user_num","user_info","user_nickname", master.c_str());								
+								PGresult* resSelect = PQexec(pCon, DML.c_str());
+								sendroot["action"] = "createroom";
+								if(PQntuples(resSelect) == 1){
+									room[cntroom].m_masternum = atoi(PQgetvalue(resSelect, 0, 0));
+									//cout << room[cntroom].m_masternum << endl;		
+									// Chatroom Insert						
+									DML = DML_Insert("room_info", to_string(room[cntroom].m_masternum).c_str(), to_string(1).c_str(), to_string(maxnum).c_str(), roomname.c_str(), roomtype.c_str());									
+									//cout << DML << endl;
+									PGresult* resInsert = PQexec(pCon, DML.c_str()); 
+									
+									if(strlen(PQoidStatus(resInsert)) == 0){
+										room[cntroom].m_masternum = 0;
+										cout << "Insert ERROR" << endl;
+										sendroot["result"] = "false";
+										sendroot["msg"] = "방 만들기에 실패하였습니다";
+									}
+									else {									
+										// room_num Select
+										//DML = DML_Select(4,"room_num","room_info","room_master_user_num", room[cntroom].m_masternum);								
+										DML = "select room_num from room_info where room_master_user_num = " + to_string(room[cntroom].m_masternum) + ";";
+										PGresult* resSelect = PQexec(pCon, DML.c_str());
+										if(PQntuples(resSelect) == 1){
+											room[cntroom].m_roomnum = atoi(PQgetvalue(resSelect, 0, 0));
+											cout << "채팅방 번호 : " << room[cntroom].m_roomnum << endl;							
+											room[cntroom].m_master = master;
+											cout << "채팅방 방장 : " << room[cntroom].m_master << endl;
+											room[cntroom].m_name = roomname;
+											cout << "채팅방 이름 : " << room[cntroom].m_name << endl;
+											room[cntroom].m_type = roomtype;
+											cout << "채팅방 타입: " << room[cntroom].m_type << endl;
+											room[cntroom].m_usernum = 1;
+											cout << "채팅방 현재 인원 : " << room[cntroom].m_usernum << endl;
+											room[cntroom].m_maxnum = maxnum;
+											cout << "채팅방 총 인원 : " << room[cntroom].m_maxnum << endl;
+											room[cntroom].m_client.push_back(c[index]);
+											cout << "채팅방 방장 IP: " << room[cntroom].m_client[room[cntroom].m_usernum - 1].clnt_ip << endl;	
 
-								DML = DML_Insert("room_info", room[cntroom].m_master.c_str(), room[cntroom].m_usernum, room[cntroom].m_maxnum, room[cntroom].m_name.c_str(), room[cntroom].m_type.c_str());
-								cout << DML << endl;
+											sendroot["result"] = "true";
+											sendroot["roomnum"] = room[cntroom].m_roomnum;
+											cntroom++;							
+											data.msg.clear();
+											data.msg = writer.write(sendroot);
+											data.size = data.msg.size();										
 
-								//PGresult* res = PQexec(pCon, DML.c_str()); //DML SEND
+											if (ret_HeadWrite = SSL_write(ssl, &data.size, sizeof(int)) <= 0)
+												cout << "ret_HeadWrite_searchpw_error\n" <<endl;
 
+											else // HeadWrite Successful
+											{
+												if (ret_BodyWrite = SSL_write(ssl, &data.msg[0], data.size) <= 0)
+													cout << "ret_BodyWrite_searchpw_error\n" << endl;
+												cout << "Send Success: " <<"("<< c[index].clnt_sock <<")"  << endl;
+											}
+											//TODO : 채팅방 만든거 대기실 유저에게 뿌려줘야함
+										}										
+										else {
+											room[cntroom].m_masternum = 0;
+											cout << "Insert ERROR" << endl;
+											sendroot["result"] = "false";
+											sendroot["msg"] = "방 만들기에 실패하였습니다";
+										}
+									}
+								}
+								else if(PQntuples(resSelect) == 0) {
+									cout << "Cannot find user_num" << endl;
+									sendroot["result"] = "false";
+									sendroot["msg"] = "방 만들기에 실패하였습니다";
+								} 
 
-																
-								
 
 							}
 
@@ -630,54 +696,67 @@ string DML_Insert(string table, ...){
     string DML = "insert into " + table + " values (";
     va_list args;
 	va_start(args, table);
+    char * gData;
     
-	char *gData;
-
     if(table == "user_info")
     {
         DML += "nextval('sq_user_num'),'";//user_num : sequence
         for(int i = 0; i < 6; i++)
         {
-            gData = va_arg(args,char*);
-            if(i != 5){
+            gData = va_arg(args, char *);
+            if(i != 5)
+            {
                 DML += gData;
-			   	DML+="','";
-			}
-			else
+                DML += "','";
+            }
+            else
                 DML += gData;
         }
         DML += "',0,0);";
     }
+    
+    
     else if(table == "friends_info")
     {
         DML += "'";
         for(int i = 0; i < 2; i++)
         {
             gData = va_arg(args, char *);
-            if(i != 1){
+            if(i != 1)
+            {
                 DML += gData;
-			   DML	+= "','";
-			}		   
+                DML += "','";          
+            }
             else
                 DML += gData;
         }
         DML += "');";
     }
+    
+    
     else if(table == "room_info")
     {
         DML += "nextval('room_num'),";//room_num : sequence
         for(int i = 0; i < 5; i++)
         {
-            gData = va_arg(args, char*);
-            if(i != 3||i != 4){
+            gData = va_arg(args, char *);
+            if(i < 3)
+            {
                 DML += gData;
-			   DML	+= ",";
-			}
-            else{
+                DML += ",";
+            }
+            else if(i == 3)
+            {
                 DML += "'";
-			   DML	+= gData;
-			  DML += "'";
-			}
+                DML += gData;
+                DML += "',";
+            }
+            else
+            {
+                DML += "'";
+                DML += gData;
+                DML += "'";
+            }
         }
         DML += ");";
     }
@@ -775,7 +854,7 @@ string DML_Delete(int args, ...)
 
 string DML_Update(int args, ...)
 {
-	string DML = "update from ";
+	string DML = "update ";
 
 	va_list ap;
 	va_start(ap, args);
