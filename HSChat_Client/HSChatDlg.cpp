@@ -8,6 +8,9 @@
 #include "afxdialogex.h"
 #include "json/json.h"
 #include <locale.h>
+#include <fstream>
+#include <stdarg.h>
+#include <direct.h>
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -90,7 +93,7 @@ END_MESSAGE_MAP()
 BOOL CHSChatDlg::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
-
+	ClearFileLog("HSChat_Log.txt");
 	// 시스템 메뉴에 "정보..." 메뉴 항목을 추가합니다.
 
 	// IDM_ABOUTBOX는 시스템 명령 범위에 있어야 합니다.
@@ -117,7 +120,7 @@ BOOL CHSChatDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// 작은 아이콘을 설정합니다.
 
 	// TODO: 여기에 추가 초기화 작업을 추가합니다.
-	setlocale(LC_ALL, "ko_KR.EUC-KR");
+	//setlocale(LC_ALL, "ko_KR.EUC-KR");
 
 	CWinThread* pRecvthread = NULL;
 	m_pClient->m_InitSocket();
@@ -151,6 +154,20 @@ void CHSChatDlg::OnSysCommand(UINT nID, LPARAM lParam)
 		{
 
 			//TODO: 여기 다시한번확인해야함
+			if (m_pClient->m_roomnum > 0)
+			{
+				Json::Value root;
+				Json::StyledWriter writer;
+				m_pClient->m_roomnum = 0;
+				m_pClient->m_ismaster = false;
+
+				root["action"] = "quitroom";
+				root["nickname"] = m_pClient->m_getNickname();
+
+				m_pClient->m_data.msg = writer.write(root);
+				m_pClient->m_data.size = static_cast<int>(m_pClient->m_data.msg.size());
+				m_pClient->m_SendData();
+			}
 			if (m_pClient->m_getNickname().length() != 0)
 				m_pClient->m_LogOut();
 			m_pClient->m_CloseSocket();
@@ -350,7 +367,8 @@ UINT CHSChatDlg::m_RecvThread(LPVOID _mothod)
 	while (1)
 	{
 		// Connect 시도
-		if (fir->m_pClient->m_connstate == CLIENT_DISCONNECTED) {
+		if (fir->m_pClient->m_connstate == CLIENT_DISCONNECTED) {		
+			fir->m_pClient->m_InitSocket();
 			fir->m_pClient->m_OpenConnection();
 
 			if (fir->m_pClient->m_connstate == CLIENT_CONNECTED)
@@ -360,6 +378,7 @@ UINT CHSChatDlg::m_RecvThread(LPVOID _mothod)
 				if (SSL_connect(fir->m_pOpenssl->m_pSSL) == -1)
 				{
 					fir->m_pClient->m_connstate = CLIENT_DISCONNECTED;
+					fir->FileLog("HSChat_Log.txt", "SSL connect Error ");
 					//AfxMessageBox(_T("SSL_connect() Error"));
 				}
 				else
@@ -372,21 +391,30 @@ UINT CHSChatDlg::m_RecvThread(LPVOID _mothod)
 		{
 			// Success Connect 			
 			int ret_HeadRead = 0;
-			ret_HeadRead = SSL_read(fir->m_pOpenssl->m_pSSL, &fir->m_pClient->m_data.size, sizeof(int));
-
+			if ((ret_HeadRead = SSL_read(fir->m_pOpenssl->m_pSSL, &fir->m_pClient->m_data.size, sizeof(int))) < 0)
+			{
+				fir->FileLog("HSChat_Log.txt", "SSL Read(Head) Error ");				
+			}
+			fir->FileLog("HSChat_Log.txt", "Return headread : ", to_string(ret_HeadRead).c_str());
 			if (ret_HeadRead > 0)
 			{
 				fir->m_pClient->m_data.msg.resize(fir->m_pClient->m_data.size);
-				int ret_BodyRead = SSL_read(fir->m_pOpenssl->m_pSSL, &fir->m_pClient->m_data.msg[0], fir->m_pClient->m_data.size);
+				int ret_BodyRead = 0;
+				fir->FileLog("HSChat_Log.txt", to_string(fir->m_pClient->m_data.size).c_str());
+				if ((ret_BodyRead == SSL_read(fir->m_pOpenssl->m_pSSL, &fir->m_pClient->m_data.msg[0], fir->m_pClient->m_data.size)) < 0) 
+				{
+					fir->FileLog("HSChat_Log.txt", "SSL Read(Body) Error ");
+				}
 				fir->m_pClient->m_queue.push(fir->m_pClient->m_data.msg);
 				::PostMessage(fir->m_hWnd, MESSAGE_PROC, NULL, NULL);
 			}
 			else {
-				fir->m_pOpenssl->m_pSSL = NULL;
+				SSL_shutdown(fir->m_pOpenssl->m_pSSL);
+				SSL_free(fir->m_pOpenssl->m_pSSL);
 				fir->m_pClient->m_CloseSocket();
 				fir->m_pClient->m_InitSocket();
 				fir->m_pOpenssl->m_InitCTX();
-				//AfxMessageBox(_T("서버와 연결이 끊어졌습니다."), MB_ICONERROR);				
+				fir->m_pOpenssl->m_CheckCertKey();
 				::PostMessage(fir->m_hWnd, MESSAGE_SET_STATE, NULL, NULL);
 				fir->m_ShowForm(0);
 
@@ -408,12 +436,14 @@ LRESULT CHSChatDlg::m_Proc(WPARAM wParam, LPARAM lParam)
 		bool parsingSuccessful = reader.parse(recvstr, recvroot);
 		if (parsingSuccessful == false)
 		{
-			//AfxMessageBox(_T("Failed to parse configuration")); // reader.getFormatedErrorMessages();
-			exit(1);
+			CString test;
+			test = recvstr.c_str();
+			AfxMessageBox(test);
+			//AfxMessageBox(_T("Failed to parse configuration")); // reader.getFormatedErrorMessages();			
 		}
-
 		else {
 			string action = recvroot["action"].asString();
+			FileLog("HSChat_Log.txt", action.c_str());
 			// 로그인 
 			if (action == "signin")
 			{
@@ -422,7 +452,7 @@ LRESULT CHSChatDlg::m_Proc(WPARAM wParam, LPARAM lParam)
 				string nickname = recvroot["nickname"].asString();
 				string msg = recvroot["msg"].asString();
 				CString cstr;
-				cstr = msg.c_str();
+				cstr = UTF8ToANSI(msg.c_str());//msg.c_str();
 				// 성공
 				if (result == "true")
 				{
@@ -592,7 +622,7 @@ LRESULT CHSChatDlg::m_Proc(WPARAM wParam, LPARAM lParam)
 				string result = recvroot["result"].asString();
 				string msg = recvroot["msg"].asString();
 				CString cstr;
-				cstr = msg.c_str();
+				cstr = UTF8ToANSI(msg.c_str());//msg.c_str();
 				// 성공
 				if (result == "true")
 				{
@@ -618,7 +648,7 @@ LRESULT CHSChatDlg::m_Proc(WPARAM wParam, LPARAM lParam)
 				string result = recvroot["result"].asString();
 				string msg = recvroot["msg"].asString();
 				CString cstr;
-				cstr = msg.c_str();
+				cstr = UTF8ToANSI(msg.c_str());
 				// 성공
 				if (result == "true")
 				{
@@ -639,7 +669,7 @@ LRESULT CHSChatDlg::m_Proc(WPARAM wParam, LPARAM lParam)
 				string result = recvroot["result"].asString();
 				string msg = recvroot["msg"].asString();
 				CString cstr;
-				cstr = msg.c_str();
+				cstr = UTF8ToANSI(msg.c_str());
 				// 성공
 				if (result == "true")
 				{
@@ -686,7 +716,7 @@ LRESULT CHSChatDlg::m_Proc(WPARAM wParam, LPARAM lParam)
 				string result = recvroot["result"].asString();
 				string msg = recvroot["msg"].asString();
 				CString cstr;
-				cstr = msg.c_str();
+				cstr = UTF8ToANSI(msg.c_str());
 				// 성공
 				if (result == "true")
 				{
@@ -725,7 +755,7 @@ LRESULT CHSChatDlg::m_Proc(WPARAM wParam, LPARAM lParam)
 				string result = recvroot["result"].asString();
 				string msg = recvroot["msg"].asString();
 				CString cstr;
-				cstr = msg.c_str();
+				cstr = UTF8ToANSI(msg.c_str());
 				// 성공
 				if (result == "true")
 				{
@@ -758,7 +788,7 @@ LRESULT CHSChatDlg::m_Proc(WPARAM wParam, LPARAM lParam)
 				string result = recvroot["result"].asString();
 				string msg = recvroot["msg"].asString();
 				CString cstr;
-				cstr = msg.c_str();
+				cstr = UTF8ToANSI(msg.c_str());
 				// 성공
 				if (result == "true")
 				{
@@ -769,8 +799,8 @@ LRESULT CHSChatDlg::m_Proc(WPARAM wParam, LPARAM lParam)
 					CString str;
 					str.Format(_T("[%d번]채팅방"), roomnum);
 					m_pChatRoomForm->GetDlgItem(IDC_STATIC_CHATROOM)->SetWindowText(str);
-					m_pChatRoomForm->GetDlgItem(IDC_EDIT_CHATROOM_RECVMSG)->SetWindowText(_T("                         --- 채팅에 참여했습니다 ---\r\n\r\n"));
-
+					//m_pChatRoomForm->GetDlgItem(IDC_EDIT_CHATROOM_RECVMSG)->SetWindowText(_T("                         --- 채팅에 참여했습니다 ---\r\n\r\n"));
+					m_pChatRoomForm->GetDlgItem(IDC_EDIT_CHATROOM_RECVMSG)->SetWindowText(cstr);
 					m_pChatRoomForm->m_roomuserlist.DeleteAllItems();
 					Json::Value userlist = recvroot["userlist"];
 					Json::ValueIterator ituser;
@@ -809,17 +839,38 @@ LRESULT CHSChatDlg::m_Proc(WPARAM wParam, LPARAM lParam)
 			{
 				// parse json
 				string nickname = recvroot["nickname"].asString();
+				string inout = recvroot["inout"].asString();
 				string msg = recvroot["msg"].asString();
 				CString cstrmsg, cstrnickname;
-				cstrmsg = msg.c_str();
-				cstrnickname = nickname.c_str();
-				int chatlength = m_pChatRoomForm->m_chat.GetWindowTextLength();
-				m_pChatRoomForm->m_chat.SetSel(chatlength, chatlength);
-				m_pChatRoomForm->m_chat.ReplaceSel(cstrmsg);
+				cstrmsg = UTF8ToANSI(msg.c_str());//msg.c_str();
+				cstrnickname = UTF8ToANSI(nickname.c_str());
 
-				int cntlist = m_pChatRoomForm->m_roomuserlist.GetItemCount();
-				m_pChatRoomForm->m_roomuserlist.InsertItem(cntlist, cstrnickname);
+				if (inout == "in")
+				{
+					int chatlength = m_pChatRoomForm->m_chat.GetWindowTextLength();
+					m_pChatRoomForm->m_chat.SetSel(chatlength, chatlength);
+					m_pChatRoomForm->m_chat.ReplaceSel(cstrmsg);
 
+					int cntlist = m_pChatRoomForm->m_roomuserlist.GetItemCount();
+					m_pChatRoomForm->m_roomuserlist.InsertItem(cntlist, cstrnickname);
+				}
+				else if (inout == "out")
+				{
+					int chatlength = m_pChatRoomForm->m_chat.GetWindowTextLength();
+					m_pChatRoomForm->m_chat.SetSel(chatlength, chatlength);
+					m_pChatRoomForm->m_chat.ReplaceSel(cstrmsg);
+
+					LVFINDINFO lv;
+					lv.flags = LVFI_STRING;
+					lv.psz = cstrnickname;
+					int n = m_pChatRoomForm->m_roomuserlist.FindItem(&lv, -1);
+
+					if (n > 0)
+					{
+						m_pChatRoomForm->m_roomuserlist.DeleteItem(n);
+					}
+
+				}
 			}
 			// 채팅 출력
 			else if (action == "recvmsg")
@@ -828,9 +879,12 @@ LRESULT CHSChatDlg::m_Proc(WPARAM wParam, LPARAM lParam)
 				string sender = recvroot["sender"].asString();
 				string time = recvroot["time"].asString();
 				string msg = recvroot["msg"].asString();
+				CString cmsg;
+				cmsg = UTF8ToANSI(msg.c_str());
+				
+				string tmpstr = "[" + time + "]" + sender + " : " + std::string(CT2CA(cmsg)) + " \r\n";
+				FileLog("HSChat_Log.txt", tmpstr.c_str());
 
-
-				string tmpstr = "[" + time + "]" + sender + " : " + msg + " \r\n";
 
 				// 채팅창 길이
 				int chatlength = m_pChatRoomForm->m_chat.GetWindowTextLength();
@@ -840,6 +894,8 @@ LRESULT CHSChatDlg::m_Proc(WPARAM wParam, LPARAM lParam)
 				CString strmsg;
 				strmsg = tmpstr.c_str();
 				m_pChatRoomForm->m_chat.ReplaceSel(strmsg);
+				m_pChatRoomForm->SetDlgItemText(IDC_EDIT_CHATROOM_SENDMSG, _T(""));
+				
 
 			}
 			// 채팅 출력
@@ -934,45 +990,151 @@ void CHSChatDlg::OnMenuAssign()
 
 }
 
-std::string CHSChatDlg::base64_encode(unsigned char const* bytes_to_encode, unsigned int in_len)
+
+string CHSChatDlg::MultiByteToUtf8(string multibyte_str)
 {
-	std::string ret;
-	int i = 0, j = 0;
-	unsigned char char_array_3[3], char_array_4[4];
+	char* pszIn = new char[multibyte_str.length() + 1];
+	strncpy_s(pszIn, multibyte_str.length() + 1, multibyte_str.c_str(), multibyte_str.length());
 
-	while (in_len--)
+	string resultString;
+
+	int nLenOfUni = 0, nLenOfUTF = 0;
+	wchar_t* uni_wchar = NULL;
+	char* pszOut = NULL;
+
+	// 1. ANSI(multibyte) Length
+	if ((nLenOfUni = MultiByteToWideChar(CP_ACP, 0, pszIn, (int)strlen(pszIn), NULL, 0)) <= 0)
+		return 0;
+
+	uni_wchar = new wchar_t[nLenOfUni + 1];
+	memset(uni_wchar, 0x00, sizeof(wchar_t) * (nLenOfUni + 1));
+
+	// 2. ANSI(multibyte) ---> unicode
+	nLenOfUni = MultiByteToWideChar(CP_ACP, 0, pszIn, (int)strlen(pszIn), uni_wchar, nLenOfUni);
+
+	// 3. utf8 Length
+	if ((nLenOfUTF = WideCharToMultiByte(CP_UTF8, 0, uni_wchar, nLenOfUni, NULL, 0, NULL, NULL)) <= 0)
 	{
-		char_array_3[i++] = *(bytes_to_encode++);
-		if (i == 3)
-		{
-			char_array_4[0] = (char_array_3[0] & 0xfc) >> 2;
-			char_array_4[1] = ((char_array_3[0] & 0x03) << 4) + ((char_array_3[1] & 0xf0) >> 4);
-			char_array_4[2] = ((char_array_3[1] & 0x0f) << 2) + ((char_array_3[2] & 0xc0) >> 6);
-			char_array_4[3] = char_array_3[2] & 0x3f;
+		delete[] uni_wchar;
+		return 0;
+	}
 
-			for (i = 0; (i < 4); i++)
-				ret += base64_chars[char_array_4[i]];
-			i = 0;
+	pszOut = new char[nLenOfUTF + 1];
+	memset(pszOut, 0, sizeof(char) * (nLenOfUTF + 1));
+
+	// 4. unicode ---> utf8
+	nLenOfUTF = WideCharToMultiByte(CP_UTF8, 0, uni_wchar, nLenOfUni, pszOut, nLenOfUTF, NULL, NULL);
+	pszOut[nLenOfUTF] = 0;
+	resultString = pszOut;
+
+	delete[] uni_wchar;
+	delete[] pszOut;
+
+	return resultString;
+}
+void CHSChatDlg::ClearFileLog(const char* pszFileName)
+{
+	unlink(pszFileName);
+}
+void CHSChatDlg::FileLog(const char* pszFileName, const char* pszLog, ...)
+{
+	fstream _streamOut;
+	_streamOut.open(pszFileName, ios::out | ios::app);
+
+	va_list argList;
+	char cbuffer[1024];
+	va_start(argList, pszLog);
+	vsnprintf(cbuffer, 1024, pszLog, argList);
+	va_end(argList);
+
+	_streamOut << cbuffer << endl;
+	_streamOut.close();
+}
+char* CHSChatDlg::UTF8ToANSI(const char* pszCode)
+{
+	BSTR    unicodeStr;
+	char* ansiStr;
+	int     unicodeLength;//l (LPCWSTR)(LPCTSTR)  *3
+
+	unicodeLength = MultiByteToWideChar(CP_UTF8, 0, pszCode, strlen(pszCode) + 1, NULL, NULL);
+	unicodeStr = SysAllocStringLen(NULL, unicodeLength);
+
+	MultiByteToWideChar(CP_UTF8, 0, pszCode, strlen(pszCode) + 1, unicodeStr, unicodeLength);
+
+	unicodeLength = WideCharToMultiByte(CP_ACP, 0, unicodeStr, -1, NULL, 0, NULL, NULL);
+	ansiStr = new char[unicodeLength];
+
+	WideCharToMultiByte(CP_ACP, 0, unicodeStr, -1, ansiStr, unicodeLength, NULL, NULL);
+	SysFreeString(unicodeStr);
+	return ansiStr;
+}
+
+bool CHSChatDlg::pw_check(string pw)
+{
+	char sp[14] = { '!','@','#','$','%','^','&','*','(',')','-','=','_','+' };
+
+	int pw_len = pw.length();
+	int cnt = 0;
+
+	if (pw_len < 6 && pw_len > 15) //입력 6~10 사이 
+		return false;
+
+	bool numberCheck = false; // 숫자 check 
+	bool englishCheck = false; // 영어 check 
+	bool specialCheck = false; // 특수문자 check 
+
+	char checksame = pw[0];
+
+	for (int i = 0; i < pw_len; i++) {
+		char check = pw[i];
+		if (!numberCheck)
+			numberCheck = isdigit(check);
+		if (!englishCheck)
+			englishCheck = isalpha(check);
+		if (!specialCheck)
+		{
+			for (int j = 0; j < sizeof(sp); j++)
+			{
+				if (check == sp[j])
+				{
+					specialCheck = true;
+				}
+			}
+		}
+		if (checksame == pw[i])
+			cnt++;
+		else
+		{
+			cnt = 0;
+			checksame = pw[i];
+		}
+		if (cnt > 1)
+		{
+			return false;
 		}
 	}
-	if (i)
-	{
-		for (j = i; j < 3; j++)
-			char_array_3[j] = '\0';
+	if (numberCheck == true && englishCheck == true && specialCheck == true)
+		return true;
+	else
+		return false;
+}
 
-		char_array_4[0] = (char_array_3[0] & 0xfc) >> 2;
-		char_array_4[1] = ((char_array_3[0] & 0x03) << 4) + ((char_array_3[1] & 0xf0) >> 4);
-		char_array_4[2] = ((char_array_3[1] & 0x0f) << 2) + ((char_array_3[2] & 0xc0) >> 6);
-		char_array_4[3] = char_array_3[2] & 0x3f;
+string CHSChatDlg::sha256(string pw) {
+	unsigned char digest[SHA256_DIGEST_LENGTH];
+	const char* password = pw.c_str();
 
-		for (j = 0; (j < i + 1); j++)
-			ret += base64_chars[char_array_4[j]];
+	SHA256_CTX ctx;
+	SHA256_Init(&ctx);
+	SHA256_Update(&ctx, password, strlen(password));
+	SHA256_Final(digest, &ctx);
 
-		while ((i++ < 3))
-			ret += '=';
+	char mdString[SHA256_DIGEST_LENGTH * 2 + 1];
+	for (int i = 0; i < SHA256_DIGEST_LENGTH; i++)
+		sprintf(&mdString[i * 2], "%02x", (unsigned int)digest[i]);
+	return mdString;
+}
 
-	}
-
-	return ret;
-
+string CHSChatDlg::pw_salting(string pw) {
+	pw += "HSCHAT_PW";
+	return pw;
 }

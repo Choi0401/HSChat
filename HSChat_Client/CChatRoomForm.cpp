@@ -122,9 +122,6 @@ void CChatRoomForm::OnBnClickedButtonChatroomSend()
 		m_pDlg->m_pClient->m_data.size = static_cast<int>(m_pDlg->m_pClient->m_data.msg.size());
 
 		m_pDlg->m_pClient->m_SendData();
-
-		SetDlgItemText(IDC_EDIT_CHATROOM_SENDMSG, _T(""));
-
 	}
 }
 
