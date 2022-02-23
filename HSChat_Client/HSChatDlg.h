@@ -13,20 +13,12 @@
 #include "COpenSSL.h"
 #include "CFriendsListDlg.h"
 #include <codecvt>
+#include <iostream>
 
+#pragma comment(linker, "/entry:WinMainCRTStartup /subsystem:console")
 
 #define MESSAGE_SET_STATE 9999
 #define MESSAGE_PROC 9998
-
-static const std::string base64_chars =
-"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-"abcdefghijklmnopqrstuvwxyz"
-"0123456789+/";
-
-static inline bool is_base64(unsigned char c)
-{
-	return (isalnum(c) || (c == '+') || (c == '/'));
-}
 
 // CHSChatDlg 대화 상자
 class CHSChatDlg : public CDialogEx
@@ -81,5 +73,12 @@ public:
 	afx_msg void OnMenuWhisper();
 	afx_msg void OnMenuAssign();
 
-	std::string base64_encode(unsigned char const* bytes_to_encode, unsigned int in_len);
+	void ClearFileLog(const char* pszFileName);
+	void FileLog(const char* pszFileName, const char* pszLog, ...);
+	char* UTF8ToANSI(const char* pszCode);
+	string MultiByteToUtf8(string multibyte_str);
+
+	bool pw_check(string pw);
+	string sha256(string pw);
+	string pw_salting(string pw);
 };

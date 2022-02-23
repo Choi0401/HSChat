@@ -61,6 +61,7 @@ void CSignupForm::OnInitialUpdate()
 void CSignupForm::OnBnClickedButtonSignupOK()
 {	
 	CString strName, strBirth, strPhone, strID, strNickname, strPW, strPWOK;
+	string name, birth, phone, id, pw, nickname;
 	Json::Value root;
 	Json::StyledWriter writer;
 
@@ -87,13 +88,32 @@ void CSignupForm::OnBnClickedButtonSignupOK()
 	else if (strPW != strPWOK)
 		AfxMessageBox(_T("비밀번호를 확인하세요!"), MB_ICONSTOP);
 	else {				
+		if (m_pDlg->pw_check(std::string(CT2CA(strPW))))
+		{
+			pw = m_pDlg->pw_salting(pw);
+			pw = m_pDlg->sha256(pw);
+		}
+		else
+			AfxMessageBox(_T("연속되는 3개의 문자는 사용할 수 없습니다!"), MB_ICONSTOP);
+
+		name = std::string(CT2CA(strName));
+		birth = std::string(CT2CA(strBirth));
+		phone = std::string(CT2CA(strPhone));
+		id = std::string(CT2CA(strID));
+		nickname = std::string(CT2CA(strNickname));
+		//pw = std::string(CT2CA(strPW));
+
+		name = m_pDlg->MultiByteToUtf8(name);
+		nickname = m_pDlg->MultiByteToUtf8(nickname);
+
 		root["action"] = "signup";
-		root["name"] = std::string(CT2CA(strName));
-		root["birth"] = std::string(CT2CA(strBirth));
-		root["phone"] = std::string(CT2CA(strPhone));
-		root["id"] = std::string(CT2CA(strID));
-		root["nickname"] = std::string(CT2CA(strNickname));
-		root["pw"] = std::string(CT2CA(strPW));
+
+		root["name"] = name;
+		root["birth"] = birth;
+		root["phone"] = phone;
+		root["id"] = id;
+		root["nickname"] = nickname;
+		root["pw"] = pw;
 
 
 		m_pDlg->m_pClient->m_data.msg = writer.write(root);

@@ -41,12 +41,12 @@ void CClient::m_InitSocket()
     // 윈속 초기화
     if (WSAStartup(MAKEWORD(2, 2), &m_wsaData) != 0)
     {
-        //m_ErrorHandling(_T("WSAStartup() error : %d"));
+        m_pDlg->FileLog("HSChat_Log.txt", "WSAStartup Error ");
     }
 
     if ((m_socket = socket(PF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET)
     {
-        //m_ErrorHandling(_T("socket() error : %d"));
+        m_pDlg->FileLog("HSChat_Log.txt", "socket Error ");
     }
     memset(&m_addr, 0, sizeof(m_addr));
     m_addr.sin_family = AF_INET;
@@ -60,7 +60,7 @@ void CClient::m_OpenConnection()
 {
     if (connect(m_socket, (SOCKADDR*)&m_addr, sizeof(m_addr)) == SOCKET_ERROR)
     {
-        //m_ErrorHandling(_T("connect() error : %d"));        
+        //m_pDlg->FileLog("HSChat_Log.txt", "Connect Error ");
     }
     else
         m_connstate = CLIENT_CONNECTED;
@@ -68,8 +68,9 @@ void CClient::m_OpenConnection()
 
 void CClient::m_CloseSocket()
 {
+
     closesocket(m_socket);
-    WSACleanup();
+    WSACleanup();    
     m_socket = INVALID_SOCKET;
     m_connstate = CLIENT_DISCONNECTED;
 }
@@ -82,19 +83,13 @@ void CClient::m_InitData()
 }
 
 void CClient::m_SendData()
-{
-    //string encodingmsg;
-    ////encodingmsg = m_pDlg->base64_encode((unsigned char*)m_data.msg.c_str(), m_data.size);
-    //encodingmsg = m_pDlg->base64_encode((unsigned char*)"헤위", 6);
-    //CString asdf;
-    //asdf = encodingmsg.c_str();
-    //AfxMessageBox(asdf);
-    //m_data.size = encodingmsg.size();
-
+{    
     int ret_HeadWrite = 0;
     if (m_pDlg == NULL) m_pDlg = (CHSChatDlg*)::AfxGetMainWnd();
+    cout << "Data Body Size : " << m_pDlg->m_pClient->m_data.size << endl;
     if (m_connstate == CLIENT_DISCONNECTED || (ret_HeadWrite = SSL_write(m_pDlg->m_pOpenssl->m_pSSL, &m_data.size, sizeof(int))) <= 0)
     {
+        m_pDlg->FileLog("HSChat_Log.txt", "SSL_write(Head) Error ");
         AfxMessageBox(_T("서버에 연결할 수 없습니다."));
     }
     else
@@ -103,6 +98,7 @@ void CClient::m_SendData()
 
         if (m_connstate == CLIENT_DISCONNECTED || (ret_BodyWrite = SSL_write(m_pDlg->m_pOpenssl->m_pSSL, &m_data.msg[0], m_data.size)) <= 0)
         {
+            m_pDlg->FileLog("HSChat_Log.txt", "SSL_write(Body) Error ");
             AfxMessageBox(_T("서버에 연결할 수 없습니다."));
         }
     }
@@ -114,8 +110,11 @@ void CClient::m_RequestAllList()
     Json::Value root;
     Json::StyledWriter writer;
 
+    string nick;
+    nick = m_pDlg->MultiByteToUtf8(m_getNickname());
+
     root["action"] = "alllist";
-    root["nickname"] = m_getNickname();
+    root["nickname"] = nick;
 
     m_data.msg = writer.write(root);
     m_data.size = static_cast<int>(m_data.msg.size());

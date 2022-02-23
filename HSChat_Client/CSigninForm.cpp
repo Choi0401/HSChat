@@ -78,6 +78,8 @@ void CSigninForm::OnBnClickedButtonSigninSignin()
 	Json::Value root;
 	Json::StyledWriter writer;
 
+	string id;
+	string pw;
 	GetDlgItemText(IDC_EDIT_SIGNIN_ID, strID);
 	GetDlgItemText(IDC_EDIT_SIGNIN_PW, strPW);
 
@@ -87,9 +89,13 @@ void CSigninForm::OnBnClickedButtonSigninSignin()
 		AfxMessageBox(_T("비밀번호를 입력하세요!"), MB_ICONSTOP);
 	else
 	{
+		id = std::string(CT2CA(strID));
+		pw = std::string(CT2CA(strPW));
+		//pw = m_pDlg->sha256(pw);
+
 		root["action"] = "signin";
-		root["id"] = std::string(CT2CA(strID));
-		root["pw"] = std::string(CT2CA(strPW));
+		root["id"] = id;
+		root["pw"] = pw;
 
 		m_pDlg->m_pClient->m_data.msg = writer.write(root);
 		m_pDlg->m_pClient->m_data.size = static_cast<int>(m_pDlg->m_pClient->m_data.msg.size());
