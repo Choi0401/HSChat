@@ -76,9 +76,15 @@ void CMakeRoomDlg::OnBnClickedButtonMakeroom()
 	else
 	{
 		//TODO : 방 만드는 메시지 서버에 전송
+		string room_master;
+		room_master = m_pDlg->MultiByteToUtf8(m_pDlg->m_pClient->m_getNickname());
+		
+		string roomname;
+		roomname = m_pDlg->MultiByteToUtf8(std::string(CT2CA(strRoomName)));
 		root["action"] = "createroom";
-		root["master"] = m_pDlg->m_pClient->m_getNickname();
-		root["roomname"] = std::string(CT2CA(strRoomName));
+		root["master"] = room_master;
+		root["roomname"] = roomname;
+		//root["roomname"] = std::string(CT2CA(strRoomName));
 		root["maxnum"] = maxnum;
 		if (m_pRB_public->GetCheck())
 			root["roomtype"] = "public";

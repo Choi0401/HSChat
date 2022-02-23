@@ -91,7 +91,8 @@ void CSigninForm::OnBnClickedButtonSigninSignin()
 	{
 		id = std::string(CT2CA(strID));
 		pw = std::string(CT2CA(strPW));
-		//pw = m_pDlg->sha256(pw);
+		pw = m_pDlg->pw_salting(pw);
+		pw = m_pDlg->sha256(pw);
 
 		root["action"] = "signin";
 		root["id"] = id;

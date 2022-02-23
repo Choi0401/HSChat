@@ -15,7 +15,6 @@
 #include <codecvt>
 #include <iostream>
 
-#pragma comment(linker, "/entry:WinMainCRTStartup /subsystem:console")
 
 #define MESSAGE_SET_STATE 9999
 #define MESSAGE_PROC 9998

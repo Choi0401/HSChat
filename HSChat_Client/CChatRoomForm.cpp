@@ -109,10 +109,12 @@ void CChatRoomForm::OnBnClickedButtonChatroomSend()
 	{
 		CString selstr;
 		m_cbchat.GetLBText(m_cbchat.GetCurSel(), selstr);
+		string sendmsg;
+		sendmsg = m_pDlg->MultiByteToUtf8(std::string(CT2CA(strMsg)));
 		root["action"] = "sendmsg";
 		root["nickname"] = m_pDlg->m_pClient->m_getNickname();
 		root["roomnum"] = m_pDlg->m_pClient->m_roomnum;
-		root["msg"] = std::string(CT2CA(strMsg));
+		root["msg"] = sendmsg;
 		if (selstr == "전체채팅")
 			root["receiver"] = "all";
 		else
@@ -150,14 +152,14 @@ void CChatRoomForm::OnBnClickedButtonChatroomQuit()
 	m_pDlg->m_pClient->m_ismaster = false;
 
 	root["action"] = "quitroom";
-	root["nickname"] = m_pDlg->m_pClient->m_getNickname();
+	root["nickname"] = m_pDlg->MultiByteToUtf8(m_pDlg->m_pClient->m_getNickname());
 
 	m_pDlg->m_pClient->m_data.msg = writer.write(root);
 	m_pDlg->m_pClient->m_data.size = static_cast<int>(m_pDlg->m_pClient->m_data.msg.size());
 	m_pDlg->m_pClient->m_SendData();
 
 	m_pDlg->m_pClient->m_RequestAllList();
-	m_pDlg->m_ShowForm(4);	
+	m_pDlg->m_ShowForm(4);
 
 }
 
