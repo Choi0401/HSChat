@@ -547,9 +547,9 @@ int main(int argc, char *argv[])
 								{
 
 									int cnttuples = PQntuples(resSelect);
-
-									if (cnttuples > 0)
+									if (cnttuples >= 0)
 									{
+										cout << "asdfdsa" << endl;
 										Json::Value roomlist;
 										Json::Value roomarr[cnttuples];
 
@@ -679,6 +679,11 @@ int main(int argc, char *argv[])
 															// 사용자 채팅방 번호 업데이트
 															DML = "update user_info set current_room_num = " + to_string(0) + " where user_num = " + to_string(user_num) + ";";
 															PGresult *resUpdateuser = PQexec(pCon, DML.c_str());
+															// 채팅방 현재 인원수 업데이트
+															DML = "update room_info set room_num_user = " + to_string(room[roomindex].m_usernum) + " where room_num = " + to_string(roomnum) + ";";
+															resUpdateroom = PQexec(pCon, DML.c_str());
+															nickname += "(방장)";
+
 															currentusernum--;
 														}
 														else
@@ -720,6 +725,7 @@ int main(int argc, char *argv[])
 													{
 														if (room[roomindex].m_client[i].nickname != nickname)
 														{
+															cout << "test" << endl;
 															SendData(room[roomindex].m_client[i].clientssl, data);
 														}
 													}
@@ -744,9 +750,6 @@ int main(int argc, char *argv[])
 								string nickname = recvroot["nickname"].asString();
 								int roomnum = recvroot["roomnum"].asInt();
 
-								if (roomnum == 0)
-									cout << "roomnum = " << roomnum << endl;
-
 								int roomindex = 0;
 								for (int i = 0; i < room.size(); i++)
 								{
@@ -757,61 +760,93 @@ int main(int argc, char *argv[])
 									}
 								}
 
-								// 채팅방 현재 인원 수 업데이트
-								DML = "update room_info set room_num_user = " + to_string(++room[roomindex].m_usernum) + " where room_num = " + to_string(roomnum) + ";";
-								PGresult *resUpdateNum = PQexec(pCon, DML.c_str()); // DML SEND;
-								room[roomindex].m_client.push_back(c[index]);
+								DML = "select room_num from room_info where room_num = " + to_string(roomnum) + ";";
+								PGresult *resSelecteNum = PQexec(pCon, DML.c_str());
 
-								// 클라이언트 현재 채팅방 번호 업데이트
-								DML = "update user_info set current_room_num = " + to_string(roomnum) + " where user_nickname = " + "'" + nickname + "'" + ";";
-								PGresult *resUpdateroomnum = PQexec(pCon, DML.c_str()); // DML SEND;
-
-								// cout << "num = " << room[roomindex].m_usernum << endl;
-								int cntuser = room[roomindex].m_client.size();
-								// cout << "cntuser = " << cntuser << endl;
-								// cout << "master = " << room[roomindex].m_master << endl;
-
-								Json::Value userlist;
-								Json::Value user[cntuser];
-								sendroot["action"] = "enterroom";
-								sendroot["result"] = "true";
-								sendroot["roomnum"] = roomnum;
-								sendroot["master"] = room[roomindex].m_master;
-								sendroot["msg"] = "채팅방에 오신 것을 환영합니다.\r\n\r\n";
-								for (int i = 0; i < cntuser; i++)
+								if (PQntuples(resSelecteNum) == 0)
 								{
-									user[i]["nickname"] = room[roomindex].m_client[i].nickname;
-									cout << "nickname = " << room[roomindex].m_client[i].nickname << endl;
-									userlist.append(user[i]);
+									sendroot["action"] = "enterroom";
+									sendroot["result"] = "false";
+									sendroot["msg"] = "채팅방에 입장할 수 없습니다";
+
+									data.msg.clear();
+									data.msg = writer.write(sendroot);
+									data.size = data.msg.size();
 								}
-								sendroot["userlist"] = userlist;
 
-								data.msg.clear();
-								data.msg = writer.write(sendroot);
-								data.size = data.msg.size();
-								SendData(ssl, data);
+								DML = "select room_num_user, room_max_user from room_info where room_num = " + to_string(roomnum) + ";";
+								resSelecteNum = PQexec(pCon, DML.c_str());
+								string room_num_user = PQgetvalue(resSelecteNum, 0, 0);
+								string room_max_user = PQgetvalue(resSelecteNum, 0, 1);
 
-								/* 같은 채팅방 유저에게 알려줌 */
-								sendroot.clear();
-								sendroot["action"] = "updateuserlist";
-								sendroot["inout"] = "in";
-								sendroot["nickname"] = nickname;
-								string sendmsg = "[공지]" + nickname + "님이 채팅방에 입장하였습니다.\r\n";
-								sendroot["msg"] = sendmsg;
-
-								data.msg.clear();
-								data.msg = writer.write(sendroot);
-								data.size = data.msg.size();
-
-								int cnt_client = room[roomindex].m_client.size();
-								for (int i = 0; i < cnt_client; i++)
+								if (room_num_user == room_max_user)
 								{
-									if (room[roomindex].m_client[i].nickname != nickname)
+									sendroot["action"] = "enterroom";
+									sendroot["result"] = "false";
+									sendroot["msg"] = "채팅방이 꽉찼습니다.";
+
+									data.msg.clear();
+									data.msg = writer.write(sendroot);
+									data.size = data.msg.size();
+								}
+								else
+								{
+									// 채팅방 현재 인원 수 업데이트
+									DML = "update room_info set room_num_user = " + to_string(++room[roomindex].m_usernum) + " where room_num = " + to_string(roomnum) + ";";
+									PGresult *resUpdateNum = PQexec(pCon, DML.c_str()); // DML SEND;
+									room[roomindex].m_client.push_back(c[index]);
+
+									// 클라이언트 현재 채팅방 번호 업데이트
+									DML = "update user_info set current_room_num = " + to_string(roomnum) + " where user_nickname = " + "'" + nickname + "'" + ";";
+									PGresult *resUpdateroomnum = PQexec(pCon, DML.c_str()); // DML SEND;
+
+									// cout << "num = " << room[roomindex].m_usernum << endl;
+									int cntuser = room[roomindex].m_client.size();
+									// cout << "cntuser = " << cntuser << endl;
+									// cout << "master = " << room[roomindex].m_master << endl;
+
+									Json::Value userlist;
+									Json::Value user[cntuser];
+									sendroot["action"] = "enterroom";
+									sendroot["result"] = "true";
+									sendroot["roomnum"] = roomnum;
+									sendroot["master"] = room[roomindex].m_master;
+									sendroot["msg"] = "채팅방에 오신 것을 환영합니다.\r\n\r\n";
+									for (int i = 0; i < cntuser; i++)
 									{
-										SendData(room[roomindex].m_client[i].clientssl, data);
+										user[i]["nickname"] = room[roomindex].m_client[i].nickname;
+										cout << "nickname = " << room[roomindex].m_client[i].nickname << endl;
+										userlist.append(user[i]);
 									}
+									sendroot["userlist"] = userlist;
+
+									data.msg.clear();
+									data.msg = writer.write(sendroot);
+									data.size = data.msg.size();
+									SendData(ssl, data);
+
+									/* 같은 채팅방 유저에게 알려줌 */
+									sendroot.clear();
+									sendroot["action"] = "updateuserlist";
+									sendroot["inout"] = "in";
+									sendroot["nickname"] = nickname;
+									string sendmsg = "[공지]" + nickname + "님이 채팅방에 입장하였습니다.\r\n";
+									sendroot["msg"] = sendmsg;
+
+									data.msg.clear();
+									data.msg = writer.write(sendroot);
+									data.size = data.msg.size();
+
+									int cnt_client = room[roomindex].m_client.size();
+									for (int i = 0; i < cnt_client; i++)
+									{
+										if (room[roomindex].m_client[i].nickname != nickname)
+										{
+											SendData(room[roomindex].m_client[i].clientssl, data);
+										}
+									}
+									continue;
 								}
-								continue;
 							}
 
 							else if (action == "sendmsg")
@@ -819,6 +854,7 @@ int main(int argc, char *argv[])
 								string nickname = recvroot["nickname"].asString();
 								int roomnum = recvroot["roomnum"].asInt();
 								string msg = recvroot["msg"].asString();
+								string receiver = recvroot["receiver"].asString();
 
 								int roomindex = 0;
 								for (int i = 0; i < room.size(); i++)
@@ -838,21 +874,43 @@ int main(int argc, char *argv[])
 								time = to_string(t->tm_hour) + ":" + to_string(t->tm_min);
 
 								sendroot["action"] = "recvmsg";
-								sendroot["msg"] = msg;
 								sendroot["sender"] = nickname;
 								sendroot["time"] = time;
+								sendroot["msg"] = msg;
 
-								data.msg.clear();
-								data.msg = writer.write(sendroot);
-								data.size = data.msg.size();
-
-								int cnt_client = room[roomindex].m_client.size();
-								for (int i = 0; i < cnt_client; i++)
+								if (receiver == "all")
 								{
-									SendData(room[roomindex].m_client[i].clientssl, data);
-									cout << "Send to " << room[roomindex].m_client[i].clnt_ip << endl;
+									sendroot["iswhisper"] = "false";
+									data.msg.clear();
+									data.msg = writer.write(sendroot);
+									data.size = data.msg.size();
+
+									int cnt_client = room[roomindex].m_client.size();
+									for (int i = 0; i < cnt_client; i++)
+									{
+										SendData(room[roomindex].m_client[i].clientssl, data);
+										cout << "Send to " << room[roomindex].m_client[i].clnt_ip << endl;
+									}
+									continue;
 								}
-								continue;
+								else
+								{
+									sendroot["iswhisper"] = "true";
+									data.msg.clear();
+									data.msg = writer.write(sendroot);
+									data.size = data.msg.size();
+
+									int cnt_client = room[roomindex].m_client.size();
+									for (int i = 0; i < cnt_client; i++)
+									{
+										if (room[roomindex].m_client[i].nickname == receiver || room[roomindex].m_client[i].nickname == nickname)
+										{
+											SendData(room[roomindex].m_client[i].clientssl, data);
+											cout << "Send to " << room[roomindex].m_client[i].nickname << endl;
+										}
+									}
+									continue;
+								}
 							}
 
 							else if (action == "searchid")
