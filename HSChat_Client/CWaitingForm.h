@@ -44,4 +44,5 @@ public:
 	afx_msg void OnHdnItemclickList(NMHDR* pNMHDR, LRESULT* pResult);
 	static int CALLBACK CompareItem(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort);
 
+	afx_msg void OnBnClickedButtonWatingUpdate();
 };
