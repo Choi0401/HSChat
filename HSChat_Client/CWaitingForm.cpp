@@ -37,6 +37,7 @@ BEGIN_MESSAGE_MAP(CWaitingForm, CFormView)
 	ON_BN_CLICKED(IDC_BUTTON_WATING_FRIENDS, &CWaitingForm::OnBnClickedButtonWatingFriends)
 	ON_NOTIFY(HDN_ITEMCLICK, 0, &CWaitingForm::OnHdnItemclickList)
 
+	ON_BN_CLICKED(IDC_BUTTON_WATING_UPDATE, &CWaitingForm::OnBnClickedButtonWatingUpdate)
 END_MESSAGE_MAP()
 
 
@@ -140,14 +141,14 @@ void CWaitingForm::OnNMDblclkListWatingRoom(NMHDR* pNMHDR, LRESULT* pResult)
 		Json::Value root;
 		Json::StyledWriter writer;
 		int roomnum = _ttoi(strroomnum);
-	
+
 		root["action"] = "enterroom";
-		root["nickname"] = m_pDlg->m_pClient->m_getNickname();
+		root["nickname"] = m_pDlg->MultiByteToUtf8(m_pDlg->m_pClient->m_getNickname());
 		root["roomnum"] = roomnum;
-		
+
 		m_pDlg->m_pClient->m_data.msg = writer.write(root);
 		m_pDlg->m_pClient->m_data.size = static_cast<int>(m_pDlg->m_pClient->m_data.msg.size());
-		
+
 		m_pDlg->m_pClient->m_SendData();
 	}
 	*pResult = 0;
@@ -283,4 +284,9 @@ int CWaitingForm::CompareItem(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort)
 
 	return 0;
 
+}
+
+void CWaitingForm::OnBnClickedButtonWatingUpdate()
+{
+	m_pDlg->m_pClient->m_RequestAllList();
 }

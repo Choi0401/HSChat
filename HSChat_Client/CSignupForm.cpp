@@ -87,21 +87,23 @@ void CSignupForm::OnBnClickedButtonSignupOK()
 		AfxMessageBox(_T("비밀번호를 입력하세요!"), MB_ICONSTOP);
 	else if (strPW != strPWOK)
 		AfxMessageBox(_T("비밀번호를 확인하세요!"), MB_ICONSTOP);
-	else {				
-		if (m_pDlg->pw_check(std::string(CT2CA(strPW))))
-		{
-			pw = m_pDlg->pw_salting(pw);
-			pw = m_pDlg->sha256(pw);
-		}
-		else
-			AfxMessageBox(_T("연속되는 3개의 문자는 사용할 수 없습니다!"), MB_ICONSTOP);
-
+	else {
 		name = std::string(CT2CA(strName));
 		birth = std::string(CT2CA(strBirth));
 		phone = std::string(CT2CA(strPhone));
 		id = std::string(CT2CA(strID));
 		nickname = std::string(CT2CA(strNickname));
-		//pw = std::string(CT2CA(strPW));
+		pw = std::string(CT2CA(strPW));
+
+		if (m_pDlg->pw_check(pw))
+		{
+			pw = m_pDlg->pw_salting(pw);
+			pw = m_pDlg->sha256(pw);
+		}
+		else
+			AfxMessageBox(_T("비밀번호 정책 오류입니다!"), MB_ICONSTOP);
+
+
 
 		name = m_pDlg->MultiByteToUtf8(name);
 		nickname = m_pDlg->MultiByteToUtf8(nickname);
@@ -118,10 +120,10 @@ void CSignupForm::OnBnClickedButtonSignupOK()
 
 		m_pDlg->m_pClient->m_data.msg = writer.write(root);
 		m_pDlg->m_pClient->m_data.size = static_cast<int>(m_pDlg->m_pClient->m_data.msg.size());
-		
+
 		m_pDlg->m_pClient->m_SendData();
 
-	}	
+	}
 }
 
 

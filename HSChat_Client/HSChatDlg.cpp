@@ -436,14 +436,11 @@ LRESULT CHSChatDlg::m_Proc(WPARAM wParam, LPARAM lParam)
 		bool parsingSuccessful = reader.parse(recvstr, recvroot);
 		if (parsingSuccessful == false)
 		{
-			CString test;
-			test = recvstr.c_str();
-			AfxMessageBox(test);
-			//AfxMessageBox(_T("Failed to parse configuration")); // reader.getFormatedErrorMessages();			
+			FileLog("HSChat_Log.txt", "Failed to parse configuration");
 		}
 		else {
 			string action = recvroot["action"].asString();
-			FileLog("HSChat_Log.txt", action.c_str());
+			//FileLog("HSChat_Log.txt", action.c_str());
 			// 로그인 
 			if (action == "signin")
 			{
@@ -499,7 +496,7 @@ LRESULT CHSChatDlg::m_Proc(WPARAM wParam, LPARAM lParam)
 							strRoomnum.Format(_T("%d"), roomnum);
 							strUsernum.Format(_T("%d"), usernum);
 							strMaxusernum.Format(_T("%d"), maxusernum);
-							strRoomname = roomname.c_str();
+							strRoomname = UTF8ToANSI(roomname.c_str());
 							m_pWatingForm->m_roomlist.InsertItem(i, strRoomnum);
 							m_pWatingForm->m_roomlist.SetItemText(i, 1, strRoomname);
 							m_pWatingForm->m_roomlist.SetItemText(i, 2, strUsernum + _T("/") + strMaxusernum);
@@ -814,12 +811,16 @@ LRESULT CHSChatDlg::m_Proc(WPARAM wParam, LPARAM lParam)
 							string nickname = (*ituser)["nickname"].asString();
 							if (master == nickname)
 							{
-								nickname += "(방장)";
+								
+								nickname = UTF8ToANSI(nickname.c_str());
 								strNickname = nickname.c_str();
+								strNickname += "(방장)";
 								m_pChatRoomForm->m_roomuserlist.InsertItem(0, strNickname);
 							}
 							else
 							{
+								//nickname = MultiByteToUtf8(nickname);
+								nickname = UTF8ToANSI(nickname.c_str());
 								strNickname = nickname.c_str();
 								m_pChatRoomForm->m_roomuserlist.InsertItem(i, strNickname);
 							}
@@ -831,7 +832,7 @@ LRESULT CHSChatDlg::m_Proc(WPARAM wParam, LPARAM lParam)
 				// 실패
 				else if (result == "false")
 				{
-
+					AfxMessageBox(cstr);
 				}
 			}
 			// 다른 유저 채팅방 입장 
@@ -864,11 +865,12 @@ LRESULT CHSChatDlg::m_Proc(WPARAM wParam, LPARAM lParam)
 					lv.flags = LVFI_STRING;
 					lv.psz = cstrnickname;
 					int n = m_pChatRoomForm->m_roomuserlist.FindItem(&lv, -1);
-
 					if (n > 0)
 					{
 						m_pChatRoomForm->m_roomuserlist.DeleteItem(n);
 					}
+
+
 
 				}
 			}
@@ -879,11 +881,15 @@ LRESULT CHSChatDlg::m_Proc(WPARAM wParam, LPARAM lParam)
 				string sender = recvroot["sender"].asString();
 				string time = recvroot["time"].asString();
 				string msg = recvroot["msg"].asString();
+				string iswhisper = recvroot["iswhisper"].asString();
 				CString cmsg;
 				cmsg = UTF8ToANSI(msg.c_str());
-				
-				string tmpstr = "[" + time + "]" + sender + " : " + std::string(CT2CA(cmsg)) + " \r\n";
-				FileLog("HSChat_Log.txt", tmpstr.c_str());
+				string tmpstr;
+				if(iswhisper == "false")
+					tmpstr = "[" + time + "]" + sender + " : " + std::string(CT2CA(cmsg)) + " \r\n";
+				else if(iswhisper == "true")
+					tmpstr = "[" + time + "]" + "[귓속말]" + sender + " : " + std::string(CT2CA(cmsg)) + " \r\n";
+				//FileLog("HSChat_Log.txt", tmpstr.c_str());
 
 
 				// 채팅창 길이
@@ -894,9 +900,7 @@ LRESULT CHSChatDlg::m_Proc(WPARAM wParam, LPARAM lParam)
 				CString strmsg;
 				strmsg = tmpstr.c_str();
 				m_pChatRoomForm->m_chat.ReplaceSel(strmsg);
-				m_pChatRoomForm->SetDlgItemText(IDC_EDIT_CHATROOM_SENDMSG, _T(""));
 				
-
 			}
 			// 채팅 출력
 			else if (action == "assignmaster")

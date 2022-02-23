@@ -25,6 +25,7 @@ void CClient::m_setID(string id)
 void CClient::m_setNickname(string nickname)
 {
     m_nickname = nickname;
+    m_nickname = m_pDlg->UTF8ToANSI(m_nickname.c_str());
 }
 string CClient::m_getID()
 {
@@ -86,7 +87,7 @@ void CClient::m_SendData()
 {    
     int ret_HeadWrite = 0;
     if (m_pDlg == NULL) m_pDlg = (CHSChatDlg*)::AfxGetMainWnd();
-    cout << "Data Body Size : " << m_pDlg->m_pClient->m_data.size << endl;
+    //cout << "Data Body Size : " << m_pDlg->m_pClient->m_data.size << endl;
     if (m_connstate == CLIENT_DISCONNECTED || (ret_HeadWrite = SSL_write(m_pDlg->m_pOpenssl->m_pSSL, &m_data.size, sizeof(int))) <= 0)
     {
         m_pDlg->FileLog("HSChat_Log.txt", "SSL_write(Head) Error ");
@@ -110,11 +111,11 @@ void CClient::m_RequestAllList()
     Json::Value root;
     Json::StyledWriter writer;
 
-    string nick;
-    nick = m_pDlg->MultiByteToUtf8(m_getNickname());
+    string nickname;
+    nickname = m_pDlg->MultiByteToUtf8(m_getNickname());
 
     root["action"] = "alllist";
-    root["nickname"] = nick;
+    root["nickname"] = nickname;
 
     m_data.msg = writer.write(root);
     m_data.size = static_cast<int>(m_data.msg.size());
@@ -128,8 +129,12 @@ void CClient::m_LogOut()
     Json::Value root;
     Json::StyledWriter writer;
 
+    string nickname;
+    nickname = m_pDlg->MultiByteToUtf8(m_getNickname());
+
     root["action"] = "logout";
-    root["nickname"] = m_getNickname();
+    root["nickname"] = nickname;
+
 
     m_data.msg = writer.write(root);
     m_data.size = static_cast<int>(m_data.msg.size());
