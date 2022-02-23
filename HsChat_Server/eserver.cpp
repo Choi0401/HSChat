@@ -821,33 +821,23 @@ int main(int argc, char *argv[])
 								char* gdata;
 								string nickname = recvroot["nickname"].asString();
 								DML = "select user_name, user_id, user_birth from user_info where user_nickname = ";
-							   	gdata = "'";
-								DML += gdata;
-								DML += nickname.c_str();
 								gdata = "'";
+								DML += gdata;
+								DML += nickname;
 								DML += gdata;
 								gdata = ";";
 								DML += gdata;
+								
+								+ "'" + nickname + "'" + ";";
 
-								cout << DML << endl;
+								PGresult* resshowmyinfo = PQexec(pCon, DML.c_str()); //DML SEND;
 
-								//다중 Select문 수정 필요
-								PGresult* resShowMyInfo = PQexec(pCon, DML.c_str()); //DML SEND;
-
-								string name, id, birth;
-
-								for (int i =0; i < PQnfields(resShowMyInfo); i++)
-								{
-										name = PQgetvalue(resShowMyInfo, 0, i);
-										i++;
-										id = PQgetvalue(resShowMyInfo, 0, i);
-										i++;
-										birth = PQgetvalue(resShowMyInfo, 0, i);
-								}	
-
-								if(PQntuples(resShowMyInfo) > 0) // 일치하는 닉네임을 찾은 경우(내정보 출력)
-								{
-																		
+								string name = PQgetvalue(resshowmyinfo, 0, 0);
+								string id = PQgetvalue(resshowmyinfo, 0, 1);
+								string birth = PQgetvalue(resshowmyinfo, 0, 2);
+						
+								if(PQntuples(resshowmyinfo) > 0) // 일치하는 닉네임을 찾은 경우(내정보 출력)
+								{													
 									sendroot["action"] = "showmyinfo";
 									sendroot["result"] = "true";
 									sendroot["name"] = name;
@@ -868,9 +858,86 @@ int main(int argc, char *argv[])
 									if (ret_BodyWrite = SSL_write(ssl, &data.msg[0], data.size) <= 0)
 										cout << "ret_BodyWrite_showmyinfo_error\n" << endl;
 									cout << "Send Success: " <<"("<< c[index].clnt_sock <<")"  << endl;
-								} 
+								}
 
-							} /* end showmyinfo */			
+							} /* end showmyinfo */
+
+							else if (action == "addfriend")
+							{
+								int getfriendnum;
+								int friendcnt = 0;
+								string nickname = recvroot["nickname"].asString();
+								string fnickname = recvroot["fnickname"].asString();
+					
+								/* 나의 회원정보를 불러옴 */
+								DML = DML_Select(4,"user_num","user_info","user_nickname",nickname.c_str());
+								PGresult* resmyusernum = PQexec(pCon, DML.c_str()); //DML SEND;
+								int myusernum = stoi(PQgetvalue(resmyusernum, 0, 0));
+								/*친구의 회원정보를 불러옴 */
+								DML = DML_Select(4,"user_num","user_info","user_nickname",fnickname.c_str());
+								PGresult* resfriendusernum = PQexec(pCon, DML.c_str()); //DML SEND;
+
+								/* 해당 친구 닉네임이 유저 목록에 있는지 확인 */
+								if (PQntuples(resfriendusernum) > 0)
+								{
+									int friendusernum = stoi(PQgetvalue(resfriendusernum, 0, 0));
+									/* 나의 친구정보를 불러옴 */
+									DML = "select friends_user_num from friends_info where user_num = " + to_string(myusernum) + ";";
+									PGresult* resfriendlist = PQexec(pCon, DML.c_str()); //DML SEND;
+									
+									for (i= 0; i < PQntuples(resfriendlist); i++)
+									{
+										getfriendnum = stoi(PQgetvalue(resfriendlist, i, 0));
+										if (getfriendnum == friendusernum)
+											friendcnt++;
+									}
+
+									/* 이미 친구로 등록되어 있는경우 */
+									if (friendcnt > 0) 
+									{
+										sendroot["action"] = "addfriend";
+										sendroot["result"] = "false";
+										sendroot["msg"]	= "이미 친구로 등록되어 있습니다";
+									}
+
+									/* 친구로 등록되어 있지 않은 경우 */
+									else
+									{
+										DML = "insert into friends_info values(" + to_string(myusernum) + "," + to_string(friendusernum) + ")" + ";";
+										PGresult* resfriendadd = PQexec(pCon, DML.c_str()); //DML SEND;
+
+										sendroot["action"] = "addfriend";
+										sendroot["result"] = "true";
+										sendroot["msg"] = "친구추가가 완료되었습니다";						
+									}										
+									
+								}
+
+								/* 친구 닉네임이 유저 목록에 없는 경우 */
+								else if (PQntuples(resfriendusernum) == 0)
+								{
+									sendroot["action"] = "addfriend";
+									sendroot["result"] = "false";
+									sendroot["msg"] = "잘못된 닉네임입니다";																									
+								}
+
+								data.msg.clear();
+								data.msg = writer.write(sendroot);
+								cout << writer.write(sendroot) << endl;
+								data.size = data.msg.size();
+	
+								if (ret_HeadWrite = SSL_write(ssl, &data.size, sizeof(int)) <= 0)
+									cout << "ret_HeadWrite_changemyinfo_error\n" <<endl;
+
+								else // HeadWrite Successful
+								{
+									if (ret_BodyWrite = SSL_write(ssl, &data.msg[0], data.size) <= 0)
+										cout << "ret_BodyWrite_changemyinfo_error\n" << endl;
+									else	
+										cout << "Send Success: " <<"("<< c[index].clnt_sock <<")"  << endl;
+								}
+								
+							} /* end addfriend */			
 
 										
 						
