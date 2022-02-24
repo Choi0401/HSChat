@@ -91,7 +91,7 @@ void CMyInfoForm::OnBnClickedButtonMyInfoOK()
 	{
 		root["action"] = "changemyinfo";
 		root["phone"] = std::string(CT2CA(strPhone));
-		root["nickname"] = std::string(CT2CA(strNickname));
+		root["nickname"] = m_pDlg->MultiByteToUtf8((std::string(CT2CA(strNickname))));
 		root["pw"] = std::string(CT2CA(strPW));
 
 		m_pDlg->m_pClient->m_data.msg = writer.write(root);
@@ -117,7 +117,7 @@ void CMyInfoForm::OnBnClickedButtonMyInfoDelete()
 		Json::StyledWriter writer;
 
 		root["action"] = "deleteaccount";
-		root["nickname"] = m_pDlg->m_pClient->m_getNickname();
+		root["nickname"] = m_pDlg->MultiByteToUtf8(m_pDlg->m_pClient->m_getNickname());
 
 		m_pDlg->m_pClient->m_data.msg = writer.write(root);
 		m_pDlg->m_pClient->m_data.size = static_cast<int>(m_pDlg->m_pClient->m_data.msg.size());

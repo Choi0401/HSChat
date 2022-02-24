@@ -81,8 +81,8 @@ void CFriendListForm::OnBnClickedButtonFriendsDelete()
 			Json::StyledWriter writer;
 
 			root["action"] = "deletefriends";
-			root["nickname"] = m_pDlg->m_pClient->m_getNickname();
-			root["fnickname"] = std::string(CT2CA(fnickname));
+			root["nickname"] = m_pDlg->MultiByteToUtf8(m_pDlg->m_pClient->m_getNickname());
+			root["fnickname"] = m_pDlg->MultiByteToUtf8(std::string(CT2CA(fnickname)));
 
 			m_pDlg->m_pClient->m_data.msg = writer.write(root);
 			m_pDlg->m_pClient->m_data.size = static_cast<int>(m_pDlg->m_pClient->m_data.msg.size());

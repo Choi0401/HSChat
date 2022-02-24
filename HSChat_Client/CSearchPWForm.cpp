@@ -82,7 +82,7 @@ void CSearchPWForm::OnBnClickedButtonSearchPWOK()
 		AfxMessageBox(_T("ID를 입력하세요!"), MB_ICONSTOP);
 	else {
 		root["action"] = "searchpw";
-		root["name"] = std::string(CT2CA(strName));
+		root["name"] = m_pDlg->MultiByteToUtf8((std::string(CT2CA(strName))));
 		root["birth"] = std::string(CT2CA(strBirth));
 		root["phone"] = std::string(CT2CA(strPhone));
 		root["id"] = std::string(CT2CA(strID));
@@ -91,11 +91,6 @@ void CSearchPWForm::OnBnClickedButtonSearchPWOK()
 		m_pDlg->m_pClient->m_data.size = static_cast<int>(m_pDlg->m_pClient->m_data.msg.size());
 
 		m_pDlg->m_pClient->m_SendData();
-
-		SetDlgItemText(IDC_EDIT_SEARCHPW_NAME, _T(""));
-		SetDlgItemText(IDC_EDIT_SEARCHPW_BIRTH, _T(""));
-		SetDlgItemText(IDC_EDIT_SEARCHPW_PHONE, _T(""));
-		SetDlgItemText(IDC_EDIT_SEARCHPW_ID, _T(""));
 	}
 }
 

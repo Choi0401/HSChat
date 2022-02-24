@@ -121,7 +121,7 @@ void CWaitingForm::OnBnClickedButtonWatingMyinfo()
 	Json::StyledWriter writer;
 	
 	root["action"] = "showmyinfo";
-	root["nickname"] = m_pDlg->m_pClient->m_getNickname();
+	root["nickname"] = m_pDlg->MultiByteToUtf8((m_pDlg->m_pClient->m_getNickname()));
 
 	m_pDlg->m_pClient->m_data.msg = writer.write(root);
 	m_pDlg->m_pClient->m_data.size = static_cast<int>(m_pDlg->m_pClient->m_data.msg.size());
@@ -162,7 +162,7 @@ void CWaitingForm::OnBnClickedButtonWatingFriends()
 		Json::StyledWriter writer;
 		m_pDlg->m_pFriendslistDlg = new CFriendsListDlg();		
 		root["action"] = "friendslist";
-		root["nickname"] = m_pDlg->m_pClient->m_getNickname();
+		root["nickname"] = m_pDlg->MultiByteToUtf8(m_pDlg->m_pClient->m_getNickname());
 
 		m_pDlg->m_pClient->m_data.msg = writer.write(root);
 		m_pDlg->m_pClient->m_data.size = static_cast<int>(m_pDlg->m_pClient->m_data.msg.size());

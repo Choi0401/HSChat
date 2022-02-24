@@ -431,497 +431,525 @@ LRESULT CHSChatDlg::m_Proc(WPARAM wParam, LPARAM lParam)
 		string recvstr;
 		//recvstr = m_pClient->m_queue.front();
 		recvstr = m_pClient->m_queue.pop();
-		Json::Value recvroot;
-		Json::Reader reader;
-		bool parsingSuccessful = reader.parse(recvstr, recvroot);
-		if (parsingSuccessful == false)
-		{
-			FileLog("HSChat_Log.txt", "Failed to parse configuration");
-		}
-		else {
-			string action = recvroot["action"].asString();
-			//FileLog("HSChat_Log.txt", action.c_str());
-			// 로그인 
-			if (action == "signin")
+		if (recvstr.size() > 0) {
+			Json::Value recvroot;
+			Json::Reader reader;
+			bool parsingSuccessful = reader.parse(recvstr, recvroot);
+			if (parsingSuccessful == false)
 			{
-				// parse json
-				string result = recvroot["result"].asString();
-				string nickname = recvroot["nickname"].asString();
-				string msg = recvroot["msg"].asString();
-				CString cstr;
-				cstr = UTF8ToANSI(msg.c_str());//msg.c_str();
-				// 성공
-				if (result == "true")
-				{
-					//TODO: 클라이언트의 이름, 아이디를 클래스에 저장해야함
-					m_pClient->m_setNickname(nickname);
-					m_pClient->m_RequestAllList();
-					AfxMessageBox(cstr, MB_ICONINFORMATION);
-					m_ShowForm(4);
-
-				}
-				// 실패
-				else if (result == "false")
-				{
-					AfxMessageBox(cstr, MB_ICONERROR);
-					m_pSigninForm->GetDlgItem(IDC_EDIT_SIGNIN_ID)->SetFocus();
-				}
+				FileLog("HSChat_Log.txt", "Failed to parse configuration");
 			}
-			// 채팅방 및 친구목록 
-			else if (action == "alllist")
-			{
-				// parse json
-
-				string result = recvroot["result"].asString();
-				// 성공
-				if (result == "true")
+			else {
+				string action = recvroot["action"].asString();
+				//FileLog("HSChat_Log.txt", action.c_str());
+				// 로그인 
+				if (action == "signin")
 				{
-					m_pWatingForm->m_roomlist.DeleteAllItems();
-					m_pWatingForm->m_friendslist.DeleteAllItems();
-					Json::Value roomlist = recvroot["roomlist"];
-					Json::ValueIterator itroom;
-					int roomcnt = recvroot["roomlist"].size();
-					int i = 0;
-					for (itroom = roomlist.begin(), i = 0; itroom != roomlist.end(); itroom++, i++)
-					{
-						if (itroom->isObject())
-						{
-							int roomnum = (*itroom)["roomnum"].asInt();
-							int usernum = (*itroom)["usernum"].asInt();
-							int maxusernum = (*itroom)["maxusernum"].asInt();
-							string roomname = (*itroom)["roomname"].asString();
-							//string roomtype = (*it)["roomnum"].asString();	타입은 필요없을듯?
-
-							CString strRoomnum, strUsernum, strMaxusernum, strRoomname;
-							strRoomnum.Format(_T("%d"), roomnum);
-							strUsernum.Format(_T("%d"), usernum);
-							strMaxusernum.Format(_T("%d"), maxusernum);
-							strRoomname = UTF8ToANSI(roomname.c_str());
-							m_pWatingForm->m_roomlist.InsertItem(i, strRoomnum);
-							m_pWatingForm->m_roomlist.SetItemText(i, 1, strRoomname);
-							m_pWatingForm->m_roomlist.SetItemText(i, 2, strUsernum + _T("/") + strMaxusernum);
-						}
-					}
-					Json::Value friendslist = recvroot["friendslist"];
-					Json::ValueIterator itfriends;
-					int friendscnt = recvroot["friendslist"].size();
-					for (itfriends = friendslist.begin(), i = 0; itfriends != friendslist.end(); itfriends++, i++)
-					{
-						if (itfriends->isObject())
-						{
-							string nickname = (*itfriends)["nickname"].asString();
-							string fstate = (*itfriends)["fstate"].asString();
-
-							CString strNickname;
-							strNickname = nickname.c_str();
-							if (fstate == "online")
-							{
-								m_pWatingForm->m_friendslist.InsertItem(i, strNickname);
-							}
-						}
-					}
-
-				}
-				// 실패
-				else if (result == "false")
-				{
-
-				}
-			}
-			// 친구목록 버튼
-			else if (action == "friendslist")
-			{
-				// parse json
-				string result = recvroot["result"].asString();
-				// 성공
-				if (result == "true")
-				{
-					m_pFriendslistDlg->m_pFriendsListForm->m_friendslist.DeleteAllItems();
-					Json::Value friendslist = recvroot["friendslist"];
-					Json::ValueIterator itfriends;
-					int i = 0;
-					int friendscnt = recvroot["friendslist"].size();
-					for (itfriends = friendslist.begin(), i = 0; itfriends != friendslist.end(); itfriends++, i++)
-					{
-						if (itfriends->isObject())
-						{
-							string nickname = (*itfriends)["nickname"].asString();
-							string fstate = (*itfriends)["fstate"].asString();
-
-							CString strNickname;
-							strNickname = nickname.c_str();
-							m_pFriendslistDlg->m_pFriendsListForm->m_friendslist.InsertItem(i, strNickname);
-						}
-					}
-
-				}
-				// 실패
-				else if (result == "false")
-				{
-
-				}
-			}
-			// 친구추가
-			else if (action == "addfriend")
-			{
-				// parse json
-				string result = recvroot["result"].asString();
-				string msg = recvroot["msg"].asString();
-				CString cstr;
-				cstr = msg.c_str();
-				// 성공
-				if (result == "true")
-				{
-					AfxMessageBox(cstr);
-					Json::Value root;
-					Json::StyledWriter writer;
-					root["action"] = "friendslist";
-					root["nickname"] = m_pClient->m_getNickname();
-
-					m_pClient->m_data.msg = writer.write(root);
-					m_pClient->m_data.size = static_cast<int>(m_pClient->m_data.msg.size());
-					m_pClient->m_SendData();
-
-				}
-				// 실패
-				else if (result == "false")
-				{
-
-				}
-			}
-
-			// 친구삭제
-			else if (action == "deletefriends")
-			{
-				// parse json
-				string result = recvroot["result"].asString();
-				string msg = recvroot["msg"].asString();
-				CString cstr;
-				cstr = msg.c_str();
-				// 성공
-				if (result == "true")
-				{
-					int nMark = m_pFriendslistDlg->m_pFriendsListForm->m_friendslist.GetSelectionMark();
-					m_pFriendslistDlg->m_pFriendsListForm->m_friendslist.DeleteItem(nMark);
-					AfxMessageBox(cstr);
-				}
-				// 실패
-				else if (result == "false")
-				{
-
-				}
-			}
-
-			// 회원가입 
-			else if (action == "signup")
-			{
-				// parse json
-				string result = recvroot["result"].asString();
-				string msg = recvroot["msg"].asString();
-				CString cstr;
-				cstr = UTF8ToANSI(msg.c_str());//msg.c_str();
-				// 성공
-				if (result == "true")
-				{
-					m_ShowForm(0);
-					SetDlgItemText(IDC_EDIT_SIGNUP_NAME, _T(""));
-					SetDlgItemText(IDC_EDIT_SIGNUP_PHONE, _T(""));
-					SetDlgItemText(IDC_EDIT_SIGNUP_ID, _T(""));
-					SetDlgItemText(IDC_EDIT_SIGNUP_NICKNAME, _T(""));
-					SetDlgItemText(IDC_EDIT_SIGNUP_PW, _T(""));
-					SetDlgItemText(IDC_EDIT_SIGNUP_PWOK, _T(""));
-					AfxMessageBox(cstr, MB_ICONINFORMATION);
-				}
-				// 실패
-				else if (result == "false")
-				{
-					AfxMessageBox(cstr, MB_ICONERROR);
-				}
-			}
-			// ID 찾기 
-			else if (action == "searchid")
-			{
-				// parse json
-				string result = recvroot["result"].asString();
-				string msg = recvroot["msg"].asString();
-				CString cstr;
-				cstr = UTF8ToANSI(msg.c_str());
-				// 성공
-				if (result == "true")
-				{
+					// parse json
+					string result = recvroot["result"].asString();
+					string nickname = recvroot["nickname"].asString();
 					string id = recvroot["id"].asString();
-					m_ShowForm(0);
-					AfxMessageBox(cstr, MB_ICONINFORMATION);
-				}
-				// 실패
-				else if (result == "false")
-				{
-					AfxMessageBox(cstr, MB_ICONERROR);
-				}
-			}
-			// PW 찾기 
-			else if (action == "searchpw")
-			{
-				// parse json
-				string result = recvroot["result"].asString();
-				string msg = recvroot["msg"].asString();
-				CString cstr;
-				cstr = UTF8ToANSI(msg.c_str());
-				// 성공
-				if (result == "true")
-				{
-					string pw = recvroot["pw"].asString();
-					m_ShowForm(0);
-					AfxMessageBox(cstr, MB_ICONINFORMATION);
-				}
-				// 실패
-				else if (result == "false")
-				{
-					AfxMessageBox(cstr, MB_ICONERROR);
-				}
-			}
-			else if (action == "showmyinfo")
-			{
-				// parse json
-				string result = recvroot["result"].asString();
-				// 성공
-				if (result == "true")
-				{
-					CString cname, cid, cbirth;
-					string name = recvroot["name"].asString();
-					string id = recvroot["id"].asString();
-					string birth = recvroot["birth"].asString();
-					cname = name.c_str();
-					cid = id.c_str();
-					cbirth = birth.c_str();
-					m_pMyInfomForm->SetDlgItemText(IDC_EDIT_MYINFO_NAME, cname);
-					m_pMyInfomForm->SetDlgItemText(IDC_EDIT_MYINFO_ID, cid);
-					m_pMyInfomForm->SetDlgItemText(IDC_EDIT_MYINFO_BIRTH, cbirth);
-					m_ShowForm(5);
-
-
-				}
-				// 실패
-				else if (result == "false")
-				{
-
-				}
-			}
-			else if (action == "changemyinfo")
-			{
-				// parse json
-				string result = recvroot["result"].asString();
-				string msg = recvroot["msg"].asString();
-				CString cstr;
-				cstr = UTF8ToANSI(msg.c_str());
-				// 성공
-				if (result == "true")
-				{
-					m_ShowForm(4);
-					AfxMessageBox(cstr, MB_ICONINFORMATION);
-				}
-				// 실패
-				else if (result == "false")
-				{
-
-				}
-			}
-			else if (action == "deleteaccount")
-			{
-				// parse json
-				string result = recvroot["result"].asString();
-				string msg = recvroot["msg"].asString();
-				CString cstr;
-				cstr = msg.c_str();
-				// 성공
-				if (result == "true")
-				{
-					m_ShowForm(0);
-					AfxMessageBox(cstr, MB_ICONINFORMATION);
-				}
-				// 실패
-				else if (result == "false")
-				{
-
-				}
-			}
-			// 채팅방 만들기 
-			else if (action == "createroom")
-			{
-				// parse json
-				string result = recvroot["result"].asString();
-				string msg = recvroot["msg"].asString();
-				CString cstr;
-				cstr = UTF8ToANSI(msg.c_str());
-				// 성공
-				if (result == "true")
-				{
-					//TODO : 리스트 지워야함
-					m_pClient->m_ismaster = true;
-					int roomnum = recvroot["roomnum"].asInt();
-					m_pClient->m_roomnum = roomnum;
-					CString str;
-					str.Format(_T("[%d번]채팅방"), roomnum);
-					m_pChatRoomForm->GetDlgItem(IDC_STATIC_CHATROOM)->SetWindowText(str);
-					m_pChatRoomForm->m_roomuserlist.DeleteAllItems();
-					string nickname = m_pClient->m_getNickname() + "(방장)";
-					CString strNickname;
-					strNickname = nickname.c_str();
-					m_pChatRoomForm->m_roomuserlist.InsertItem(0, strNickname);
-
-					m_ShowForm(6);
-					//AfxMessageBox(cstr, MB_ICONINFORMATION);
-				}
-				// 실패
-				else if (result == "false")
-				{
-					AfxMessageBox(cstr, MB_ICONERROR);
-				}
-			}
-			// 채팅방 입장 
-			else if (action == "enterroom")
-			{
-				// parse json
-				string result = recvroot["result"].asString();
-				string msg = recvroot["msg"].asString();
-				CString cstr;
-				cstr = UTF8ToANSI(msg.c_str());
-				// 성공
-				if (result == "true")
-				{
-					int roomnum = recvroot["roomnum"].asInt();
-					string master = recvroot["master"].asString();
-					m_pClient->m_roomnum = roomnum;
-					m_pClient->m_ismaster = false;
-					CString str;
-					str.Format(_T("[%d번]채팅방"), roomnum);
-					m_pChatRoomForm->GetDlgItem(IDC_STATIC_CHATROOM)->SetWindowText(str);
-					//m_pChatRoomForm->GetDlgItem(IDC_EDIT_CHATROOM_RECVMSG)->SetWindowText(_T("                         --- 채팅에 참여했습니다 ---\r\n\r\n"));
-					m_pChatRoomForm->GetDlgItem(IDC_EDIT_CHATROOM_RECVMSG)->SetWindowText(cstr);
-					m_pChatRoomForm->m_roomuserlist.DeleteAllItems();
-					Json::Value userlist = recvroot["userlist"];
-					Json::ValueIterator ituser;
-					int i = 0;
-					int usercnt = recvroot["userlist"].size();
-					for (ituser = userlist.begin(), i = 0; ituser != userlist.end(); ituser++, i++)
+					string msg = recvroot["msg"].asString();
+					CString cstr;
+					cstr = UTF8ToANSI(msg.c_str());//msg.c_str();
+					// 성공
+					if (result == "true")
 					{
-						if (ituser->isObject())
+						//TODO: 클라이언트의 이름, 아이디를 클래스에 저장해야함
+						m_pClient->m_setNickname(nickname);
+						m_pClient->m_setID(id);
+						m_pClient->m_RequestAllList();
+						AfxMessageBox(cstr, MB_ICONINFORMATION);
+						m_ShowForm(4);
+
+					}
+					// 실패
+					else if (result == "false")
+					{
+						AfxMessageBox(cstr, MB_ICONERROR);
+						m_pSigninForm->GetDlgItem(IDC_EDIT_SIGNIN_ID)->SetFocus();
+					}
+				}
+				// 채팅방 및 친구목록 
+				else if (action == "alllist")
+				{
+					// parse json
+
+					string result = recvroot["result"].asString();
+					// 성공
+					if (result == "true")
+					{
+						m_pWatingForm->m_roomlist.DeleteAllItems();
+						m_pWatingForm->m_friendslist.DeleteAllItems();
+						Json::Value roomlist = recvroot["roomlist"];
+						Json::ValueIterator itroom;
+						int roomcnt = recvroot["roomlist"].size();
+						int i = 0;
+						for (itroom = roomlist.begin(), i = 0; itroom != roomlist.end(); itroom++, i++)
 						{
-							CString strNickname;
-							string nickname = (*ituser)["nickname"].asString();
-							if (master == nickname)
+							if (itroom->isObject())
 							{
-								
-								nickname = UTF8ToANSI(nickname.c_str());
-								strNickname = nickname.c_str();
-								strNickname += "(방장)";
-								m_pChatRoomForm->m_roomuserlist.InsertItem(0, strNickname);
-							}
-							else
-							{
-								//nickname = MultiByteToUtf8(nickname);
-								nickname = UTF8ToANSI(nickname.c_str());
-								strNickname = nickname.c_str();
-								m_pChatRoomForm->m_roomuserlist.InsertItem(i, strNickname);
+								int roomnum = (*itroom)["roomnum"].asInt();
+								int usernum = (*itroom)["usernum"].asInt();
+								int maxusernum = (*itroom)["maxusernum"].asInt();
+								string roomname = (*itroom)["roomname"].asString();
+								//string roomtype = (*it)["roomnum"].asString();	타입은 필요없을듯?
+
+								CString strRoomnum, strUsernum, strMaxusernum, strRoomname;
+								strRoomnum.Format(_T("%d"), roomnum);
+								strUsernum.Format(_T("%d"), usernum);
+								strMaxusernum.Format(_T("%d"), maxusernum);
+								strRoomname = UTF8ToANSI(roomname.c_str());
+								m_pWatingForm->m_roomlist.InsertItem(i, strRoomnum);
+								m_pWatingForm->m_roomlist.SetItemText(i, 1, strRoomname);
+								m_pWatingForm->m_roomlist.SetItemText(i, 2, strUsernum + _T("/") + strMaxusernum);
 							}
 						}
+						Json::Value friendslist = recvroot["friendslist"];
+						Json::ValueIterator itfriends;
+						int friendscnt = recvroot["friendslist"].size();
+						for (itfriends = friendslist.begin(), i = 0; itfriends != friendslist.end(); itfriends++, i++)
+						{
+							if (itfriends->isObject())
+							{
+								string nickname = (*itfriends)["nickname"].asString();
+								string fstate = (*itfriends)["fstate"].asString();
+
+								CString strNickname;
+								strNickname = nickname.c_str();
+								if (fstate == "online")
+								{
+									m_pWatingForm->m_friendslist.InsertItem(i, strNickname);
+								}
+							}
+						}
+
 					}
+					// 실패
+					else if (result == "false")
+					{
 
-					m_ShowForm(6);
+					}
 				}
-				// 실패
-				else if (result == "false")
+				// 친구목록 버튼
+				else if (action == "friendslist")
 				{
-					AfxMessageBox(cstr);
-				}
-			}
-			// 다른 유저 채팅방 입장 
-			else if (action == "updateuserlist")
-			{
-				// parse json
-				string nickname = recvroot["nickname"].asString();
-				string inout = recvroot["inout"].asString();
-				string msg = recvroot["msg"].asString();
-				CString cstrmsg, cstrnickname;
-				cstrmsg = UTF8ToANSI(msg.c_str());//msg.c_str();
-				cstrnickname = UTF8ToANSI(nickname.c_str());
+					// parse json
+					string result = recvroot["result"].asString();
+					// 성공
+					if (result == "true")
+					{
+						m_pFriendslistDlg->m_pFriendsListForm->m_friendslist.DeleteAllItems();
+						Json::Value friendslist = recvroot["friendslist"];
+						Json::ValueIterator itfriends;
+						int i = 0;
+						int friendscnt = recvroot["friendslist"].size();
+						for (itfriends = friendslist.begin(), i = 0; itfriends != friendslist.end(); itfriends++, i++)
+						{
+							if (itfriends->isObject())
+							{
+								string nickname = (*itfriends)["nickname"].asString();
+								string fstate = (*itfriends)["fstate"].asString();
 
-				if (inout == "in")
+								CString strNickname;
+								strNickname = UTF8ToANSI(nickname.c_str());
+								m_pFriendslistDlg->m_pFriendsListForm->m_friendslist.InsertItem(i, strNickname);
+							}
+						}
+
+					}
+					// 실패
+					else if (result == "false")
+					{
+
+					}
+				}
+				// 친구추가
+				else if (action == "addfriend")
 				{
+					// parse json
+					string result = recvroot["result"].asString();
+					string msg = recvroot["msg"].asString();
+					CString cstr;
+					cstr = UTF8ToANSI(msg.c_str());
+					AfxMessageBox(cstr, MB_ICONINFORMATION);
+					// 성공
+					if (result == "true")
+					{
+						Json::Value root;
+						Json::StyledWriter writer;
+						root["action"] = "friendslist";
+						root["nickname"] = MultiByteToUtf8(m_pClient->m_getNickname());
+
+						m_pClient->m_data.msg = writer.write(root);
+						m_pClient->m_data.size = static_cast<int>(m_pClient->m_data.msg.size());
+						m_pClient->m_SendData();
+					}
+					// 실패
+					else if (result == "false")
+					{
+
+					}
+				}
+
+				// 친구삭제
+				else if (action == "deletefriends")
+				{
+					// parse json
+					string result = recvroot["result"].asString();
+					string msg = recvroot["msg"].asString();
+					CString cstr;
+					cstr = UTF8ToANSI(msg.c_str());
+					AfxMessageBox(cstr, MB_ICONINFORMATION);
+					// 성공
+					if (result == "true")
+					{
+						int nMark = m_pFriendslistDlg->m_pFriendsListForm->m_friendslist.GetSelectionMark();
+						FileLog("HSChat_Log.txt", "asdfsa :%d", nMark);
+						m_pFriendslistDlg->m_pFriendsListForm->m_friendslist.DeleteItem(nMark);
+					}
+					// 실패
+					else if (result == "false")
+					{
+
+					}
+				}
+
+				// 회원가입 
+				else if (action == "signup")
+				{
+					// parse json
+					string result = recvroot["result"].asString();
+					string msg = recvroot["msg"].asString();
+					CString cstr;
+					cstr = UTF8ToANSI(msg.c_str());//msg.c_str();
+					// 성공
+					if (result == "true")
+					{
+						m_ShowForm(0);
+						SetDlgItemText(IDC_EDIT_SIGNUP_NAME, _T(""));
+						SetDlgItemText(IDC_EDIT_SIGNUP_PHONE, _T(""));
+						SetDlgItemText(IDC_EDIT_SIGNUP_ID, _T(""));
+						SetDlgItemText(IDC_EDIT_SIGNUP_NICKNAME, _T(""));
+						SetDlgItemText(IDC_EDIT_SIGNUP_PW, _T(""));
+						SetDlgItemText(IDC_EDIT_SIGNUP_PWOK, _T(""));
+						AfxMessageBox(cstr, MB_ICONINFORMATION);
+					}
+					// 실패
+					else if (result == "false")
+					{
+						AfxMessageBox(cstr, MB_ICONERROR);
+					}
+				}
+				// ID 찾기 
+				else if (action == "searchid")
+				{
+					// parse json
+					string result = recvroot["result"].asString();
+					string msg = recvroot["msg"].asString();
+					CString cstr;
+					cstr = UTF8ToANSI(msg.c_str());
+					// 성공
+					if (result == "true")
+					{
+						string id = recvroot["id"].asString();
+						m_ShowForm(0);
+						AfxMessageBox(cstr, MB_ICONINFORMATION);
+					}
+					// 실패
+					else if (result == "false")
+					{
+						AfxMessageBox(cstr, MB_ICONERROR);
+					}
+				}
+				// PW 찾기 
+				else if (action == "searchpw")
+				{
+					// parse json
+					string result = recvroot["result"].asString();
+					string msg = recvroot["msg"].asString();
+					CString cstr;
+					cstr = UTF8ToANSI(msg.c_str());
+					// 성공
+					if (result == "true")
+					{
+						string pw = recvroot["pw"].asString();
+						CString cstr;
+						m_pSearchPWForm->GetDlgItemText(IDC_EDIT_SEARCHPW_ID, cstr);
+						m_pClient->m_setID(std::string(CT2CA(cstr)));
+						m_changpwdlg.DoModal();
+						m_pSearchPWForm->SetDlgItemText(IDC_EDIT_SEARCHPW_NAME, _T(""));
+						m_pSearchPWForm->SetDlgItemText(IDC_EDIT_SEARCHPW_BIRTH, _T(""));
+						m_pSearchPWForm->SetDlgItemText(IDC_EDIT_SEARCHPW_PHONE, _T(""));
+						m_pSearchPWForm->SetDlgItemText(IDC_EDIT_SEARCHPW_ID, _T(""));
+						//m_ShowForm(0);
+						//AfxMessageBox(cstr, MB_ICONINFORMATION);
+					}
+					// 실패
+					else if (result == "false")
+					{
+						AfxMessageBox(cstr, MB_ICONERROR);
+					}
+				}
+				else if (action == "setnewpw")
+				{
+					// parse json
+					string result = recvroot["result"].asString();
+					string msg = recvroot["msg"].asString();
+					CString cstr;
+					cstr = UTF8ToANSI(msg.c_str());
+					// 성공
+					if (result == "true")
+					{
+						m_changpwdlg.EndDialog(IDOK);
+						m_ShowForm(0);
+						AfxMessageBox(cstr, MB_ICONINFORMATION);
+					}
+				}
+				else if (action == "showmyinfo")
+				{
+					// parse json
+					string result = recvroot["result"].asString();
+					// 성공
+					if (result == "true")
+					{
+						CString cname, cid, cbirth;
+						string name = recvroot["name"].asString();
+						string id = recvroot["id"].asString();
+						string birth = recvroot["birth"].asString();
+						cname = UTF8ToANSI(name.c_str());
+						cid = id.c_str();
+						cbirth = birth.c_str();
+						m_pMyInfomForm->SetDlgItemText(IDC_EDIT_MYINFO_NAME, cname);
+						m_pMyInfomForm->SetDlgItemText(IDC_EDIT_MYINFO_ID, cid);
+						m_pMyInfomForm->SetDlgItemText(IDC_EDIT_MYINFO_BIRTH, cbirth);
+						m_ShowForm(5);
+
+
+					}
+					// 실패
+					else if (result == "false")
+					{
+
+					}
+				}
+				else if (action == "changemyinfo")
+				{
+					// parse json
+					string result = recvroot["result"].asString();
+					string msg = recvroot["msg"].asString();
+					CString cstr;
+					cstr = UTF8ToANSI(msg.c_str());
+					// 성공
+					if (result == "true")
+					{
+						m_ShowForm(4);
+						AfxMessageBox(cstr, MB_ICONINFORMATION);
+					}
+					// 실패
+					else if (result == "false")
+					{
+
+					}
+				}
+				else if (action == "deleteaccount")
+				{
+					// parse json
+					string result = recvroot["result"].asString();
+					string msg = recvroot["msg"].asString();
+					CString cstr;
+					cstr = msg.c_str();
+					// 성공
+					if (result == "true")
+					{
+						m_ShowForm(0);
+						AfxMessageBox(cstr, MB_ICONINFORMATION);
+					}
+					// 실패
+					else if (result == "false")
+					{
+
+					}
+				}
+				// 채팅방 만들기 
+				else if (action == "createroom")
+				{
+					// parse json
+					string result = recvroot["result"].asString();
+					string msg = recvroot["msg"].asString();
+					CString cstr;
+					cstr = UTF8ToANSI(msg.c_str());
+					// 성공
+					if (result == "true")
+					{
+						//TODO : 리스트 지워야함
+						m_pClient->m_ismaster = true;
+						int roomnum = recvroot["roomnum"].asInt();
+						m_pClient->m_roomnum = roomnum;
+						CString str;
+						str.Format(_T("[%d번]채팅방"), roomnum);
+						m_pChatRoomForm->GetDlgItem(IDC_STATIC_CHATROOM)->SetWindowText(str);
+						m_pChatRoomForm->m_roomuserlist.DeleteAllItems();
+						string nickname = m_pClient->m_getNickname() + "(방장)";
+						CString strNickname;
+						strNickname = nickname.c_str();
+						m_pChatRoomForm->m_roomuserlist.InsertItem(0, strNickname);
+
+						m_ShowForm(6);
+						//AfxMessageBox(cstr, MB_ICONINFORMATION);
+					}
+					// 실패
+					else if (result == "false")
+					{
+						AfxMessageBox(cstr, MB_ICONERROR);
+					}
+				}
+				// 채팅방 입장 
+				else if (action == "enterroom")
+				{
+					// parse json
+					string result = recvroot["result"].asString();
+					string msg = recvroot["msg"].asString();
+					CString cstr;
+					cstr = UTF8ToANSI(msg.c_str());
+					// 성공
+					if (result == "true")
+					{
+						int roomnum = recvroot["roomnum"].asInt();
+						string master = recvroot["master"].asString();
+						m_pClient->m_roomnum = roomnum;
+						m_pClient->m_ismaster = false;
+						CString str;
+						str.Format(_T("[%d번]채팅방"), roomnum);
+						m_pChatRoomForm->GetDlgItem(IDC_STATIC_CHATROOM)->SetWindowText(str);
+						//m_pChatRoomForm->GetDlgItem(IDC_EDIT_CHATROOM_RECVMSG)->SetWindowText(_T("                         --- 채팅에 참여했습니다 ---\r\n\r\n"));
+						m_pChatRoomForm->GetDlgItem(IDC_EDIT_CHATROOM_RECVMSG)->SetWindowText(cstr);
+						m_pChatRoomForm->m_roomuserlist.DeleteAllItems();
+						Json::Value userlist = recvroot["userlist"];
+						Json::ValueIterator ituser;
+						int i = 0;
+						int usercnt = recvroot["userlist"].size();
+						for (ituser = userlist.begin(), i = 0; ituser != userlist.end(); ituser++, i++)
+						{
+							if (ituser->isObject())
+							{
+								CString strNickname;
+								string nickname = (*ituser)["nickname"].asString();
+								if (master == nickname)
+								{
+
+									nickname = UTF8ToANSI(nickname.c_str());
+									strNickname = nickname.c_str();
+									strNickname += "(방장)";
+									m_pChatRoomForm->m_roomuserlist.InsertItem(0, strNickname);
+								}
+								else
+								{
+									//nickname = MultiByteToUtf8(nickname);
+									nickname = UTF8ToANSI(nickname.c_str());
+									strNickname = nickname.c_str();
+									m_pChatRoomForm->m_roomuserlist.InsertItem(i, strNickname);
+								}
+							}
+						}
+
+						m_ShowForm(6);
+					}
+					// 실패
+					else if (result == "false")
+					{
+						AfxMessageBox(cstr);
+					}
+				}
+				// 다른 유저 채팅방 입장 
+				else if (action == "updateuserlist")
+				{
+					// parse json
+					string nickname = recvroot["nickname"].asString();
+					string inout = recvroot["inout"].asString();
+					string msg = recvroot["msg"].asString();
+					CString cstrmsg, cstrnickname;
+					cstrmsg = UTF8ToANSI(msg.c_str());//msg.c_str();
+					cstrnickname = UTF8ToANSI(nickname.c_str());
+
+					if (inout == "in")
+					{
+						int chatlength = m_pChatRoomForm->m_chat.GetWindowTextLength();
+						m_pChatRoomForm->m_chat.SetSel(chatlength, chatlength);
+						m_pChatRoomForm->m_chat.ReplaceSel(cstrmsg);
+
+						int cntlist = m_pChatRoomForm->m_roomuserlist.GetItemCount();
+						m_pChatRoomForm->m_roomuserlist.InsertItem(cntlist, cstrnickname);
+					}
+					else if (inout == "out")
+					{
+						int chatlength = m_pChatRoomForm->m_chat.GetWindowTextLength();
+						m_pChatRoomForm->m_chat.SetSel(chatlength, chatlength);
+						m_pChatRoomForm->m_chat.ReplaceSel(cstrmsg);
+
+						LVFINDINFO lv;
+						lv.flags = LVFI_STRING;
+						lv.psz = cstrnickname;
+						int n = m_pChatRoomForm->m_roomuserlist.FindItem(&lv, -1);
+						if (n > 0)
+						{
+							m_pChatRoomForm->m_roomuserlist.DeleteItem(n);
+						}
+
+
+
+					}
+				}
+				// 채팅 출력
+				else if (action == "recvmsg")
+				{
+					// parse json
+					string sender = recvroot["sender"].asString();
+					string time = recvroot["time"].asString();
+					string msg = recvroot["msg"].asString();
+					string iswhisper = recvroot["iswhisper"].asString();
+					CString cmsg;
+					string whis_nick;
+					whis_nick = UTF8ToANSI(sender.c_str());
+					cmsg = UTF8ToANSI(msg.c_str());
+					string tmpstr;
+					if (iswhisper == "false")
+						tmpstr = "[" + time + "]" + whis_nick + " : " + std::string(CT2CA(cmsg)) + " \r\n";
+					else if (iswhisper == "true")
+						tmpstr = "[" + time + "]" + "[귓속말]" + whis_nick + " : " + std::string(CT2CA(cmsg)) + " \r\n";
+
+
+					// 채팅창 길이
+					int chatlength = m_pChatRoomForm->m_chat.GetWindowTextLength();
+					// 마지막 줄 선택
+					m_pChatRoomForm->m_chat.SetSel(chatlength, chatlength);
+					// 선택된 행의 텍스트를 교체
+					CString strmsg;
+					strmsg = tmpstr.c_str();
+					m_pChatRoomForm->m_chat.ReplaceSel(strmsg);
+
+				}
+				// 채팅 출력
+				else if (action == "assignmaster")
+				{
+					// parse json
+					string result = recvroot["true"].asString();
+					string msg = recvroot["msg"].asString();
+
+					CString strmsg;
+					strmsg = msg.c_str();
+					if (result == "true")
+						m_pClient->m_ismaster = false;
+
+					//TODO : 유저리스트 재정렬 and 방장 바뀐것 출력
+					AfxMessageBox(strmsg);
+					string tmp = "[공지]" + m_pClient->m_getNickname() + "님이 " + msg + "\r\n";
+					CString str;
+					str = tmp.c_str();
 					int chatlength = m_pChatRoomForm->m_chat.GetWindowTextLength();
 					m_pChatRoomForm->m_chat.SetSel(chatlength, chatlength);
-					m_pChatRoomForm->m_chat.ReplaceSel(cstrmsg);
-
-					int cntlist = m_pChatRoomForm->m_roomuserlist.GetItemCount();
-					m_pChatRoomForm->m_roomuserlist.InsertItem(cntlist, cstrnickname);
+					m_pChatRoomForm->m_chat.ReplaceSel(str);
 				}
-				else if (inout == "out")
-				{
-					int chatlength = m_pChatRoomForm->m_chat.GetWindowTextLength();
-					m_pChatRoomForm->m_chat.SetSel(chatlength, chatlength);
-					m_pChatRoomForm->m_chat.ReplaceSel(cstrmsg);
-
-					LVFINDINFO lv;
-					lv.flags = LVFI_STRING;
-					lv.psz = cstrnickname;
-					int n = m_pChatRoomForm->m_roomuserlist.FindItem(&lv, -1);
-					if (n > 0)
-					{
-						m_pChatRoomForm->m_roomuserlist.DeleteItem(n);
-					}
-
-
-
-				}
-			}
-			// 채팅 출력
-			else if (action == "recvmsg")
-			{
-				// parse json
-				string sender = recvroot["sender"].asString();
-				string time = recvroot["time"].asString();
-				string msg = recvroot["msg"].asString();
-				string iswhisper = recvroot["iswhisper"].asString();
-				CString cmsg;
-				cmsg = UTF8ToANSI(msg.c_str());
-				string tmpstr;
-				if(iswhisper == "false")
-					tmpstr = "[" + time + "]" + sender + " : " + std::string(CT2CA(cmsg)) + " \r\n";
-				else if(iswhisper == "true")
-					tmpstr = "[" + time + "]" + "[귓속말]" + sender + " : " + std::string(CT2CA(cmsg)) + " \r\n";
-				//FileLog("HSChat_Log.txt", tmpstr.c_str());
-
-
-				// 채팅창 길이
-				int chatlength = m_pChatRoomForm->m_chat.GetWindowTextLength();
-				// 마지막 줄 선택
-				m_pChatRoomForm->m_chat.SetSel(chatlength, chatlength);
-				// 선택된 행의 텍스트를 교체
-				CString strmsg;
-				strmsg = tmpstr.c_str();
-				m_pChatRoomForm->m_chat.ReplaceSel(strmsg);
-				
-			}
-			// 채팅 출력
-			else if (action == "assignmaster")
-			{
-				// parse json
-				string result = recvroot["true"].asString();
-				string msg = recvroot["msg"].asString();
-
-				CString strmsg;
-				strmsg = msg.c_str();
-				if (result == "true")
-					m_pClient->m_ismaster = false;
-
-				//TODO : 유저리스트 재정렬 and 방장 바뀐것 출력
-				AfxMessageBox(strmsg);
-				string tmp = "[공지]" + m_pClient->m_getNickname() + "님이 " + msg + "\r\n";
-				CString str;
-				str = tmp.c_str();
-				int chatlength = m_pChatRoomForm->m_chat.GetWindowTextLength();
-				m_pChatRoomForm->m_chat.SetSel(chatlength, chatlength);
-				m_pChatRoomForm->m_chat.ReplaceSel(str);
 			}
 		}
 	}
