@@ -109,6 +109,8 @@ void CChatRoomForm::OnBnClickedButtonChatroomSend()
 	{
 		CString selstr;
 		m_cbchat.GetLBText(m_cbchat.GetCurSel(), selstr);
+		selstr.Replace(_T("(방장)"), _T(""));
+		
 		string sendmsg;
 		sendmsg = m_pDlg->MultiByteToUtf8(std::string(CT2CA(strMsg)));
 		root["action"] = "sendmsg";
@@ -160,6 +162,7 @@ void CChatRoomForm::OnBnClickedButtonChatroomQuit()
 	m_pDlg->m_pClient->m_SendData();
 
 	m_pDlg->m_pClient->m_RequestAllList();
+	m_roomuserlist.DeleteAllItems();
 	m_pDlg->m_ShowForm(4);
 
 }

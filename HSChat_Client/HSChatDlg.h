@@ -78,10 +78,13 @@ public:
 
 	void ClearFileLog(const char* pszFileName);
 	void FileLog(const char* pszFileName, const char* pszLog, ...);
+	void m_wait(DWORD dwMillisecond);
+
 	char* UTF8ToANSI(const char* pszCode);
 	string MultiByteToUtf8(string multibyte_str);
 
 	bool pw_check(string pw);
 	string sha256(string pw);
 	string pw_salting(string pw);
+	
 };

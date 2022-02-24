@@ -84,7 +84,6 @@ void CMakeRoomDlg::OnBnClickedButtonMakeroom()
 		root["action"] = "createroom";
 		root["master"] = room_master;
 		root["roomname"] = roomname;
-		//root["roomname"] = std::string(CT2CA(strRoomName));
 		root["maxnum"] = maxnum;
 		if (m_pRB_public->GetCheck())
 			root["roomtype"] = "public";
@@ -92,8 +91,7 @@ void CMakeRoomDlg::OnBnClickedButtonMakeroom()
 			root["roomtype"] = "private";
 
 		m_pDlg->m_pClient->m_data.msg = writer.write(root);
-		m_pDlg->m_pClient->m_data.size = static_cast<int>(m_pDlg->m_pClient->m_data.msg.size());
-		
+		m_pDlg->m_pClient->m_data.size = static_cast<int>(m_pDlg->m_pClient->m_data.msg.size());		
 		m_pDlg->m_pClient->m_SendData();
 
 		m_pDlg->m_pChatRoomForm->SetDlgItemText(IDC_EDIT_CHATROOM_RECVMSG, _T(""));

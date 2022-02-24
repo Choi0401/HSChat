@@ -77,9 +77,9 @@ void CMyInfoForm::OnBnClickedButtonMyInfoOK()
 	GetDlgItemText(IDC_EDIT_MYINFO_PW, strPW);
 	GetDlgItemText(IDC_EDIT_MYINFO_PWOK, strPWOK);
 
-	if (strPhone.GetLength() == 0)
+	if (strPhone.GetLength() == 0 || strPhone.GetLength() > 20)
 		AfxMessageBox(_T("전화번호를 입력하세요!"), MB_ICONSTOP);
-	else if (strNickname.GetLength() == 0)
+	else if (strNickname.GetLength() == 0 || strNickname.GetLength() > 20)
 		AfxMessageBox(_T("닉네임을 입력하세요!"), MB_ICONSTOP);
 	else if (strPW.GetLength() == 0)
 		AfxMessageBox(_T("비밀번호를 입력하세요!"), MB_ICONSTOP);

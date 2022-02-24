@@ -84,7 +84,7 @@ void CWaitingForm::OnBnClickedButtonWatingExit()
 {	
 	if (AfxMessageBox(_T("프로그램을 종료하시겠습니까?"), MB_YESNO | MB_ICONQUESTION) == IDYES)
 	{
-		//TODO: 종료하기전에 서버에 종료 메시지 보내줘야함
+		m_pDlg->m_pClient->m_LogOut();
 		m_pDlg->m_pClient->m_CloseSocket();
 		ExitProcess(0);
 

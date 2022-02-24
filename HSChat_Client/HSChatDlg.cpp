@@ -267,10 +267,6 @@ void CHSChatDlg::m_AllocForm()
 	m_pChatRoomForm->OnInitialUpdate();
 	m_pChatRoomForm->ShowWindow(SW_HIDE);
 
-
-
-
-
 	GetDlgItem(IDC_PICTURE_CONTROL)->DestroyWindow();
 }
 
@@ -386,6 +382,7 @@ UINT CHSChatDlg::m_RecvThread(LPVOID _mothod)
 					::PostMessage(fir->m_hWnd, MESSAGE_SET_STATE, NULL, NULL);
 				}
 			}
+			fir->m_wait(2000);
 		}
 		else
 		{
@@ -395,7 +392,7 @@ UINT CHSChatDlg::m_RecvThread(LPVOID _mothod)
 			{
 				fir->FileLog("HSChat_Log.txt", "SSL Read(Head) Error ");				
 			}
-			fir->FileLog("HSChat_Log.txt", "Return headread : ", to_string(ret_HeadRead).c_str());
+			//fir->FileLog("HSChat_Log.txt", "Return headread : ", to_string(ret_HeadRead).c_str());
 			if (ret_HeadRead > 0)
 			{
 				fir->m_pClient->m_data.msg.resize(fir->m_pClient->m_data.size);
@@ -572,7 +569,6 @@ LRESULT CHSChatDlg::m_Proc(WPARAM wParam, LPARAM lParam)
 					string msg = recvroot["msg"].asString();
 					CString cstr;
 					cstr = UTF8ToANSI(msg.c_str());
-					AfxMessageBox(cstr, MB_ICONINFORMATION);
 					// 성공
 					if (result == "true")
 					{
@@ -590,6 +586,7 @@ LRESULT CHSChatDlg::m_Proc(WPARAM wParam, LPARAM lParam)
 					{
 
 					}
+					AfxMessageBox(cstr, MB_ICONINFORMATION);
 				}
 
 				// 친구삭제
@@ -600,7 +597,7 @@ LRESULT CHSChatDlg::m_Proc(WPARAM wParam, LPARAM lParam)
 					string msg = recvroot["msg"].asString();
 					CString cstr;
 					cstr = UTF8ToANSI(msg.c_str());
-					AfxMessageBox(cstr, MB_ICONINFORMATION);
+
 					// 성공
 					if (result == "true")
 					{
@@ -613,6 +610,7 @@ LRESULT CHSChatDlg::m_Proc(WPARAM wParam, LPARAM lParam)
 					{
 
 					}
+					AfxMessageBox(cstr, MB_ICONINFORMATION);
 				}
 
 				// 회원가입 
@@ -638,8 +636,9 @@ LRESULT CHSChatDlg::m_Proc(WPARAM wParam, LPARAM lParam)
 					// 실패
 					else if (result == "false")
 					{
-						AfxMessageBox(cstr, MB_ICONERROR);
+
 					}
+					AfxMessageBox(cstr, MB_ICONERROR);
 				}
 				// ID 찾기 
 				else if (action == "searchid")
@@ -867,6 +866,7 @@ LRESULT CHSChatDlg::m_Proc(WPARAM wParam, LPARAM lParam)
 					// parse json
 					string nickname = recvroot["nickname"].asString();
 					string inout = recvroot["inout"].asString();
+					string ismaster = recvroot["ismaster"].asString();
 					string msg = recvroot["msg"].asString();
 					CString cstrmsg, cstrnickname;
 					cstrmsg = UTF8ToANSI(msg.c_str());//msg.c_str();
@@ -885,18 +885,35 @@ LRESULT CHSChatDlg::m_Proc(WPARAM wParam, LPARAM lParam)
 					{
 						int chatlength = m_pChatRoomForm->m_chat.GetWindowTextLength();
 						m_pChatRoomForm->m_chat.SetSel(chatlength, chatlength);
-						m_pChatRoomForm->m_chat.ReplaceSel(cstrmsg);
+						m_pChatRoomForm->m_chat.ReplaceSel(cstrmsg);					
 
 						LVFINDINFO lv;
 						lv.flags = LVFI_STRING;
+
+						if (ismaster == "true") {						
+							string nextmaster = recvroot["nextmaster"].asString();							
+							CString tmpstr, nickstr;
+							tmpstr = UTF8ToANSI(nextmaster.c_str());
+							nickstr = m_pClient->m_getNickname().c_str();
+							if (tmpstr == nickstr)
+								m_pClient->m_ismaster = true;
+							lv.psz = tmpstr;
+							int n = -1;
+							if ((n = m_pChatRoomForm->m_roomuserlist.FindItem(&lv, -1)) >= 0)
+							{
+								tmpstr += "(방장)";
+								m_pChatRoomForm->m_roomuserlist.SetItemText(n, 0, tmpstr);
+							}
+							cstrnickname += _T("(방장)");
+						}				
+
 						lv.psz = cstrnickname;
+
 						int n = m_pChatRoomForm->m_roomuserlist.FindItem(&lv, -1);
-						if (n > 0)
+						if (n >= 0)
 						{
 							m_pChatRoomForm->m_roomuserlist.DeleteItem(n);
 						}
-
-
 
 					}
 				}
@@ -1169,4 +1186,20 @@ string CHSChatDlg::sha256(string pw) {
 string CHSChatDlg::pw_salting(string pw) {
 	pw += "HSCHAT_PW";
 	return pw;
+}
+
+void CHSChatDlg::m_wait(DWORD dwMillisecond)
+{
+	MSG msg;
+	DWORD dwStart;
+	dwStart = GetTickCount();
+
+	while (GetTickCount() - dwStart < dwMillisecond)
+	{
+		while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+		{
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+		}
+	}
 }
