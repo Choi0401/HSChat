@@ -65,6 +65,7 @@ public:
 	int current_room_num;
 	int usernum;
 	bool ismaster;
+	int state;
 	string clnt_ip;
 	string clnt_name;
 	string id;
@@ -146,6 +147,7 @@ int main(int argc, char *argv[])
 		c[i].ismaster = false;
 		c[i].clientssl = NULL;
 		c[i].usernum = 0;
+		c[i].state = 0;
 		memset(&c[i].clnt_ip, 0x00, sizeof(c[i].clnt_ip));
 		memset(&c[i].clnt_name, 0x00, sizeof(c[i].clnt_name));
 	}
@@ -319,7 +321,6 @@ int main(int argc, char *argv[])
 
 								// 1. 아이디 중복 검사
 								DML = DML_Select(4, "*", "user_info", "user_id", id.c_str());
-								// cout << DML << endl;
 								PGresult *resID = PQexec(pCon, DML.c_str()); // DML SEND;
 
 								if (PQresultStatus(resID) == PGRES_TUPLES_OK)
@@ -329,9 +330,12 @@ int main(int argc, char *argv[])
 									PGresult *resNickname = PQexec(pCon, DML.c_str()); // DML SEND;
 									if (PQresultStatus(resNickname) == PGRES_TUPLES_OK)
 									{
-										cout << PQntuples(resID) << " " << PQntuples(resNickname) << endl;
+										// 3. 전화번호 중복 검사
+										DML = DML_Select(4, "*", "user_info", "user_phone", phone.c_str());
+										PGresult *resPhone = PQexec(pCon, DML.c_str());
+
 										//계정이 존재하지 않는 경우
-										if (PQntuples(resID) == 0 && PQntuples(resNickname) == 0)
+										if (PQntuples(resID) == 0 && PQntuples(resNickname) == 0 && PQntuples(resPhone) == 0)
 										{
 											DML = "insert into user_info values(nextval('sq_user_num'),'" + name + "','" + birth + "','" + phone + "','" + id + "','" + nickname + "','" + pw + "',0,0);";
 											PGresult *resInsert = PQexec(pCon, DML.c_str()); // DML SEND
@@ -347,7 +351,6 @@ int main(int argc, char *argv[])
 												if (PQntuples(resSelect) == 1)
 												{
 													c[index].usernum = atoi(PQgetvalue(resSelect, 0, 0));
-													cout << "usernum = " << c[index].usernum << endl;
 												}
 											}
 											else
@@ -359,7 +362,7 @@ int main(int argc, char *argv[])
 											}
 										}
 										//이미 계정이 존재하는 경우
-										else if (PQntuples(resID) > 0 || PQntuples(resNickname) > 0)
+										else if (PQntuples(resID) > 0 || PQntuples(resNickname) > 0 || PQntuples(resPhone) > 0)
 										{
 											sendroot["action"] = "signup";
 											sendroot["result"] = "false";
@@ -367,6 +370,8 @@ int main(int argc, char *argv[])
 												sendroot["msg"] = "이미 가입되어 있는 회원입니다";
 											else if (PQntuples(resNickname) > 0)
 												sendroot["msg"] = "이미 가입되어 있는 닉네임입니다";
+											else if (PQntuples(resPhone) > 0)
+												sendroot["msg"] = "이미 가입되어 있는 전화번호입니다";
 										}
 
 										/* Json Data Send */
@@ -411,13 +416,16 @@ int main(int argc, char *argv[])
 										nickname = PQgetvalue(rescheck, 0, 0);
 										c[index].nickname = nickname;
 
-										cout << nickname << endl;
-
 										sendroot["action"] = "signin";
 										sendroot["result"] = "true";
 										sendroot["nickname"] = nickname;
 										sendroot["id"] = id;
 										sendroot["msg"] = nickname + "님 환영합니다";
+
+										// 사용자 상태 온라인으로 업데이트
+										DML = "update user_info set user_state = " + to_string(1) + " where user_nickname = '" + nickname + "';";
+										PGresult *resUpdate = PQexec(pCon, DML.c_str()); // DML SEND;
+										PQclear(resUpdate);
 									}
 								}
 								else
@@ -522,6 +530,7 @@ int main(int argc, char *argv[])
 											sendroot["result"] = "false";
 											sendroot["msg"] = "방 만들기에 실패하였습니다";
 										}
+										PQclear(resSelect);
 									}
 									else if (PQntuples(resSelect) == 0)
 									{
@@ -551,7 +560,6 @@ int main(int argc, char *argv[])
 									int cnttuples = PQntuples(resSelect);
 									if (cnttuples >= 0)
 									{
-										cout << "asdfdsa" << endl;
 										Json::Value roomlist;
 										Json::Value roomarr[cnttuples];
 
@@ -577,36 +585,37 @@ int main(int argc, char *argv[])
 								{
 									cout << PQerrorMessage(pCon) << endl;
 								}
+								PQclear(resSelect);
 							}
 							else if (action == "quitroom")
 							{
 								string nickname = recvroot["nickname"].asString();
 								// Get user_num
 								DML = DML_Select(4, "user_num", "user_info", "user_nickname", nickname.c_str());
-								PGresult *resSelect = PQexec(pCon, DML.c_str());
+								PGresult *resSelectuser = PQexec(pCon, DML.c_str());
 
-								if (PQresultStatus(resSelect) == PGRES_TUPLES_OK)
+								if (PQresultStatus(resSelectuser) == PGRES_TUPLES_OK)
 								{
-									if (PQntuples(resSelect) == 1)
+									if (PQntuples(resSelectuser) == 1)
 									{
-										int user_num = atoi(PQgetvalue(resSelect, 0, 0));
+										int user_num = atoi(PQgetvalue(resSelectuser, 0, 0));
 										// Get room info
 										DML = "select * from room_info;";
-										PGresult *resSelect = PQexec(pCon, DML.c_str());
+										PGresult *resSelectroom = PQexec(pCon, DML.c_str());
 
-										if (PQresultStatus(resSelect) == PGRES_TUPLES_OK)
+										if (PQresultStatus(resSelectroom) == PGRES_TUPLES_OK)
 										{
 
-											int cnttuples = PQntuples(resSelect);
+											int cnttuples = PQntuples(resSelectroom);
 
 											if (cnttuples > 0)
 											{
 												int roomnum, currentusernum, masterusernum;
 												for (int i = 0; i < cnttuples; i++) // Get tables data
 												{
-													roomnum = stoi(PQgetvalue(resSelect, i, 0));
-													masterusernum = stoi(PQgetvalue(resSelect, i, 1));
-													currentusernum = stoi(PQgetvalue(resSelect, i, 2));
+													roomnum = stoi(PQgetvalue(resSelectroom, i, 0));
+													masterusernum = stoi(PQgetvalue(resSelectroom, i, 1));
+													currentusernum = stoi(PQgetvalue(resSelectroom, i, 2));
 												}
 
 												// 방에 혼자 남은 경우
@@ -636,6 +645,7 @@ int main(int argc, char *argv[])
 														cout << PQerrorMessage(pCon) << endl;
 													}
 													c[index].current_room_num = 0;
+													PQclear(resUpdate);
 													continue;
 												}
 												else if (currentusernum > 1)
@@ -685,11 +695,11 @@ int main(int argc, char *argv[])
 															DML = "update room_info set room_num_user = " + to_string(room[roomindex].m_usernum) + " where room_num = " + to_string(roomnum) + ";";
 															resUpdateroom = PQexec(pCon, DML.c_str());
 															nickname += "(방장)";
-
 															currentusernum--;
 														}
 														else
 															cout << PQerrorMessage(pCon) << endl;
+														PQclear(resselectuser);
 													}
 													else
 													{
@@ -745,6 +755,7 @@ int main(int argc, char *argv[])
 								{
 									cout << PQerrorMessage(pCon) << endl;
 								}
+								PQclear(resSelectuser);
 							}
 
 							else if (action == "enterroom")
@@ -993,9 +1004,9 @@ int main(int argc, char *argv[])
 								string id = recvroot["id"].asString();
 								string pw = recvroot["pw"].asString();
 
-								DML = "update user_info set user_pw = " + pw + " where user_id = " + "'" + id + "'" + ";";
+								DML = "update user_info set user_pw = '" + pw + "' where user_id = " + "'" + id + "'" + ";";
 								PGresult *resUpdate = PQexec(pCon, DML.c_str());
-								cout << DML << endl;
+								// cout << DML << endl;
 
 								if (PQresultStatus(resUpdate) == PGRES_COMMAND_OK)
 								{
@@ -1008,7 +1019,6 @@ int main(int argc, char *argv[])
 								}
 								else
 								{
-									cout << "test" << endl;
 									cout << PQerrorMessage(pCon) << endl;
 								}
 							}
