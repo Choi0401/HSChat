@@ -73,15 +73,20 @@ void CSignupForm::OnBnClickedButtonSignupOK()
 	GetDlgItemText(IDC_EDIT_SIGNUP_PW, strPW);
 	GetDlgItemText(IDC_EDIT_SIGNUP_PWOK, strPWOK);
 
-	if (strName.GetLength() == 0)
-		AfxMessageBox(_T("이름을 입력하세요!"), MB_ICONSTOP);
+	((CEdit*)GetDlgItem(IDC_EDIT_SIGNUP_NAME))->SetLimitText(20);
+	((CEdit*)GetDlgItem(IDC_EDIT_SIGNUP_PHONE))->SetLimitText(11);
+	((CEdit*)GetDlgItem(IDC_EDIT_SIGNUP_ID))->SetLimitText(20);
+	((CEdit*)GetDlgItem(IDC_EDIT_SIGNUP_NICKNAME))->SetLimitText(20);
+
+	if (strName.GetLength() == 0 || strName.GetLength() > 20)
+		AfxMessageBox(_T("이름을 확인해주세요(1~20자)!"), MB_ICONSTOP);
 	else if (strBirth.GetLength() == 0)
 		AfxMessageBox(_T("생년월일을 입력하세요!"), MB_ICONSTOP);
-	else if (strPhone.GetLength() == 0)
+	else if (strPhone.GetLength() == 0 || strPhone.GetLength() > 11)
 		AfxMessageBox(_T("전화번호를 입력하세요!"), MB_ICONSTOP);
-	else if (strID.GetLength() == 0)
+	else if (strID.GetLength() == 0 || strID.GetLength() > 20)
 		AfxMessageBox(_T("아이디를 입력하세요!"), MB_ICONSTOP);
-	else if (strNickname.GetLength() == 0)
+	else if (strNickname.GetLength() == 0 || strNickname.GetLength() > 20)
 		AfxMessageBox(_T("닉네임을 입력하세요!"), MB_ICONSTOP);
 	else if (strPW.GetLength() == 0)
 		AfxMessageBox(_T("비밀번호를 입력하세요!"), MB_ICONSTOP);

@@ -30,6 +30,7 @@ void CChangePWDlg::DoDataExchange(CDataExchange* pDX)
 
 BEGIN_MESSAGE_MAP(CChangePWDlg, CDialogEx)
 	ON_BN_CLICKED(ID_BUTTON_CHAGNEPW_OK, &CChangePWDlg::OnBnClickedButtonChagnepwOk)
+	ON_BN_CLICKED(ID_BUTTON_CHAGNEPW_CANCEL, &CChangePWDlg::OnBnClickedButtonChagnepwCancel)
 END_MESSAGE_MAP()
 
 
@@ -92,4 +93,10 @@ void CChangePWDlg::OnBnClickedButtonChagnepwOk()
 		m_pDlg->m_pClient->m_SendData();
 	}
 	
+}
+
+
+void CChangePWDlg::OnBnClickedButtonChagnepwCancel()
+{
+	EndDialog(IDOK);
 }

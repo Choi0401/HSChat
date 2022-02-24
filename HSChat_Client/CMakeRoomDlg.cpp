@@ -63,10 +63,10 @@ void CMakeRoomDlg::OnBnClickedButtonMakeroom()
 	{
 		if(strRoomName.GetLength() == 0)
 			AfxMessageBox(_T("방 이름을 입력해주세요."));
-		else if(maxnum == 0)
+		else if(maxnum == 0 || to_string(maxnum).length() == 0)
 			AfxMessageBox(_T("방 인원을 입력해주세요."));
 	}
-	if (strRoomName.GetLength() > 30 || maxnum > 50)
+	else if (strRoomName.GetLength() > 30 || maxnum > 50)
 	{
 		if (strRoomName.GetLength() > 30)
 			AfxMessageBox(_T("방 이름을 30자 이하로 적어주세요"));
@@ -84,7 +84,6 @@ void CMakeRoomDlg::OnBnClickedButtonMakeroom()
 		root["action"] = "createroom";
 		root["master"] = room_master;
 		root["roomname"] = roomname;
-		//root["roomname"] = std::string(CT2CA(strRoomName));
 		root["maxnum"] = maxnum;
 		if (m_pRB_public->GetCheck())
 			root["roomtype"] = "public";
@@ -92,8 +91,7 @@ void CMakeRoomDlg::OnBnClickedButtonMakeroom()
 			root["roomtype"] = "private";
 
 		m_pDlg->m_pClient->m_data.msg = writer.write(root);
-		m_pDlg->m_pClient->m_data.size = static_cast<int>(m_pDlg->m_pClient->m_data.msg.size());
-		
+		m_pDlg->m_pClient->m_data.size = static_cast<int>(m_pDlg->m_pClient->m_data.msg.size());		
 		m_pDlg->m_pClient->m_SendData();
 
 		m_pDlg->m_pChatRoomForm->SetDlgItemText(IDC_EDIT_CHATROOM_RECVMSG, _T(""));
