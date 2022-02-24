@@ -1,1 +1,10 @@
+SSL connect Error 
+SSL connect Error 
+SSL_write(Head) Error 
+SSL connect Error 
+141
+72
+154
+72
+72
 SSL Read(Head) Error 

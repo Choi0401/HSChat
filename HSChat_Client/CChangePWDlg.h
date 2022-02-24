@@ -26,4 +26,5 @@ public:
 	CHSChatDlg* m_pDlg;
 	virtual BOOL OnInitDialog();
 	afx_msg void OnBnClickedButtonChagnepwOk();
+	afx_msg void OnBnClickedButtonChagnepwCancel();
 };
