@@ -367,7 +367,8 @@ int main(int argc, char *argv[])
 				if (parseSuccessful == false)
 				{
 					// std::cout << "Failed to parse configuration\n" << reader.getFormatedErrorMessages();
-					return -1;
+
+					// return -1;
 				}
 
 				else
@@ -1427,11 +1428,16 @@ int main(int argc, char *argv[])
 						// 사용자 상태 오프라인으로 업데이트
 						DML = "update user_info set user_state = " + to_string(0) + " where user_nickname = '" + nickname + "';";
 						PGresult *resUpdate = PQexec(pCon, DML.c_str()); // DML SEND;
+						sendroot["action"] = "logout";
+						sendroot["msg"] = "로그아웃을 완료했습니다";
+						data.msg.clear();
+						data.msg = writer.write(sendroot);
+						data.size = data.msg.size();
 						PQclear(resUpdate);
 					}
 				}
-
-				SendData(ssl, data);
+				if (parseSuccessful)
+					SendData(ssl, data);
 			}
 	}
 }
@@ -1714,6 +1720,11 @@ void rcv(void *p)
 	int read_len = SSL_read(pp->ssl, &pp->data.size, sizeof(int));
 	if (read_len == 0)
 	{
+		// cout << "1" << endl;
+		// SSL_shutdown(pp->ssl);
+		// cout << "2" << endl;
+		// SSL_free(pp->ssl);
+		// cout << "3" << endl;
 		pp->fd_arr = -1;
 		(void)close(pp->fd);
 		printf("client closed(%d)\n", pp->fd);
