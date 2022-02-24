@@ -84,6 +84,8 @@ public:
 	string m_type;
 	string m_master;
 	vector<Client> m_client;
+
+	int m_getindex();
 };
 
 // DML//
