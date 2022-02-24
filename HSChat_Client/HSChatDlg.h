@@ -37,7 +37,7 @@
 #define CHANGEMYINFO			5013
 #define DELETEACCOUNT			5014
 #define SETNEWPW				5015
-
+#define LOGOUT					5016
 
 
 
@@ -136,4 +136,5 @@ public:
 	void m_SetNewPW();
 	void m_DeleteAccount();
 	void m_RecvMSG();
+	void m_Logout();
 };

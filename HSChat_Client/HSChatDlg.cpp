@@ -487,6 +487,9 @@ LRESULT CHSChatDlg::m_Proc(WPARAM wParam, LPARAM lParam)
 				case DELETEACCOUNT:
 					m_DeleteAccount();
 					break;
+				case LOGOUT:
+					m_Logout();
+					break;
 				}				
 			}
 		}
@@ -733,6 +736,8 @@ void CHSChatDlg::m_InitMap()
 	m_map["showmyinfo"] = SHOWMYINFO;
 	m_map["changemyinfo"] = CHANGEMYINFO;
 	m_map["deleteaccount"] = DELETEACCOUNT;
+	m_map["setnewpw"] = SETNEWPW;
+	m_map["logout"] = LOGOUT;
 }
 
 void CHSChatDlg::m_Signup()
@@ -745,21 +750,20 @@ void CHSChatDlg::m_Signup()
 	// 성공
 	if (result == "true")
 	{
-		m_ShowForm(0);
-		SetDlgItemText(IDC_EDIT_SIGNUP_NAME, _T(""));
-		SetDlgItemText(IDC_EDIT_SIGNUP_PHONE, _T(""));
-		SetDlgItemText(IDC_EDIT_SIGNUP_ID, _T(""));
-		SetDlgItemText(IDC_EDIT_SIGNUP_NICKNAME, _T(""));
-		SetDlgItemText(IDC_EDIT_SIGNUP_PW, _T(""));
-		SetDlgItemText(IDC_EDIT_SIGNUP_PWOK, _T(""));
+		m_ShowForm(0);		
+		m_pSignupForm->SetDlgItemText(IDC_EDIT_SIGNUP_NAME, _T(""));
+		m_pSignupForm->SetDlgItemText(IDC_EDIT_SIGNUP_PHONE, _T(""));
+		m_pSignupForm->SetDlgItemText(IDC_EDIT_SIGNUP_ID, _T(""));
+		m_pSignupForm->SetDlgItemText(IDC_EDIT_SIGNUP_NICKNAME, _T(""));
+		m_pSignupForm->SetDlgItemText(IDC_EDIT_SIGNUP_PW, _T(""));
+		m_pSignupForm->SetDlgItemText(IDC_EDIT_SIGNUP_PWOK, _T(""));
 		AfxMessageBox(cstr, MB_ICONINFORMATION);
 	}
 	// 실패
 	else if (result == "false")
 	{
-
+		AfxMessageBox(cstr, MB_ICONERROR);
 	}
-	AfxMessageBox(cstr, MB_ICONERROR);
 }
 
 void CHSChatDlg::m_Signin()
@@ -1186,6 +1190,7 @@ void CHSChatDlg::m_SetNewPW()
 	string msg = m_recvroot["msg"].asString();
 	CString cstr;
 	cstr = UTF8ToANSI(msg.c_str());
+
 	// 성공
 	if (result == "true")
 	{
@@ -1241,6 +1246,15 @@ void CHSChatDlg::m_RecvMSG()
 	CString strmsg;
 	strmsg = tmpstr.c_str();
 	m_pChatRoomForm->m_chat.ReplaceSel(strmsg);
+}
+
+void CHSChatDlg::m_Logout()
+{
+	// parse json
+	string msg = m_recvroot["msg"].asString();
+	CString cmsg;
+	cmsg = UTF8ToANSI(msg.c_str());
+	AfxMessageBox(cmsg, MB_ICONINFORMATION);
 }
 
 string CHSChatDlg::sha256(string pw) 

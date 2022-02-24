@@ -63,10 +63,10 @@ void CMakeRoomDlg::OnBnClickedButtonMakeroom()
 	{
 		if(strRoomName.GetLength() == 0)
 			AfxMessageBox(_T("방 이름을 입력해주세요."));
-		else if(maxnum == 0)
+		else if(maxnum == 0 || to_string(maxnum).length() == 0)
 			AfxMessageBox(_T("방 인원을 입력해주세요."));
 	}
-	if (strRoomName.GetLength() > 30 || maxnum > 50)
+	else if (strRoomName.GetLength() > 30 || maxnum > 50)
 	{
 		if (strRoomName.GetLength() > 30)
 			AfxMessageBox(_T("방 이름을 30자 이하로 적어주세요"));
