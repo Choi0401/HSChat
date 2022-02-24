@@ -12,6 +12,7 @@
 #include "CClient.h"
 #include "COpenSSL.h"
 #include "CFriendsListDlg.h"
+#include "CChangePWDlg.h"
 #include <codecvt>
 #include <iostream>
 
@@ -58,8 +59,11 @@ public:
 
 	CFriendsListDlg* m_pFriendslistDlg;
 
+	CChangePWDlg m_changpwdlg;
+
 	CClient* m_pClient;
 	COpenSSL* m_pOpenssl;
+
 
 	void m_AllocForm();	
 	void m_ShowForm(int idx);

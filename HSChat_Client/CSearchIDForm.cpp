@@ -72,7 +72,7 @@ void CSearchIDForm::OnBnClickedButtonSearchIDOK()
 		AfxMessageBox(_T("전화번호를 입력하세요!"), MB_ICONSTOP);
 	else {
 		root["action"] = "searchid";
-		root["name"] = std::string(CT2CA(strName));
+		root["name"] = m_pDlg->MultiByteToUtf8(std::string(CT2CA(strName)));
 		root["birth"] = std::string(CT2CA(strBirth));
 		root["phone"] = std::string(CT2CA(strPhone));
 

@@ -21,6 +21,7 @@
 #define IDD_DIALOG_FRIENDSLIST          139
 #define IDD_FORMVIEW_FRIENDS_LIST       140
 #define IDD_DIALOG_FRIENDADD            144
+#define IDD_DIALOG_CHANGEPW             151
 #define IDC_PICTURE_CONTROL             1000
 #define IDC_STATIC_HSCHAT               1001
 #define IDC_STATIC_SIGNIN_STATE         1002
@@ -68,6 +69,7 @@
 #define IDC_EDIT_CHATROOM_RECVMSG       1030
 #define IDC_STATIC_SEARCHID_NAME        1030
 #define IDC_EDIT_SEARCHID_BIRTH_ID      1030
+#define IDC_STATIC_CHANGEPW_NEWPWOK     1030
 #define IDC_STATIC_MAKEROOK_NUM         1031
 #define IDC_STATIC_SEARCHID_BIRTH       1031
 #define IDC_EDIT_CHATROOM_SENDMSG       1032
@@ -102,7 +104,6 @@
 #define IDC_STATIC_SIGNUP_PHONE         1050
 #define IDC_BUTTON_WATING_MAKEROOM      1050
 #define IDC_EDIT_SIGNUP_PHONE           1051
-#define IDC_BUTTON_WATING_MAKEROOM2     1051
 #define IDC_BUTTON_WATING_UPDATE        1051
 #define IDC_EDIT_MYINFO_NAME            1052
 #define IDC_EDIT_MYINFO_BIRTH           1053
@@ -133,6 +134,11 @@
 #define IDC_CHATROOM_COMBO              1089
 #define IDC_SEARCHID_BIRTH              1091
 #define IDC_SEARCHPW_BIRTH              1092
+#define ID_BUTTON_CHAGNEPW_OK           1093
+#define ID_BUTTON_CHAGNEPW_CANCEL       1094
+#define IDC_EDIT_CHANGEPW_NEWPW         1095
+#define IDC_EDIT_CHANGEPW_NEWPWOK       1096
+#define IDC_STATIC_CHANGEPW_NEWPW       1097
 #define ID_DD_DD                        32771
 #define ID_DD_DD32772                   32772
 #define ID_32773                        32773
@@ -148,9 +154,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        151
+#define _APS_NEXT_RESOURCE_VALUE        153
 #define _APS_NEXT_COMMAND_VALUE         32792
-#define _APS_NEXT_CONTROL_VALUE         1093
+#define _APS_NEXT_CONTROL_VALUE         1098
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif
