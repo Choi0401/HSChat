@@ -488,37 +488,14 @@ LRESULT CHSChatDlg::m_Proc(WPARAM wParam, LPARAM lParam)
 				case LOGOUT:
 					m_Logout();
 					break;
+				case ASSIGNMASTER:
+					m_AssignMaster();
+					break;
 				}				
 			}
 		}
 		m_recvroot.clear();
 	}
-	/*
-
-				// 채팅 출력
-				else if (action == "assignmaster")
-				{
-					// parse json
-					string result = recvroot["true"].asString();
-					string msg = recvroot["msg"].asString();
-
-					CString strmsg;
-					strmsg = msg.c_str();
-					if (result == "true")
-						m_pClient->m_ismaster = false;
-
-					//TODO : 유저리스트 재정렬 and 방장 바뀐것 출력
-					AfxMessageBox(strmsg);
-					string tmp = "[공지]" + m_pClient->m_getNickname() + "님이 " + msg + "\r\n";
-					CString str;
-					str = tmp.c_str();
-					int chatlength = m_pChatRoomForm->m_chat.GetWindowTextLength();
-					m_pChatRoomForm->m_chat.SetSel(chatlength, chatlength);
-					m_pChatRoomForm->m_chat.ReplaceSel(str);
-				}
-			}
-		}
-	}*/
 
 	return 0;
 }
@@ -736,6 +713,7 @@ void CHSChatDlg::m_InitMap()
 	m_map["deleteaccount"] = DELETEACCOUNT;
 	m_map["setnewpw"] = SETNEWPW;
 	m_map["logout"] = LOGOUT;
+	m_map["assignmaster"] = ASSIGNMASTER;
 }
 
 void CHSChatDlg::m_Signup()
@@ -890,7 +868,7 @@ void CHSChatDlg::m_AllList()
 				string fstate = (*itfriends)["fstate"].asString();
 
 				CString strNickname;
-				strNickname = nickname.c_str();
+				strNickname = UTF8ToANSI(nickname.c_str());
 				if (fstate == "online")
 				{
 					m_pWatingForm->m_friendslist.InsertItem(i, strNickname);
@@ -1179,7 +1157,7 @@ void CHSChatDlg::m_ChangeMyInfo()
 	// 실패
 	else if (result == "false")
 	{
-
+		AfxMessageBox(cstr, MB_ICONERROR);
 	}
 }
 
@@ -1206,7 +1184,7 @@ void CHSChatDlg::m_DeleteAccount()
 	string result = m_recvroot["result"].asString();
 	string msg = m_recvroot["msg"].asString();
 	CString cstr;
-	cstr = msg.c_str();
+	cstr = UTF8ToANSI(msg.c_str());
 	// 성공
 	if (result == "true")
 	{
@@ -1216,7 +1194,7 @@ void CHSChatDlg::m_DeleteAccount()
 	// 실패
 	else if (result == "false")
 	{
-
+		AfxMessageBox(cstr, MB_ICONERROR);
 	}
 }
 
@@ -1256,6 +1234,29 @@ void CHSChatDlg::m_Logout()
 	cmsg = UTF8ToANSI(msg.c_str());
 	AfxMessageBox(cmsg, MB_ICONINFORMATION);
 }
+
+void CHSChatDlg::m_AssignMaster()
+{
+	// parse json
+	string result = m_recvroot["true"].asString();
+	string msg = m_recvroot["msg"].asString();
+
+	CString strmsg;
+	strmsg = msg.c_str();
+	if (result == "true")
+		m_pClient->m_ismaster = false;
+
+	//TODO : 유저리스트 재정렬 and 방장 바뀐것 출력
+	AfxMessageBox(strmsg);
+	string tmp = "[공지]" + m_pClient->m_getNickname() + "님이 " + msg + "\r\n";
+	CString str;
+	str = tmp.c_str();
+	int chatlength = m_pChatRoomForm->m_chat.GetWindowTextLength();
+	m_pChatRoomForm->m_chat.SetSel(chatlength, chatlength);
+	m_pChatRoomForm->m_chat.ReplaceSel(str);
+}
+
+
 
 string CHSChatDlg::sha256(string pw) 
 {

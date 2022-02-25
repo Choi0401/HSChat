@@ -83,11 +83,11 @@ void CSignupForm::OnBnClickedButtonSignupOK()
 	else if (strBirth.GetLength() == 0)
 		AfxMessageBox(_T("생년월일을 입력하세요!"), MB_ICONSTOP);
 	else if (strPhone.GetLength() == 0 || strPhone.GetLength() > 11)
-		AfxMessageBox(_T("전화번호를 입력하세요!"), MB_ICONSTOP);
+		AfxMessageBox(_T("전화번호를 입력하세요(11자)!"), MB_ICONSTOP);
 	else if (strID.GetLength() == 0 || strID.GetLength() > 20)
-		AfxMessageBox(_T("아이디를 입력하세요!"), MB_ICONSTOP);
+		AfxMessageBox(_T("아이디를 입력하세요(1~20자)!"), MB_ICONSTOP);
 	else if (strNickname.GetLength() == 0 || strNickname.GetLength() > 20)
-		AfxMessageBox(_T("닉네임을 입력하세요!"), MB_ICONSTOP);
+		AfxMessageBox(_T("닉네임을 입력하세요(1~20자)!"), MB_ICONSTOP);
 	else if (strPW.GetLength() == 0)
 		AfxMessageBox(_T("비밀번호를 입력하세요!"), MB_ICONSTOP);
 	else if (strPW != strPWOK)

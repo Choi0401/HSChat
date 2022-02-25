@@ -69,6 +69,7 @@ BOOL CMyInfoForm::PreTranslateMessage(MSG* pMsg)
 void CMyInfoForm::OnBnClickedButtonMyInfoOK()
 {
 	CString strPhone, strNickname, strPW, strPWOK;
+	string pw;
 	Json::Value root;
 	Json::StyledWriter writer;
 
@@ -89,10 +90,13 @@ void CMyInfoForm::OnBnClickedButtonMyInfoOK()
 		AfxMessageBox(_T("비밀번호를 확인하세요!"), MB_ICONSTOP);
 	else 
 	{
+		pw = std::string(CT2CA(strPW));
+		pw = m_pDlg->pw_salting(pw);
+		pw = m_pDlg->sha256(pw);
 		root["action"] = "changemyinfo";
 		root["phone"] = std::string(CT2CA(strPhone));
 		root["nickname"] = m_pDlg->MultiByteToUtf8((std::string(CT2CA(strNickname))));
-		root["pw"] = std::string(CT2CA(strPW));
+		root["pw"] = std::string(pw);
 
 		m_pDlg->m_pClient->m_data.msg = writer.write(root);
 		m_pDlg->m_pClient->m_data.size = static_cast<int>(m_pDlg->m_pClient->m_data.msg.size());
