@@ -461,6 +461,8 @@ int main(int argc, char *argv[])
 					{
 						string id = recvroot["id"].asString();
 						string pw = recvroot["pw"].asString();
+						string HIS_DML;
+						string nickname, signin_ok;
 
 						// 아이디, 비밀번호 체크
 						DML = DML_Select(6, "user_nickname", "user_info", "user_id", id.c_str(), "user_pw", pw.c_str());
@@ -474,6 +476,7 @@ int main(int argc, char *argv[])
 								sendroot["action"] = "signin";
 								sendroot["result"] = "false";
 								sendroot["msg"] = "아이디와 비밀번호를 확인해주세요";
+								signin_ok = "false";
 							}
 							else if (PQntuples(rescheck) == 1)
 							{
@@ -486,9 +489,9 @@ int main(int argc, char *argv[])
 									int state = atoi(PQgetvalue(reschecklogin, 0, 0));
 									if (state == 0)
 									{
-										string nickname;
 										nickname = PQgetvalue(rescheck, 0, 0);
 										c[index].nickname = nickname;
+										c[index].id = id;
 
 										sendroot["result"] = "true";
 										sendroot["nickname"] = nickname;
@@ -499,6 +502,7 @@ int main(int argc, char *argv[])
 										DML = "update user_info set user_state = " + to_string(1) + " where user_nickname = '" + nickname + "';";
 										PGresult *resUpdate = PQexec(pCon, DML.c_str()); // DML SEND;
 										PQclear(resUpdate);
+										signin_ok = "true";
 
 										//
 										DML = DML_Select(4, "user_num", "user_info", "user_nickname", nickname.c_str());
@@ -515,8 +519,24 @@ int main(int argc, char *argv[])
 									{
 										sendroot["result"] = "false";
 										sendroot["msg"] = "이미 접속중입니다";
+										signin_ok = "false";
 									}
 								}
+							}
+							time_t now = time(0);
+							string ttt;
+
+							tm *ltm = localtime(&now);
+
+							ttt += to_string(1900 + ltm->tm_year) + "-" + to_string(1 + ltm->tm_mon) + "-" + to_string(ltm->tm_mday) + " " + to_string(ltm->tm_hour) + ":" + to_string(ltm->tm_min) + ":" + to_string(ltm->tm_sec);
+
+							HIS_DML = "insert into login_his values(nextval('sq_login')," + to_string(c[index].usernum) + ", '" + ttt + "', '" + c[index].clnt_ip + "','" + signin_ok + "');";
+							cout << HIS_DML << endl;
+							PGresult *SigninHis = PQexec(pCon, HIS_DML.c_str());
+
+							if (PQresultStatus(SigninHis) != PGRES_COMMAND_OK)
+							{
+								cout << "LOGIN_HIS ERROR" << endl;
 							}
 						}
 						else
@@ -646,6 +666,8 @@ int main(int argc, char *argv[])
 						string nickname = recvroot["nickname"].asString();
 						DML = "select * from room_info;";
 						PGresult *resSelect = PQexec(pCon, DML.c_str());
+						int getfriendusernum, getfrienduserstate;
+						string getfriendnickname;
 
 						if (PQresultStatus(resSelect) == PGRES_TUPLES_OK)
 						{
@@ -669,15 +691,62 @@ int main(int argc, char *argv[])
 								sendroot["result"] = "true";
 								sendroot["roomlist"] = roomlist;
 
-								data.msg.clear();
-								data.msg = writer.write(sendroot);
-								data.size = data.msg.size();
+								// data.msg.clear();
+								// data.msg = writer.write(sendroot);
+								// data.size = data.msg.size();
 							}
 						}
 						else
 						{
 							cout << PQerrorMessage(pCon) << endl;
 						}
+
+						// friends_list//
+						DML = "select friends_user_num from friends_info where user_num = " + to_string(c[index].usernum) + ";";
+						PGresult *select_user_num = PQexec(pCon, DML.c_str());
+						DML.clear();
+
+						if (PQresultStatus(select_user_num) != PGRES_TUPLES_OK)
+						{
+							cout << "Friends_list ERROR" << endl;
+							return 0;
+						}
+
+						int num_friends = PQntuples(select_user_num);
+						if (num_friends <= 0)
+						{
+							cout << "no friends_num" << endl;
+						}
+
+						else
+						{
+							Json::Value friendslist;
+							Json::Value friends[num_friends];
+
+							for (int i = 0; i < num_friends; i++)
+							{
+								getfriendusernum = stoi(PQgetvalue(select_user_num, i, 0));
+								DML = "select user_nickname,user_state from user_info where user_num = " + to_string(getfriendusernum) + ";";
+								PGresult *resselect = PQexec(pCon, DML.c_str());
+								if (PQresultStatus(resselect) != PGRES_TUPLES_OK)
+									cout << "select friendlist error" << endl;
+
+								getfriendnickname = PQgetvalue(resselect, 0, 0);
+								getfrienduserstate = stoi(PQgetvalue(resselect, 0, 1));
+								friends[i]["nickname"] = getfriendnickname;
+								if (getfrienduserstate % 2 == 0)
+									continue;
+								else
+									friends[i]["fstate"] = "online";
+								friendslist.append(friends[i]);
+							}
+
+							sendroot["friendslist"] = friendslist;
+						}
+
+						data.msg.clear();
+						data.msg = writer.write(sendroot);
+						data.size = data.msg.size();
 						PQclear(resSelect);
 					}
 					else if (action == "quitroom")
@@ -883,78 +952,93 @@ int main(int argc, char *argv[])
 
 						DML = "select room_num_user, room_max_user from room_info where room_num = " + to_string(roomnum) + ";";
 						resSelecteNum = PQexec(pCon, DML.c_str());
-						string room_num_user = PQgetvalue(resSelecteNum, 0, 0);
-						string room_max_user = PQgetvalue(resSelecteNum, 0, 1);
-
-						if (room_num_user == room_max_user)
+						// string room_num_user = PQgetvalue(resSelecteNum, 0, 0);
+						// string room_max_user = PQgetvalue(resSelecteNum, 0, 1);
+						if (PQntuples(resSelecteNum) > 0)
 						{
-							sendroot["action"] = "enterroom";
-							sendroot["result"] = "false";
-							sendroot["msg"] = "채팅방이 꽉찼습니다.";
+							int room_num_user = atoi(PQgetvalue(resSelecteNum, 0, 0));
+							int room_max_user = atoi(PQgetvalue(resSelecteNum, 0, 1));
 
-							data.msg.clear();
-							data.msg = writer.write(sendroot);
-							data.size = data.msg.size();
+							if (room_num_user == room_max_user)
+							{
+								sendroot["action"] = "enterroom";
+								sendroot["result"] = "false";
+								sendroot["msg"] = "채팅방이 꽉찼습니다.";
+
+								data.msg.clear();
+								data.msg = writer.write(sendroot);
+								data.size = data.msg.size();
+							}
+							else
+							{
+								// 채팅방 현재 인원 수 업데이트
+								DML = "update room_info set room_num_user = " + to_string(++room[roomindex].m_usernum) + " where room_num = " + to_string(roomnum) + ";";
+								PGresult *resUpdateNum = PQexec(pCon, DML.c_str()); // DML SEND;
+								room[roomindex].m_client.push_back(c[index]);
+
+								// 클라이언트 현재 채팅방 번호 업데이트
+								DML = "update user_info set current_room_num = " + to_string(roomnum) + " where user_nickname = '" + nickname + "';";
+								PGresult *resUpdateroomnum = PQexec(pCon, DML.c_str()); // DML SEND;
+
+								// cout << "num = " << room[roomindex].m_usernum << endl;
+								int cntuser = room[roomindex].m_client.size();
+								// cout << "cntuser = " << cntuser << endl;
+								// cout << "master = " << room[roomindex].m_master << endl;
+
+								Json::Value userlist;
+								Json::Value user[cntuser];
+								sendroot["action"] = "enterroom";
+								sendroot["result"] = "true";
+								sendroot["roomnum"] = roomnum;
+								sendroot["master"] = room[roomindex].m_master;
+								sendroot["msg"] = "채팅방에 오신 것을 환영합니다.\r\n\r\n";
+								for (int i = 0; i < cntuser; i++)
+								{
+									user[i]["nickname"] = room[roomindex].m_client[i].nickname;
+									cout << "nickname = " << room[roomindex].m_client[i].nickname << endl;
+									userlist.append(user[i]);
+								}
+								sendroot["userlist"] = userlist;
+
+								data.msg.clear();
+								data.msg = writer.write(sendroot);
+								data.size = data.msg.size();
+								SendData(ssl, data);
+
+								/* 같은 채팅방 유저에게 알려줌 */
+								sendroot.clear();
+								sendroot["action"] = "updateuserlist";
+								sendroot["inout"] = "in";
+								sendroot["nickname"] = nickname;
+								string sendmsg = "[공지]" + nickname + "님이 채팅방에 입장하였습니다.\r\n";
+								sendroot["msg"] = sendmsg;
+
+								data.msg.clear();
+								data.msg = writer.write(sendroot);
+								cout << data.msg << endl;
+								data.size = data.msg.size();
+
+								int cnt_client = room[roomindex].m_client.size();
+								for (int i = 0; i < cnt_client; i++)
+								{
+									if (room[roomindex].m_client[i].nickname != nickname)
+									{
+										SendData(room[roomindex].m_client[i].clientssl, data);
+									}
+								}
+								c[index].current_room_num = roomnum;
+								continue;
+							}
 						}
 						else
 						{
-							// 채팅방 현재 인원 수 업데이트
-							DML = "update room_info set room_num_user = " + to_string(++room[roomindex].m_usernum) + " where room_num = " + to_string(roomnum) + ";";
-							PGresult *resUpdateNum = PQexec(pCon, DML.c_str()); // DML SEND;
-							room[roomindex].m_client.push_back(c[index]);
-
-							// 클라이언트 현재 채팅방 번호 업데이트
-							DML = "update user_info set current_room_num = " + to_string(roomnum) + " where user_nickname = '" + nickname + "';";
-							PGresult *resUpdateroomnum = PQexec(pCon, DML.c_str()); // DML SEND;
-
-							// cout << "num = " << room[roomindex].m_usernum << endl;
-							int cntuser = room[roomindex].m_client.size();
-							// cout << "cntuser = " << cntuser << endl;
-							// cout << "master = " << room[roomindex].m_master << endl;
-
-							Json::Value userlist;
-							Json::Value user[cntuser];
 							sendroot["action"] = "enterroom";
-							sendroot["result"] = "true";
-							sendroot["roomnum"] = roomnum;
-							sendroot["master"] = room[roomindex].m_master;
-							sendroot["msg"] = "채팅방에 오신 것을 환영합니다.\r\n\r\n";
-							for (int i = 0; i < cntuser; i++)
-							{
-								user[i]["nickname"] = room[roomindex].m_client[i].nickname;
-								cout << "nickname = " << room[roomindex].m_client[i].nickname << endl;
-								userlist.append(user[i]);
-							}
-							sendroot["userlist"] = userlist;
+							sendroot["result"] = "false";
+							sendroot["msg"] = "채팅방에 입장할 수 없습니다";
 
 							data.msg.clear();
 							data.msg = writer.write(sendroot);
 							data.size = data.msg.size();
-							SendData(ssl, data);
-
-							/* 같은 채팅방 유저에게 알려줌 */
-							sendroot.clear();
-							sendroot["action"] = "updateuserlist";
-							sendroot["inout"] = "in";
-							sendroot["nickname"] = nickname;
-							string sendmsg = "[공지]" + nickname + "님이 채팅방에 입장하였습니다.\r\n";
-							sendroot["msg"] = sendmsg;
-
-							data.msg.clear();
-							data.msg = writer.write(sendroot);
-							cout << data.msg << endl;
-							data.size = data.msg.size();
-
-							int cnt_client = room[roomindex].m_client.size();
-							for (int i = 0; i < cnt_client; i++)
-							{
-								if (room[roomindex].m_client[i].nickname != nickname)
-								{
-									SendData(room[roomindex].m_client[i].clientssl, data);
-								}
-							}
-							c[index].current_room_num = roomnum;
-							continue;
 						}
 					}
 
@@ -1123,21 +1207,13 @@ int main(int argc, char *argv[])
 					{
 						const char *gdata;
 						string nickname = recvroot["nickname"].asString();
-						DML = "select user_name, user_id, user_birth from user_info where user_nickname = ";
-						gdata = "'";
-						DML += gdata;
-						DML += nickname;
-						DML += gdata;
-						gdata = ";";
-						DML += gdata;
-
-						+"'" + nickname + "'" + ";";
+						string id = c[index].id;
+						DML = "select user_name, user_birth from user_info where user_id = '" + id + "';";
 
 						PGresult *resshowmyinfo = PQexec(pCon, DML.c_str()); // DML SEND;
 
 						string name = PQgetvalue(resshowmyinfo, 0, 0);
-						string id = PQgetvalue(resshowmyinfo, 0, 1);
-						string birth = PQgetvalue(resshowmyinfo, 0, 2);
+						string birth = PQgetvalue(resshowmyinfo, 0, 1);
 
 						if (PQntuples(resshowmyinfo) > 0) // 일치하는 닉네임을 찾은 경우(내정보 출력)
 						{
@@ -1161,9 +1237,10 @@ int main(int argc, char *argv[])
 						int friendcnt = 0;
 						string nickname = recvroot["nickname"].asString();
 						string fnickname = recvroot["fnickname"].asString();
+						string id = c[index].id;
 
 						/* 나의 회원정보를 불러옴 */
-						DML = DML_Select(4, "user_num", "user_info", "user_nickname", nickname.c_str());
+						DML = DML_Select(4, "user_num", "user_info", "user_id", id.c_str());
 						PGresult *resmyusernum = PQexec(pCon, DML.c_str()); // DML SEND;
 						int myusernum = stoi(PQgetvalue(resmyusernum, 0, 0));
 						/*친구의 회원정보를 불러옴 */
@@ -1196,12 +1273,22 @@ int main(int argc, char *argv[])
 							/* 친구로 등록되어 있지 않은 경우 */
 							else
 							{
-								DML = "insert into friends_info values(" + to_string(myusernum) + "," + to_string(friendusernum) + ")" + ";";
-								PGresult *resfriendadd = PQexec(pCon, DML.c_str()); // DML SEND;
+								if (friendusernum != myusernum)
+								{
+									DML = "insert into friends_info values(" + to_string(myusernum) + "," + to_string(friendusernum) + ")" + ";";
+									PGresult *resfriendadd = PQexec(pCon, DML.c_str()); // DML SEND;
 
-								sendroot["action"] = "addfriend";
-								sendroot["result"] = "true";
-								sendroot["msg"] = "친구추가가 완료되었습니다";
+									sendroot["action"] = "addfriend";
+									sendroot["result"] = "true";
+									sendroot["msg"] = "친구추가가 완료되었습니다";
+								}
+
+								else
+								{
+									sendroot["action"] = "addfriend";
+									sendroot["result"] = "false";
+									sendroot["msg"] = "본인을 친구로 등록할 수 없습니다";
+								}
 							}
 						}
 
@@ -1226,9 +1313,10 @@ int main(int argc, char *argv[])
 						int friendcnt = 0;
 						string nickname = recvroot["nickname"].asString();
 						string fnickname = recvroot["fnickname"].asString();
+						string id = c[index].id;
 
 						/* 1. 나의 회원정보를 불러옴 */
-						DML = DML_Select(4, "user_num", "user_info", "user_nickname", nickname.c_str());
+						DML = DML_Select(4, "user_num", "user_info", "user_id", id.c_str());
 						PGresult *resmyusernum = PQexec(pCon, DML.c_str());
 						int myusernum = stoi(PQgetvalue(resmyusernum, 0, 0));
 						/*2. 친구의 회원정보를 불러옴 */
@@ -1266,8 +1354,9 @@ int main(int argc, char *argv[])
 						int getfriendusernum, getfrienduserstate;
 						string getfriendnickname;
 						string nickname = recvroot["nickname"].asString();
+						string id = c[index].id;
 						/* 1. 나의 회원정보 찾기 */
-						DML = DML_Select(4, "user_num", "user_info", "user_nickname", nickname.c_str());
+						DML = DML_Select(4, "user_num", "user_info", "user_id", id.c_str());
 						PGresult *resmyusernum = PQexec(pCon, DML.c_str());
 						int myusernum = stoi(PQgetvalue(resmyusernum, 0, 0));
 						/* 2. 나의 친구목록 찾기 */
@@ -1307,56 +1396,91 @@ int main(int argc, char *argv[])
 					else if (action == "changemyinfo")
 					{
 
-						string id = recvroot["id"].asString();
+						string id = c[index].id;
 						string nickname = recvroot["nickname"].asString();
 						string phone = recvroot["phone"].asString();
 						string pw = recvroot["pw"].asString();
 
 						/* 본인 닉네임 */
-						DML = DML_Select(6, "user_nickname", "user_info", "user_id", id.c_str(), "user_pw", pw.c_str());
-						PGresult *resmynickname = PQexec(pCon, DML.c_str()); // DML SEND;
-						string dbmynickname = PQgetvalue(resmynickname, 0, 0);
+						DML = "select user_nickname, user_phone from user_info where user_id = '" + id + "';";
+
+						PGresult *resselect = PQexec(pCon, DML.c_str()); // DML SEND;
+						string dbmynickname = PQgetvalue(resselect, 0, 0);
+						string dbmyphone = PQgetvalue(resselect, 0, 1);
 
 						/* 전체 닉네임 중복 검사 */
 						DML = DML_Select(4, "*", "user_info", "user_nickname", nickname.c_str());
 						PGresult *restotalnickname = PQexec(pCon, DML.c_str()); // DML SEND;
 
+						/* 전체 전화번호 중복 검사 */
+						DML = DML_Select(4, "*", "user_info", "user_phone", phone.c_str());
+						PGresult *restotalphone = PQexec(pCon, DML.c_str()); // DML SEND;
+
 						/* 비밀번호 일치 검사 */
-						DML = DML_Select(4, "*", "user_info", "user_id", id.c_str(), "user_pw", pw.c_str());
+						DML = DML_Select(6, "*", "user_info", "user_id", id.c_str(), "user_pw", pw.c_str());
 						PGresult *respwcheck = PQexec(pCon, DML.c_str()); // DML SEND;
 
-						/* 1. 이전에 입력한 닉네임과 일치하는 경우 */
-						if (dbmynickname == nickname)
+						if (PQntuples(respwcheck) > 0)
 						{
-							DML = DML_Update(9, "user_info", "user_nickname", nickname.c_str(),
-											 "user_phone", phone.c_str(), "user_id", id.c_str(), "user_pw", pw.c_str());
 
-							sendroot["action"] = "changemyinfo";
-							sendroot["result"] = "true";
-							sendroot["msg"] = "회원정보 수정이 완료되었습니다";
+							/* 1. 이전에 입력한 닉네임과 전화번호가  일치하는 경우 */
+							if (dbmynickname == nickname && dbmyphone == phone)
+							{
+								sendroot["action"] = "changemyinfo";
+								sendroot["result"] = "true";
+								sendroot["msg"] = "회원정보 수정이 완료되었습니다";
+							}
+
+							/* 2. 전체 닉네임과 전화번호를 조회했을 때 중복인 경우 */
+							else if ((dbmynickname != nickname) && PQntuples(restotalnickname) > 0 || (dbmyphone != phone) && PQntuples(restotalphone) > 0)
+							{
+								sendroot["action"] = "changemyinfo";
+								sendroot["result"] = "false";
+
+								if ((dbmynickname != nickname) && PQntuples(restotalnickname) > 0)
+									sendroot["msg"] = "중복된 닉네임입니다";
+								else if ((dbmyphone != phone) && PQntuples(restotalphone) > 0)
+									sendroot["msg"] = "중복된 전화번호입니다";
+							}
+
+							/* 3. 닉네임을 변경하는 경우 */
+							else if (((dbmynickname != nickname) && (dbmyphone == phone)) && PQntuples(restotalnickname) == 0 && PQntuples(restotalphone) > 0)
+							{
+								DML = DML_Update(5, "user_info", "user_nickname", nickname.c_str(),
+												 "user_id", id.c_str());
+								PGresult *resupdate = PQexec(pCon, DML.c_str()); // DML SEND;
+
+								sendroot["action"] = "changemyinfo";
+								sendroot["result"] = "true";
+								sendroot["msg"] = "회원정보 수정이 완료되었습니다";
+							}
+
+							/* 4. 전화번호를 변경하는 경우 */
+							else if (((dbmynickname == nickname) && (dbmyphone != phone)) && PQntuples(restotalnickname) > 0 && PQntuples(restotalphone) == 0)
+							{
+								DML = DML_Update(5, "user_info", "user_phone", phone.c_str(),
+												 "user_id", id.c_str());
+								PGresult *resupdate = PQexec(pCon, DML.c_str()); // DML SEND;
+
+								sendroot["action"] = "changemyinfo";
+								sendroot["result"] = "true";
+								sendroot["msg"] = "회원정보 수정이 완료되었습니다";
+							}
+
+							/* 5. 닉네임과 전화번호 둘 다 변경하는 경우 */
+							else if (((dbmynickname != nickname) && (dbmyphone != phone)) && PQntuples(restotalnickname) == 0 && PQntuples(restotalphone) == 0)
+							{
+								DML = "update user_info set user_nickname = '" + nickname + "', user_phone = '" + phone + "' where user_id = '" + id + "';";
+								PGresult *resupdate = PQexec(pCon, DML.c_str()); // DML SEND;
+
+								sendroot["action"] = "changemyinfo";
+								sendroot["result"] = "true";
+								sendroot["msg"] = "회원정보 수정이 완료되었습니다";
+							}
 						}
 
-						/* 2. 전체 닉네임을 조회했을 때 중복인 경우 */
-						else if ((dbmynickname != nickname) && PQntuples(restotalnickname) > 0 && PQntuples(respwcheck) > 0)
-						{
-							sendroot["action"] = "changemyinfo";
-							sendroot["result"] = "false";
-							sendroot["msg"] = "중복된 닉네임입니다";
-						}
-
-						/* 3. 전체 닉네임을 조회했을 때 중복이 아닌 경우 */
-						else if ((dbmynickname != nickname) && PQntuples(restotalnickname) == 0 && PQntuples(respwcheck) > 0)
-						{
-							DML = DML_Update(9, "user_info", "user_nickname", nickname.c_str(),
-											 "user_phone", phone.c_str(), "user_id", id.c_str(), "user_pw", pw.c_str());
-
-							sendroot["action"] = "changemyinfo";
-							sendroot["result"] = "true";
-							sendroot["msg"] = "회원정보 수정이 완료되었습니다";
-						}
-
-						/* 4. 비밀번호가 일치하지 않는 경우 */
-						else if (PQntuples(respwcheck) == 0)
+						/* 6. 비밀 번호가 일치하지 않는경우 */
+						else
 						{
 							sendroot["action"] = "changemyinfo";
 							sendroot["result"] = "false";
@@ -1365,7 +1489,6 @@ int main(int argc, char *argv[])
 
 						data.msg.clear();
 						data.msg = writer.write(sendroot);
-						cout << writer.write(sendroot) << endl;
 						data.size = data.msg.size();
 
 					} /* end changemyinfo */
@@ -1373,54 +1496,144 @@ int main(int argc, char *argv[])
 					else if (action == "deleteaccount")
 					{
 						string nickname = recvroot["nickname"].asString();
+						string id = c[index].id;
 
 						/* 1. 해당 회원의 회원번호 찾기 */
-						DML = DML_Select(4, "user_num", "user_info", "user_nickname", nickname.c_str());
+						DML = DML_Select(4, "user_num", "user_info", "user_id", id.c_str());
 						PGresult *resusernum = PQexec(pCon, DML.c_str()); // DML SEND;
-						int myusernum = stoi(PQgetvalue(resusernum, 0, 0));
 
-						/* 2. 해당 회원의 친구정보 삭제 */
-						DML = "delete from friends_info where friends_num = " + to_string(myusernum) + ";";
-						PGresult *resmydeletefriend = PQexec(pCon, DML.c_str()); // DML SEND;
+						if (PQntuples(resusernum) == 0)
+							cout << "select user_num error" << endl;
 
-						/* 3. 해당 회원을 친구로 등록하고 있는 회원에게서 해당 회원을 삭제 */
-						DML = "select user_num from friends_info where friends_user_num = " + to_string(myusernum) + ";";
-						PGresult *resfriendusernum = PQexec(pCon, DML.c_str()); // DML SEND;
-						int friendusernum = stoi(PQgetvalue(resfriendusernum, 0, 0));
-						DML = "delete from friends_info where user_num = " + to_string(friendusernum) + " and " + "friends_user_num = " + to_string(myusernum) + ";";
-						PGresult *resfrienddelete = PQexec(pCon, DML.c_str()); // DML SEND;
-
-						/* 4. 회원정보 삭제 */
-						DML = "delete from user_info where user_num = " + to_string(myusernum) + ";";
-						PGresult *resuserdelete = PQexec(pCon, DML.c_str()); // DML SEND;
-
-						/* 해당 회원의 친구정보 삭제 + 친구 삭제 + 회원정보 삭제 */
-						if (PQresultStatus(resmydeletefriend) == PGRES_COMMAND_OK && PQresultStatus(resfrienddelete) == PGRES_COMMAND_OK &&
-							PQresultStatus(resuserdelete) == PGRES_COMMAND_OK)
+						else
 						{
-							sendroot["action"] = "deleteaccount";
-							sendroot["result"] = "true";
-							sendroot["msg"] = "회원탈퇴가 완료되었습니다";
+							int myusernum = stoi(PQgetvalue(resusernum, 0, 0));
+							/* 2. 해당 회원의 친구가 존재하는지 확인 */
+							DML = "select friends_user_num from friends_info where user_num = " + to_string(myusernum) + ";";
+							PGresult *resfriendusernum = PQexec(pCon, DML.c_str()); // DML SEND;
+
+							/* 해당 회원의 친구가 존재하지 않은 경우 */
+							if (PQntuples(resfriendusernum) == 0)
+							{
+								/* 4. 해당 회원을 친구로 등록하고 있는 회원이 존재하는지 확인 */
+								DML = "select user_num from friends_info where friends_user_num = " + to_string(myusernum) + ";";
+								PGresult *resselect = PQexec(pCon, DML.c_str()); // DML SEND;
+
+								/* 해당 회원을 친구로 등록하고 있는 회원이 존재하지 않은 경우 */
+								if (PQntuples(resselect) == 0)
+								{
+									/* 4. 회원정보 삭제 */
+									DML = "delete from user_info where user_num = " + to_string(myusernum) + ";";
+									PGresult *resuserdelete = PQexec(pCon, DML.c_str()); // DML SEND;
+
+									if (PQresultStatus(resuserdelete) != PGRES_COMMAND_OK)
+										cout << "user delete fail" << endl;
+									else
+									{
+										sendroot["action"] = "deleteaccount";
+										sendroot["result"] = "true";
+										sendroot["msg"] = "회원탈퇴가 완료되었습니다";
+									}
+								}
+
+								/* 해당 회원을 친구로 등록하고 있는 회원이 존재할 경우 */
+								else
+								{
+									int friendusernum = stoi(PQgetvalue(resselect, 0, 0));
+									DML = "delete from friends_info where user_num = " + to_string(friendusernum) + " and " + "friends_user_num = " + to_string(myusernum) + ";";
+									PGresult *resfrienddelete = PQexec(pCon, DML.c_str()); // DML SEND;
+
+									/* 해당 회원을 친구로 등록하고 있는 친구에게서 해당 회원을 삭제하지 못하는 경우 */
+									if (PQresultStatus(resfrienddelete) != PGRES_COMMAND_OK)
+										cout << "friend user delete fail" << endl;
+									/* 해당 회원을 친구로 등록하고 있는 친구에게서 해당 회원을 삭제하는 경우 */
+									else
+									{
+										/* 4. 회원정보 삭제 */
+										DML = "delete from user_info where user_num = " + to_string(myusernum) + ";";
+										PGresult *resuserdelete = PQexec(pCon, DML.c_str()); // DML SEND;
+
+										if (PQresultStatus(resuserdelete) != PGRES_COMMAND_OK)
+											cout << "user delete fail" << endl;
+										else
+										{
+											sendroot["action"] = "deleteaccount";
+											sendroot["result"] = "true";
+											sendroot["msg"] = "회원탈퇴가 완료되었습니다";
+										}
+									}
+								}
+							}
+
+							/* 해당 회원의 친구가 존재하는 경우 */
+							else
+							{
+								/* 3. 해당 회원의 친구정보 삭제 */
+								DML = "delete from friends_info where user_num = " + to_string(myusernum) + ";";
+								PGresult *resmydeletefriend = PQexec(pCon, DML.c_str()); // DML SEND;
+
+								/* 해당 회원의 친구 정보 삭제가 실패하는 경우 */
+								if (PQresultStatus(resmydeletefriend) != PGRES_COMMAND_OK)
+									cout << "delete friend error" << endl;
+								/* 해당 회원의 친구 정보 삭제가 성공하는 경우 */
+								else
+								{
+									/* 4. 해당 회원을 친구로 등록하고 있는 회원이 존재하는지 확인 */
+									DML = "select user_num from friends_info where friends_user_num = " + to_string(myusernum) + ";";
+									PGresult *resselect = PQexec(pCon, DML.c_str()); // DML SEND;
+
+									/* 해당 회원을 친구로 등록하고 있는 회원이 존재하지 않은 경우 */
+									if (PQntuples(resselect) == 0)
+									{
+										/* 4. 회원정보 삭제 */
+										DML = "delete from user_info where user_num = " + to_string(myusernum) + ";";
+										PGresult *resuserdelete = PQexec(pCon, DML.c_str()); // DML SEND;
+
+										if (PQresultStatus(resuserdelete) != PGRES_COMMAND_OK)
+											cout << "user delete fail" << endl;
+										else
+										{
+											sendroot["action"] = "deleteaccount";
+											sendroot["result"] = "true";
+											sendroot["msg"] = "회원탈퇴가 완료되었습니다";
+										}
+									}
+
+									/* 해당 회원을 친구로 등록하고 있는 회원이 존재할 경우 */
+									else
+									{
+										int friendusernum = stoi(PQgetvalue(resselect, 0, 0));
+										DML = "delete from friends_info where user_num = " + to_string(friendusernum) + " and " + "friends_user_num = " + to_string(myusernum) + ";";
+										PGresult *resfrienddelete = PQexec(pCon, DML.c_str()); // DML SEND;
+
+										/* 해당 회원을 친구로 등록하고 있는 친구에게서 해당 회원을 삭제하지 못하는 경우 */
+										if (PQresultStatus(resfrienddelete) != PGRES_COMMAND_OK)
+											cout << "friend user delete fail" << endl;
+										/* 해당 회원을 친구로 등록하고 있는 친구에게서 해당 회원을 삭제하는 경우 */
+										else
+										{
+											/* 4. 회원정보 삭제 */
+											DML = "delete from user_info where user_num = " + to_string(myusernum) + ";";
+											PGresult *resuserdelete = PQexec(pCon, DML.c_str()); // DML SEND;
+
+											if (PQresultStatus(resuserdelete) != PGRES_COMMAND_OK)
+												cout << "user delete fail" << endl;
+											else
+											{
+												sendroot["action"] = "deleteaccount";
+												sendroot["result"] = "true";
+												sendroot["msg"] = "회원탈퇴가 완료되었습니다";
+											}
+										}
+									}
+								}
+							}
 						}
 
-						/* Json Data Send */
 						data.msg.clear();
 						data.msg = writer.write(sendroot);
 						data.size = data.msg.size();
 
-						if (ret_HeadWrite = SSL_write(ssl, &data.size, sizeof(int)) <= 0)
-							cout << "ret_HeadWrite_changemyinfo_error\n"
-								 << endl;
-
-						else // HeadWrite Successful
-						{
-							if (ret_BodyWrite = SSL_write(ssl, &data.msg[0], data.size) <= 0)
-								cout << "ret_BodyWrite_changemyinfo_error\n"
-									 << endl;
-							else
-								cout << "Send Success: "
-									 << "(" << c[index].clnt_sock << ")" << endl;
-						}
 					} /* end deleteaccount */
 					else if (action == "logout")
 					{
@@ -1721,7 +1934,7 @@ void rcv(void *p)
 	if (read_len == 0)
 	{
 		// cout << "1" << endl;
-		// SSL_shutdown(pp->ssl);
+		// cout << SSL_shutdown(pp->ssl) << endl;
 		// cout << "2" << endl;
 		// SSL_free(pp->ssl);
 		// cout << "3" << endl;
