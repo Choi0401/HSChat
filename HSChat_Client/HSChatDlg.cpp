@@ -155,7 +155,6 @@ void CHSChatDlg::OnSysCommand(UINT nID, LPARAM lParam)
 		if (AfxMessageBox(_T("프로그램을 종료하시겠습니까?"), MB_YESNO | MB_ICONQUESTION) == IDYES)
 		{
 
-			//TODO: 여기 다시한번확인해야함
 			if (m_pClient->m_roomnum > 0)
 			{
 				Json::Value root;
@@ -173,7 +172,6 @@ void CHSChatDlg::OnSysCommand(UINT nID, LPARAM lParam)
 			if (m_pClient->m_getNickname().length() != 0)
 				m_pClient->m_LogOut();
 			m_pClient->m_CloseSocket();
-			Sleep(1);
 			ExitProcess(0);
 
 		}
@@ -730,7 +728,7 @@ void CHSChatDlg::m_InitMap()
 	m_map["createroom"] = CREATEROOM;
 	m_map["enterroom"] = ENTERROOM;
 	m_map["updateuserlist"] = UPDATEUSERLIST;
-	m_map["frinedslist"] = FRIENDSLIST;
+	m_map["friendslist"] = FRIENDSLIST;
 	m_map["addfriend"] = ADDFRIEND;
 	m_map["deletefriends"] = DELETEFRIEND;
 	m_map["showmyinfo"] = SHOWMYINFO;
@@ -867,16 +865,18 @@ void CHSChatDlg::m_AllList()
 				int usernum = (*itroom)["usernum"].asInt();
 				int maxusernum = (*itroom)["maxusernum"].asInt();
 				string roomname = (*itroom)["roomname"].asString();
-				//string roomtype = (*it)["roomnum"].asString();	타입은 필요없을듯?
+				string roomtype = (*itroom)["roomtype"].asString();
 
-				CString strRoomnum, strUsernum, strMaxusernum, strRoomname;
-				strRoomnum.Format(_T("%d"), roomnum);
-				strUsernum.Format(_T("%d"), usernum);
-				strMaxusernum.Format(_T("%d"), maxusernum);
-				strRoomname = UTF8ToANSI(roomname.c_str());
-				m_pWatingForm->m_roomlist.InsertItem(i, strRoomnum);
-				m_pWatingForm->m_roomlist.SetItemText(i, 1, strRoomname);
-				m_pWatingForm->m_roomlist.SetItemText(i, 2, strUsernum + _T("/") + strMaxusernum);
+				if (roomtype == "public") {
+					CString strRoomnum, strUsernum, strMaxusernum, strRoomname;
+					strRoomnum.Format(_T("%d"), roomnum);
+					strUsernum.Format(_T("%d"), usernum);
+					strMaxusernum.Format(_T("%d"), maxusernum);
+					strRoomname = UTF8ToANSI(roomname.c_str());
+					m_pWatingForm->m_roomlist.InsertItem(i, strRoomnum);
+					m_pWatingForm->m_roomlist.SetItemText(i, 1, strRoomname);
+					m_pWatingForm->m_roomlist.SetItemText(i, 2, strUsernum + _T("/") + strMaxusernum);
+				}
 			}
 		}
 		Json::Value friendslist = m_recvroot["friendslist"];
